@@ -204,6 +204,7 @@ class HdlcOctetStuffedFrameReader:
 
                                 if  self._frame.is_good:
                                     print("### SUCCESS ###")
+                                    frames.append(self._frame)
                                     if self._frame._escape_count > 0:
                                         print("ESCAPE success")
                                 else:
@@ -227,7 +228,8 @@ class HdlcOctetStuffedFrameReader:
                         print("END of frame")
                         print()
 
-                        frames.append(self._frame)
+                        print(self._frame._complete_buffer.hex().upper())
+
 
                         self._frame = HdlcFrame()
                         self._buffer = self._buffer[self._buffer_pos:]

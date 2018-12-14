@@ -2,8 +2,11 @@ import fnmatch
 import os
 import socket
 import hdlc
+import decode
+import json
+import asyncio
 
-r2 = hdlc.HdlcOctetStuffedFrameReader()
+reader = hdlc.HdlcOctetStuffedFrameReader()
 
 #folder = "/Users/tore/Downloads/han-port-1.15"
 # listOfFiles = os.listdir(folder)
@@ -27,19 +30,30 @@ r2 = hdlc.HdlcOctetStuffedFrameReader()
 # create TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-#bind the socket to the port 23456, and connect
+#bind the socket to the port 3001, and connect
 server_address = ("192.168.1.10", 3001)
 sock.connect(server_address)
 print ("connecting to %s" % (server_address[0]))
 
 while True:
-    b = sock.recv(1)
-    frames = r2.read(b)
+    bytes = sock.recv(1)
+    frames = reader.read(bytes)
 
     for frame in frames:
-        print(frame.information.hex())
+        msg = decode.LlcPdu.parse(frame.information)
+        #msg = decode.decode_frame(frame._complete_buffer)
 
+        #print(json.dumps(msg))
+
+        print(msg)
+        print(f"{msg.meter_data.meter_ts}: {msg.meter_data.data.pwr_act_pos} W")
+        try:
+            print(f"Current: {msg.data.IL1} A")
+            print(f"Voltage: {msg.data.ULN1} V")
+            print(f"Reactive: {msg.data.pwr_react_neg} VAr")
+        except AttributeError:
+            pass
 
 # close connection
-#sock.close()
+sock.close()
 
