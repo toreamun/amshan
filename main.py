@@ -1,11 +1,28 @@
+import argparse
+import asyncio
+import logging
 import hdlc
 import decode
-import asyncio
+import sys
+
+parser = argparse.ArgumentParser('debugging asyncio')
+parser.add_argument('-v', dest='verbose', default=False)
+args = parser.parse_args()
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(levelname)7s: %(message)s',
+    stream=sys.stderr,
+)
+LOG = logging.getLogger('')
 
 
 async def read_task():
 
-    socket_reader, socket_writer = await asyncio.open_connection('192.168.1.10', 3001)
+    dest_ip = '192.168.1.10'
+    socket_reader, socket_writer = await asyncio.open_connection(dest_ip, 3001)
+    LOG.info('Connected to ' + dest_ip)
+
 
     frame_reader = hdlc.HdlcOctetStuffedFrameReader()
 
@@ -26,7 +43,7 @@ async def process_frames():
         frame = await queue.get()
         msg = decode.LlcPdu.parse(frame.information)
 
-        print(msg)
+        #print(msg)
         print(f"{msg.meter_data.meter_ts}: {msg.meter_data.data.pwr_act_pos} W")
         try:
             print(f"Current: {msg.data.IL1} A")
@@ -38,6 +55,10 @@ async def process_frames():
 queue = asyncio.Queue()
 
 loop = asyncio.get_event_loop()
+
+if args.verbose:
+    loop.set_debug(True)
+
 try:
     asyncio.ensure_future(read_task())
     asyncio.ensure_future(process_frames())

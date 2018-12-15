@@ -1,5 +1,5 @@
+import logging
 import fastframecheck
-from array import array
 
 
 class HdlcFrame:
@@ -7,7 +7,7 @@ class HdlcFrame:
     _ffc = None
 
     def __init__(self):
-        self._complete_buffer = bytearray()
+        self._unescaped_buffer = bytearray()
         self._buffer = bytearray()
         self._ffc = fastframecheck.FastFrameCheckSequence()
         self._escape_next = False
@@ -19,7 +19,7 @@ class HdlcFrame:
         return len(self._buffer)
 
     def append(self, byte):
-        self._complete_buffer.append(byte)
+        self._unescaped_buffer.append(byte)
 
         if self._escape_next:
             self._escape_next = False
@@ -42,6 +42,13 @@ class HdlcFrame:
                 if len(self._buffer) == self.control_position + 3:
                     self.is_header_good = self.is_good
 
+    @property
+    def frame_data(self):
+        return self._buffer
+
+    @property
+    def unescaped_frame_data(self):
+        return self._unescaped_buffer
 
     @property
     def escape_next(self):
@@ -50,16 +57,6 @@ class HdlcFrame:
     @property
     def is_good(self):
         return self._ffc.is_good
-
-    @property
-    def is_checksum_ok(self):
-        fcs_bytes = self._buffer[-2:]
-        if len(fcs_bytes) < 2:
-            print("less")
-        else:
-            fcs = fcs_bytes[1] << 8 | fcs_bytes[0]
-            calculated = self._ffc.compute_checksum(self._buffer, 0, len(self._buffer) - 2)
-            return fcs == calculated
 
     @property
     def frame_format(self):
@@ -151,7 +148,8 @@ class HdlcOctetStuffedFrameReader:
     CONTROL_ESCAPE = b'\x7d'
     FLAG_SEQUENCE = b'\x7e'
 
-    def __init__(self):
+    def __init__(self, logger=None):
+        self.logger = logger or logging.getLogger(__name__)
         self._buffer = bytearray()
         self._buffer_pos = 0
         self._frame = None
@@ -176,48 +174,33 @@ class HdlcOctetStuffedFrameReader:
         if len(self._buffer) > 0:
             while self._buffer_pos < len(self._buffer):
                 current = self._buffer[self._buffer_pos]
-                # print(hex(current))
-
-                if(self._frame.is_good):
-                    print("IS good")
 
                 if current == self.FLAG_SEQUENCE[0]:
-                    print("FOUND flag seq")
-                    if len(self._frame) > 0:
+
+                    if len(self._frame) == 0:
+                        self.logger.debug("Found flag sequence -> start of frame")
+                    else:
+                        self.logger.debug("Found flag sequence -> end of frame")
 
                         if len(self._frame) < 4:
                             # Frames which are too short (less than 4 octets)
                             # are silently discarded, and not counted as a FCS error.
-                            print("Too short frame (", len(self._frame)," bytes). Discard: ", self._frame._complete_buffer.hex())
+                            self.logger.info("Too short frame (%d bytes). Discard frame: %s",
+                                             len(self._frame), self._frame.unescaped_frame_data.hex())
                         else:
                             if self._frame.escape_next:
                                 # Frames which end with a Control Escape octet
                                 # followed immediately by a closing Flag Sequence,
                                 # are silently discarded, and not counted as a FCS error.
-                                print("Abort sequence. Discard: ", self._frame._complete_buffer.hex())
+                                self.logger.info("Abort sequence. Discard frame: %s",
+                                                 self._frame.unescaped_frame_data.hex())
                             else:
-                                actual_length = len(self._frame._buffer)
-                                is_unexpected_length = self._frame.frame_length != actual_length
-
-                                calculated = self._frame.is_checksum_ok
-                                is_unexpected_checksum = calculated != self._frame.is_good
-
-                                if  self._frame.is_good:
-                                    print("### SUCCESS ###")
+                                if self._frame.is_good:
+                                    self.logger.info("Frame of length %d successfully received", len(self._frame))
                                     frames.append(self._frame)
-                                    if self._frame._escape_count > 0:
-                                        print("ESCAPE success")
                                 else:
-                                    print("Invalid checksum. Frame: ", self._frame._complete_buffer.hex())
-
-                                if is_unexpected_length:
-                                    print("Different lengt, expected = ", self._frame.frame_length, " actual = ",
-                                          actual_length)
-                                else:
-                                    print("Correct length ", actual_length)
-
-                                if is_unexpected_checksum:
-                                    print("Checksum mismatch")
+                                    self.logger.warning("Invalid checksum. Discard frame: %s",
+                                                        self._frame.unescaped_frame_data.hex())
 
                                 if self._frame._escape_count > 0 and self._frame.is_good:
                                     print("Escaped and good!")
@@ -225,20 +208,13 @@ class HdlcOctetStuffedFrameReader:
                                 if self._frame.segmentation:
                                     print("Is segmentation")
 
-                        print("END of frame")
-                        print()
-
-                        print(self._frame._complete_buffer.hex().upper())
-
-
                         self._frame = HdlcFrame()
                         self._buffer = self._buffer[self._buffer_pos:]
                         self._buffer_pos = -1
-                    else:
-                        print("START of frame")
+
                 else:
                     if current == self.CONTROL_ESCAPE[0]:
-                        print("FOUND control escape")
+                        self.logger.debug("Found control escape")
 
                     self._frame.append(current)
 
