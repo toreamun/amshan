@@ -148,16 +148,15 @@ class HdlcOctetStuffedFrameReader:
     CONTROL_ESCAPE = b'\x7d'
     FLAG_SEQUENCE = b'\x7e'
 
-    def __init__(self, logger=None):
-        self.logger = logger or logging.getLogger(__name__)
+    def __init__(self, frame_output, logger=None):
+        self._frame_output = frame_output
+        self._logger = logger or logging.getLogger(__name__)
         self._buffer = bytearray()
         self._buffer_pos = 0
         self._frame = None
 
     def read(self, data):
         self._buffer.extend(data)
-
-        frames = []
 
         if self._frame is None:
             flag_pos = self._buffer.find(self.FLAG_SEQUENCE)
@@ -178,29 +177,29 @@ class HdlcOctetStuffedFrameReader:
                 if current == self.FLAG_SEQUENCE[0]:
 
                     if len(self._frame) == 0:
-                        self.logger.debug("Found flag sequence -> start of frame")
+                        self._logger.debug("Found flag sequence -> start of frame")
                     else:
-                        self.logger.debug("Found flag sequence -> end of frame")
+                        self._logger.debug("Found flag sequence -> end of frame")
 
                         if len(self._frame) < 4:
                             # Frames which are too short (less than 4 octets)
                             # are silently discarded, and not counted as a FCS error.
-                            self.logger.info("Too short frame (%d bytes). Discard frame: %s",
-                                             len(self._frame), self._frame.unescaped_frame_data.hex())
+                            self._logger.info("Too short frame (%d bytes). Discard frame: %s",
+                                              len(self._frame), self._frame.unescaped_frame_data.hex())
                         else:
                             if self._frame.escape_next:
                                 # Frames which end with a Control Escape octet
                                 # followed immediately by a closing Flag Sequence,
                                 # are silently discarded, and not counted as a FCS error.
-                                self.logger.info("Abort sequence. Discard frame: %s",
-                                                 self._frame.unescaped_frame_data.hex())
+                                self._logger.info("Abort sequence. Discard frame: %s",
+                                                  self._frame.unescaped_frame_data.hex())
                             else:
                                 if self._frame.is_good:
-                                    self.logger.info("Frame of length %d successfully received", len(self._frame))
-                                    frames.append(self._frame)
+                                    self._logger.info("Frame of length %d successfully received", len(self._frame))
+                                    self._frame_output.put_nowait(self._frame)
                                 else:
-                                    self.logger.warning("Invalid checksum. Discard frame: %s",
-                                                        self._frame.unescaped_frame_data.hex())
+                                    self._logger.warning("Invalid checksum. Discard frame: %s",
+                                                         self._frame.unescaped_frame_data.hex())
 
                                 if self._frame._escape_count > 0 and self._frame.is_good:
                                     print("Escaped and good!")
@@ -214,10 +213,8 @@ class HdlcOctetStuffedFrameReader:
 
                 else:
                     if current == self.CONTROL_ESCAPE[0]:
-                        self.logger.debug("Found control escape")
+                        self._logger.debug("Found control escape")
 
                     self._frame.append(current)
 
                 self._buffer_pos += 1
-
-        return frames

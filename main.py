@@ -23,15 +23,11 @@ async def read_task():
     socket_reader, socket_writer = await asyncio.open_connection(dest_ip, 3001)
     LOG.info('Connected to ' + dest_ip)
 
-
-    frame_reader = hdlc.HdlcOctetStuffedFrameReader()
+    frame_reader = hdlc.HdlcOctetStuffedFrameReader(queue)
 
     while True:
         data = await socket_reader.read(1024)
-        frames = frame_reader.read(data)
-
-        for frame in frames:
-            queue.put_nowait(frame)
+        frame_reader.read(data)
 
     # close connection
     socket_reader.close()
