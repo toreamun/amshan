@@ -5,9 +5,13 @@ import hdlc
 import decode
 import sys
 import signal
+from hbmqtt.client import MQTTClient, ClientException
+from hbmqtt.mqtt.constants import QOS_1, QOS_2
 
 parser = argparse.ArgumentParser('debugging asyncio')
 parser.add_argument('-v', dest='verbose', default=False)
+parser.add_argument('-sourceip', required=True)
+parser.add_argument('-mqtturl', required=True)
 args = parser.parse_args()
 
 logging.basicConfig(
@@ -18,11 +22,10 @@ logging.basicConfig(
 LOG = logging.getLogger('')
 
 
-async def read_task(queue):
+async def read_task(queue, source_ip):
 
-    dest_ip = '192.168.1.10'
-    socket_reader, socket_writer = await asyncio.open_connection(dest_ip, 3001)
-    LOG.info('Connected to ' + dest_ip)
+    socket_reader, socket_writer = await asyncio.open_connection(source_ip, 3001)
+    LOG.info('Connected to ' + source_ip)
 
     frame_reader = hdlc.HdlcOctetStuffedFrameReader(queue)
 
@@ -35,11 +38,16 @@ async def read_task(queue):
     socket_writer.close()
 
 
-async def process_frames(queue):
+async def process_frames(queue, mqtt_url):
+    mqtt = MQTTClient()
+    await mqtt.connect(mqtt_url)
+
     while True:
         frame = await queue.get()
-        msg = decode.LlcPdu.parse(frame.information)
 
+        await mqtt.publish('ams/frame', frame.information)
+
+        msg = decode.LlcPdu.parse(frame.information)
         #print(msg)
         print(f"{msg.meter_data.meter_ts}: {msg.meter_data.data.pwr_act_pos} W")
         try:
@@ -55,15 +63,15 @@ async def handle_exception(coro, loop):
         await coro
     except Exception as ex:
         logging.exception('Caught exception')
-        loop.stop()
+    loop.stop()
 
 
 async def shutdown(signal, loop):
     logging.info(f'Received exit signal {signal.name}...')
     logging.info('Closing database connections')
     logging.info('Nacking outstanding messages')
-    tasks = [t for t in asyncio.all_tasks() if t is not
-             asyncio.current_task()]
+    tasks = [t for t in asyncio.Task.all_tasks() if t is not
+             asyncio.Task.current_task()]
 
     [task.cancel() for task in tasks]
 
@@ -83,11 +91,11 @@ if __name__ == '__main__':
     signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
     for s in signals:
         loop.add_signal_handler(
-            s, lambda s=s: asyncio.create_task(shutdown(s, loop)))
+            s, lambda s=s: loop.create_task(shutdown(s, loop)))
 
     queue = asyncio.Queue()
-    publisher_coro = handle_exception(read_task(queue), loop)
-    consumer_coro = handle_exception(process_frames(queue), loop)
+    publisher_coro = handle_exception(read_task(queue, args.sourceip), loop)
+    consumer_coro = handle_exception(process_frames(queue, args.mqtturl), loop)
 
     try:
         loop.create_task(publisher_coro)
