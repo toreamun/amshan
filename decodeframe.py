@@ -66,56 +66,52 @@ OptionalDateTimeByte = c.ExprAdapter(
     encoder=lambda obj, ctx: obj if obj is not None else 0xff,
 )
 
-ClockStatus = c.BitStruct(
-    "invalid_value" / c.BitsInteger(1),
-    "doubtful_value" / c.BitsInteger(1),
-    "different_clock_base" / c.BitsInteger(1),
-    "invalid_clock_status" / c.BitsInteger(1),
-    c.BitsInteger(3),
-    "daylight_saving_active" / c.BitsInteger(1),
+# See COSEM blue Book section 4.1.6.1 Date and time formats
+CosemDateTime = c.Struct(
+    c.Const(0x0c, c.Byte),  # expect length 12
+    "year" / c.Int16ub,
+    "month" / c.Byte,
+    "day_of_month" / c.Byte,
+    "day_of_week" / c.Byte,
+    "hour" / OptionalDateTimeByte,
+    "minute" / OptionalDateTimeByte,
+    "second" / OptionalDateTimeByte,
+    "hundredths_of_second" / OptionalDateTimeByte,
+    "deviation" / c.ExprAdapter(
+        c.Int16sb,
+        decoder=lambda obj, ctx: obj if obj != -0x8000 else None,
+        encoder=lambda obj, ctx: obj if obj is not None else -0x8000,
+    ),
+    "clock_status_byte" / c.Peek(OptionalDateTimeByte),
+    "clock_status" / c.If(
+        0xff != c.this.clock_status_byte,
+        c.BitStruct(
+            "invalid_value" / c.BitsInteger(1),
+            "doubtful_value" / c.BitsInteger(1),
+            "different_clock_base" / c.BitsInteger(1),
+            "invalid_clock_status" / c.BitsInteger(1),
+            c.BitsInteger(3),
+            "daylight_saving_active" / c.BitsInteger(1)
+        ),
+    ),
+    c.If(0xff == c.this.clock_status_byte, c.Byte),
+    "datetime" / c.Computed(lambda ctx: datetime.datetime(
+        ctx.year, ctx.month, ctx.day_of_month,
+        ctx.hour, ctx.minute, ctx.second,
+        ctx.hundredths_of_second * 10000 if ctx.hundredths_of_second is not None else 0,
+        datetime.timezone(datetime.timedelta(minutes=ctx.deviation)) if ctx.deviation is not None else None
+    ))
 )
 
-ObisDateTime = c.Struct(
-        "item_length" / c.Byte,
-        "year" / c.Int16ub,
-        "month" / c.Byte,
-        "day_of_month" / c.Byte,
-        "day_of_week" / c.Byte,
-        "hour" / OptionalDateTimeByte,
-        "minute" / OptionalDateTimeByte,
-        "second" / OptionalDateTimeByte,
-        "hundredths_of_second" / OptionalDateTimeByte,
-        "deviation" / c.ExprAdapter(
-            c.Int16sb,
-            decoder=lambda obj, ctx: obj if obj != -0x8000 else None,
-            encoder=lambda obj, ctx: obj if obj is not None else -0x8000,
-        ),
-        "clock_status_byte" / c.Peek(OptionalDateTimeByte),
-        "clock_status" / c.If(
-            0xff != c.this.clock_status_byte,
-            c.BitStruct(
-                "invalid_value" / c.BitsInteger(1),
-                "doubtful_value" / c.BitsInteger(1),
-                "different_clock_base" / c.BitsInteger(1),
-                "invalid_clock_status" / c.BitsInteger(1),
-                c.BitsInteger(3),
-                "daylight_saving_active" / c.BitsInteger(1)
-            ),
-        ),
-        c.If(0xff == c.this.clock_status_byte, c.Byte),
-        "datetime" / c.Computed(lambda ctx: datetime.datetime(
-            ctx.year, ctx.month, ctx.day_of_month,
-            ctx.hour, ctx.minute, ctx.second,
-            ctx.hundredths_of_second * 10000 if ctx.hundredths_of_second is not None else 0,
-            datetime.timezone(datetime.timedelta(minutes=ctx.deviation)) if ctx.deviation is not None else None
-        ))
-    )
-
-OptionalDateTime = c.Struct(
+OptionalDateTime = c.FocusedSeq(
+    "value",
     "content_type" / CosemCommonDataTypes,
+    c.Check(lambda ctx:
+            ctx.content_type == CosemCommonDataTypes.null_data
+            or ctx.content_type == CosemCommonDataTypes.octet_string),
     "value" / c.If(
-        c.this.content_type == CosemCommonDataTypes.octet_string,
-        ObisDateTime
+        c.this.content_type != CosemCommonDataTypes.null_data,
+        CosemDateTime
     )
 )
 
