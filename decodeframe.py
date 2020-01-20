@@ -123,19 +123,17 @@ Element = c.Struct(
     "content" / c.IfThenElse(
         c.this.content_type == CosemCommonDataTypes.visible_string,
         c.PascalString(c.Byte, "ASCII"),
-        c.Embedded(
-            c.Struct(
-                "unscaled_value" / c.Switch(
-                    c.this._.content_type,
-                    {
-                        CosemCommonDataTypes.double_long_unsigned: c.Int32ub,
-                        CosemCommonDataTypes.long: c.Int16sb,
-                        CosemCommonDataTypes.long_unsigned: c.Int16ub
-                    }),
-                c.Embedded(CosemScalerUnit),
-                "value" / c.Computed(c.this.unscaled_value * c.this.scaler.scale)
-            )
-        ))
+        c.Struct(
+            "unscaled_value" / c.Switch(
+                c.this._.content_type,
+                {
+                    CosemCommonDataTypes.double_long_unsigned: c.Int32ub,
+                    CosemCommonDataTypes.long: c.Int16sb,
+                    CosemCommonDataTypes.long_unsigned: c.Int16ub
+                }),
+            "scaler_unit" / CosemScalerUnit,
+            "value" / c.Computed(c.this.unscaled_value * c.this.scaler_unit.scaler.scale)
+    ))
 )
 
 NotificationBody = c.Struct(
@@ -187,8 +185,7 @@ u516b = bytes.fromhex(u516L2)
 
 # f = open('output', 'wb')
 # f.write(u516b)
-# msg = LlcPdu.parse(m34b)
-# print(msg)
-
+#msg = LlcPdu.parse(m34b)
+#print(msg)
 msg = LlcPdu.parse(u516b)
 print(msg)
