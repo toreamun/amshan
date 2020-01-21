@@ -1,5 +1,6 @@
 import logging
 import fastframecheck
+from typing import Callable
 
 
 class HdlcFrame:
@@ -148,14 +149,15 @@ class HdlcOctetStuffedFrameReader:
     CONTROL_ESCAPE = b'\x7d'
     FLAG_SEQUENCE = b'\x7e'
 
-    def __init__(self, frame_output, logger=None):
-        self._frame_output = frame_output
+    def __init__(self, frame_received: Callable[[HdlcFrame], None], logger=None):
+        self._frame_received = frame_received
         self._logger = logger or logging.getLogger(__name__)
         self._buffer = bytearray()
         self._buffer_pos = 0
         self._frame = None
 
-    def read(self, data):
+    def read(self, data: bytes) -> int:
+        frame_count = 0
         self._buffer.extend(data)
 
         if self._frame is None:
@@ -196,10 +198,12 @@ class HdlcOctetStuffedFrameReader:
                             else:
                                 if self._frame.is_good:
                                     self._logger.info("Frame of length %d successfully received", len(self._frame))
-                                    self._frame_output.put_nowait(self._frame)
                                 else:
-                                    self._logger.warning("Invalid checksum. Discard frame: %s",
-                                                         self._frame.unescaped_frame_data.hex())
+                                    self._logger.warning("Frame of length %d received with invalid checksum",
+                                                         len(self._frame))
+
+                                self._frame_received(self._frame)
+                                frame_count += 1
 
                                 if self._frame._escape_count > 0 and self._frame.is_good:
                                     print("Escaped and good!")
@@ -218,3 +222,5 @@ class HdlcOctetStuffedFrameReader:
                     self._frame.append(current)
 
                 self._buffer_pos += 1
+
+        return frame_count
