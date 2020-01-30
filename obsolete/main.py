@@ -1,12 +1,12 @@
 import argparse
 import asyncio
 import logging
-import hdlc
-import decode
+
+from readams.meterdecode import hdlc
+from readams.meterdecode import aidon
 import sys
 import signal
-from hbmqtt.client import MQTTClient, ClientException
-from hbmqtt.mqtt.constants import QOS_1, QOS_2
+from hbmqtt.client import MQTTClient
 
 parser = argparse.ArgumentParser('debugging asyncio')
 parser.add_argument('-v', dest='verbose', default=False)
@@ -27,7 +27,8 @@ async def read_task(queue, source_ip):
     socket_reader, socket_writer = await asyncio.open_connection(source_ip, 3001)
     LOG.info('Connected to ' + source_ip)
 
-    frame_reader = hdlc.HdlcOctetStuffedFrameReader(queue)
+    new_packet = lambda x: queue.put_nowait(x)
+    frame_reader = hdlc.HdlcOctetStuffedFrameReader(new_packet)
 
     while True:
         data = await socket_reader.read(1024)
@@ -47,8 +48,10 @@ async def process_frames(queue, mqtt_url):
 
         await mqtt.publish('ams/frame', frame.information)
 
-        msg = decode.LlcPdu.parse(frame.information)
+        msg = aidon.LlcPdu.parse(frame.information)
+
         #print(msg)
+
         print(f"{msg.meter_data.meter_ts}: {msg.meter_data.data.pwr_act_pos} W")
         try:
             print(f"Current: {msg.data.IL1} A")

@@ -1,6 +1,7 @@
 import logging
-import fastframecheck
 from typing import Callable
+
+from readams.meterdecode import fastframecheck
 
 
 class HdlcFrame:
