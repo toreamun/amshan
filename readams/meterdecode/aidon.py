@@ -1,6 +1,5 @@
 import construct
-
-from readams.meterdecode import cosem
+from readams.meterdecode import cosem, obis_map
 
 AidonElement = construct.Struct(
     construct.Const(cosem.CommonDataTypes.structure, cosem.CommonDataTypes),  # expect structure
@@ -34,3 +33,28 @@ AidonNotificationBody = construct.Struct(
 )
 
 LlcPdu = cosem.get_llc_pdu_struct(AidonNotificationBody)
+
+
+def normalize_llcpdu_frame_content(frame: LlcPdu) -> dict:
+    list_items = frame.information.notification_body.list_items
+
+    dictionary = {}
+    for measure in list_items:
+        element_name = obis_map.obis_name_map[measure.obis]
+
+        if isinstance(measure.content, str):
+            dictionary[element_name] = measure.content
+        else:
+            if hasattr(measure.content, "datetime"):
+                dictionary[element_name] = measure.content.datetime
+            else:
+                dictionary[element_name] = (measure.content.unscaled_value
+                                            if measure.content.unscaled_value == measure.content.value
+                                            else float(measure.content.value))
+
+    return dictionary
+
+
+def decode_frame(frame: bytes) -> dict:
+    parsed = LlcPdu.parse(frame)
+    return normalize_llcpdu_frame_content(parsed)

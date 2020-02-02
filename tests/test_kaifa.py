@@ -1,4 +1,4 @@
-import pytest
+from pprint import pprint
 from readams.meterdecode import kaifa
 import logging
 
@@ -33,6 +33,17 @@ class TestDecodeKaifa:
         msg = kaifa.LlcPdu.parse(self.kaifa_list_3)
         print(msg)
 
+    def test_decode_frame_list_1(self):
+        decoded = kaifa.decode_frame(self.kaifa_list_1)
+        pprint(decoded)
+
+    def test_decode_frame_list_2(self):
+        decoded = kaifa.decode_frame(self.kaifa_list_2)
+        pprint(decoded)
+
+    def test_decode_frame_list_3(self):
+        decoded = kaifa.decode_frame(self.kaifa_list_3)
+        pprint(decoded)
 
 # print(kaifaMsg1)
 #print(kaifaMsg2)

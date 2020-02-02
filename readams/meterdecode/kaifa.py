@@ -1,6 +1,7 @@
 import construct
 
 from readams.meterdecode import cosem
+from readams.meterdecode import obis_map
 
 KaifaNotificationBody = construct.Struct(
     construct.Const(cosem.CommonDataTypes.structure, cosem.CommonDataTypes),  # expect structure
@@ -21,103 +22,83 @@ KaifaNotificationBody = construct.Struct(
     ))
 )
 
-# KaifaList1 = c.Struct(
-#     NEK_HAN_FIELD_ACTIVE_POWER_IMPORT / scaled_simple_value(cosem.CosemPhysicalUnits.W, 0)
-# )
-#
-#
-# def kaifa_list_2(is_three_phase: bool):
-#     return c.Struct(
-#         NEK_HAN_FIELD_OBIS_LIST_VER_ID / cosem.CosemOctedStringTextField,
-#         NEK_HAN_FIELD_METER_ID / cosem.CosemOctedStringTextField,
-#         NEK_HAN_FIELD_METER_TYPE / cosem.CosemOctedStringTextField,
-#
-#         NEK_HAN_FIELD_ACTIVE_POWER_IMPORT / scaled_simple_value(cosem.CosemPhysicalUnits.W, 0),
-#         NEK_HAN_FIELD_ACTIVE_POWER_EXPORT / scaled_simple_value(cosem.CosemPhysicalUnits.W, 0),
-#
-#         NEK_HAN_FIELD_REACTIVE_POWER_IMPORT / scaled_simple_value(cosem.CosemPhysicalUnits.var, 0),
-#         NEK_HAN_FIELD_REACTIVE_POWER_EXPORT / scaled_simple_value(cosem.CosemPhysicalUnits.var, 0),
-#
-#         NEK_HAN_FIELD_CURRENT_L1 / scaled_simple_value(cosem.CosemPhysicalUnits.A, -3),
-#         c.If(is_three_phase, NEK_HAN_FIELD_CURRENT_L2 / scaled_simple_value(cosem.CosemPhysicalUnits.A, -3)),
-#         c.If(is_three_phase, NEK_HAN_FIELD_CURRENT_L3 / scaled_simple_value(cosem.CosemPhysicalUnits.A, -3)),
-#
-#         NEK_HAN_FIELD_VOLTAGE_L1 / scaled_simple_value(cosem.CosemPhysicalUnits.V, -1),
-#         c.If(is_three_phase, NEK_HAN_FIELD_VOLTAGE_L2 / scaled_simple_value(cosem.CosemPhysicalUnits.V, -1)),
-#         c.If(is_three_phase, NEK_HAN_FIELD_VOLTAGE_L3 / scaled_simple_value(cosem.CosemPhysicalUnits.V, -1))
-#     )
-#
-#
-# def kaifa_list_3(is_three_phase: bool):
-#     return c.Struct(
-#         NEK_HAN_FIELD_OBIS_LIST_VER_ID / cosem.CosemOctedStringTextField,
-#         NEK_HAN_FIELD_METER_ID / cosem.CosemOctedStringTextField,
-#         NEK_HAN_FIELD_METER_TYPE / cosem.CosemOctedStringTextField,
-#
-#         NEK_HAN_FIELD_ACTIVE_POWER_IMPORT / scaled_simple_value(cosem.CosemPhysicalUnits.W, 0),
-#         NEK_HAN_FIELD_ACTIVE_POWER_EXPORT / scaled_simple_value(cosem.CosemPhysicalUnits.W, 0),
-#
-#         NEK_HAN_FIELD_REACTIVE_POWER_IMPORT / scaled_simple_value(cosem.CosemPhysicalUnits.var, 0),
-#         NEK_HAN_FIELD_REACTIVE_POWER_EXPORT / scaled_simple_value(cosem.CosemPhysicalUnits.var, 0),
-#
-#         NEK_HAN_FIELD_CURRENT_L1 / scaled_simple_value(cosem.CosemPhysicalUnits.A, -3),
-#         c.If(is_three_phase, NEK_HAN_FIELD_CURRENT_L2 / scaled_simple_value(cosem.CosemPhysicalUnits.A, -3)),
-#         c.If(is_three_phase, NEK_HAN_FIELD_CURRENT_L3 / scaled_simple_value(cosem.CosemPhysicalUnits.A, -3)),
-#
-#         NEK_HAN_FIELD_VOLTAGE_L1 / scaled_simple_value(cosem.CosemPhysicalUnits.V, -1),
-#         c.If(is_three_phase, NEK_HAN_FIELD_VOLTAGE_L2 / scaled_simple_value(cosem.CosemPhysicalUnits.V, -1)),
-#         c.If(is_three_phase, NEK_HAN_FIELD_VOLTAGE_L3 / scaled_simple_value(cosem.CosemPhysicalUnits.V, -1)),
-#
-#         NEK_HAN_FIELD_METER_DATETIME / cosem.CosemDateTimeField,
-#
-#         NEK_HAN_FIELD_ACTIVE_POWER_IMPORT_HOUR / scaled_simple_value(cosem.CosemPhysicalUnits.Wh, 0),
-#         NEK_HAN_FIELD_ACTIVE_POWER_EXPORT_HOUR / scaled_simple_value(cosem.CosemPhysicalUnits.Wh, 0),
-#
-#         NEK_HAN_FIELD_REACTIVE_POWER_IMPORT_HOUR / scaled_simple_value(cosem.CosemPhysicalUnits.varh, 0),
-#         NEK_HAN_FIELD_REACTIVE_POWER_EXPORT_HOUR / scaled_simple_value(cosem.CosemPhysicalUnits.varh, 0)
-#     )
-
-
-# KaifaList2SinglePhase = kaifa_list_2(is_three_phase=False)
-# KaifaList2ThreePhase = kaifa_list_2(is_three_phase=True)
-# KaifaList3SinglePhase = kaifa_list_3(is_three_phase=False)
-# KaifaList3ThreePhase = kaifa_list_3(is_three_phase=True)
-
-# KaifaNotificationBody = c.Struct(
-#     c.Const(cosem.CosemCommonDataTypes.structure, cosem.CosemCommonDataTypes),  # expect structure
-#     "length" / c.Int8ub,
-#     "data" / c.Switch(c.this.length, {
-#         1: KaifaList1,
-#         9: KaifaList2SinglePhase,
-#         13: KaifaList2ThreePhase,
-#         14: KaifaList3SinglePhase,
-#         18: KaifaList3ThreePhase,
-#     })
-# )
-
 LlcPdu = cosem.get_llc_pdu_struct(KaifaNotificationBody)
 
 
-def measure_to_dic(measure):
-    return {
-        "value": int(measure.scaled_value) if measure.scale == 1 else float(measure.scaled_value),
-        "unit": measure.unit
-    }
+def get_field_lists():
+    item_order_list_3_three_phase = [
+        obis_map.NEK_HAN_FIELD_OBIS_LIST_VER_ID,
+        obis_map.NEK_HAN_FIELD_METER_ID,
+        obis_map.NEK_HAN_FIELD_METER_TYPE,
+        obis_map.NEK_HAN_FIELD_ACTIVE_POWER_IMPORT,
+        obis_map.NEK_HAN_FIELD_ACTIVE_POWER_EXPORT,
+        obis_map.NEK_HAN_FIELD_REACTIVE_POWER_IMPORT,
+        obis_map.NEK_HAN_FIELD_REACTIVE_POWER_EXPORT,
+        obis_map.NEK_HAN_FIELD_CURRENT_L1,
+        obis_map.NEK_HAN_FIELD_CURRENT_L2,
+        obis_map.NEK_HAN_FIELD_CURRENT_L3,
+        obis_map.NEK_HAN_FIELD_VOLTAGE_L1,
+        obis_map.NEK_HAN_FIELD_VOLTAGE_L2,
+        obis_map.NEK_HAN_FIELD_VOLTAGE_L3,
+        obis_map.NEK_HAN_FIELD_METER_DATETIME,
+        obis_map.NEK_HAN_FIELD_ACTIVE_POWER_IMPORT_HOUR,
+        obis_map.NEK_HAN_FIELD_ACTIVE_POWER_EXPORT_HOUR,
+        obis_map.NEK_HAN_FIELD_REACTIVE_POWER_IMPORT_HOUR,
+        obis_map.NEK_HAN_FIELD_REACTIVE_POWER_EXPORT_HOUR
+    ]
+
+    item_order_list_3_single_phase = item_order_list_3_three_phase[:8] \
+                                      + item_order_list_3_three_phase[10:11] \
+                                      + item_order_list_3_three_phase[13:]
+
+    item_order_list_2_single_phase = item_order_list_3_single_phase[:-5]
+
+    item_order_list_2_three_phase = item_order_list_3_three_phase[:-5]
+
+    return [
+        [obis_map.NEK_HAN_FIELD_ACTIVE_POWER_IMPORT],
+        item_order_list_2_single_phase,
+        item_order_list_2_three_phase,
+        item_order_list_3_single_phase,
+        item_order_list_3_three_phase
+    ]
 
 
-def kaifa_message_to_dictionary(kaifa_message: construct.Container) -> dict:
-    data = kaifa_message.information.notification_body.data
-    dictionary = {cosem.NEK_HAN_FIELD_METER_DATETIME: kaifaMsg2.information.DateTime.datetime.isoformat()}
+_field_order_lists = get_field_lists()
 
-    for key in data():
-        if not key.startswith("_"):
-            value = data[key]
-            if isinstance(value, str):
-                dictionary[key] = value
+_field_scaling = {
+    obis_map.NEK_HAN_FIELD_CURRENT_L1: -3,
+    obis_map.NEK_HAN_FIELD_CURRENT_L2: -3,
+    obis_map.NEK_HAN_FIELD_CURRENT_L3: -3,
+    obis_map.NEK_HAN_FIELD_VOLTAGE_L1: -1,
+    obis_map.NEK_HAN_FIELD_VOLTAGE_L2: -1,
+    obis_map.NEK_HAN_FIELD_VOLTAGE_L3: -1,
+}
+
+
+def normalize_llcpdu_frame_content(frame: LlcPdu) -> dict:
+    list_items = frame.information.notification_body.list_items
+
+    current_list_names = next((x for x in _field_order_lists if len(x) == len(list_items)), None)
+
+    dictionary = {obis_map.NEK_HAN_FIELD_METER_DATETIME: frame.information.DateTime.datetime}
+
+    for measure in list_items:
+        element_name = current_list_names[measure.index]
+
+        if element_name == obis_map.NEK_HAN_FIELD_METER_DATETIME:
+            dictionary[element_name] = measure.value.datetime
+        else:
+            scale = _field_scaling.get(element_name, None)
+            if scale:
+                scaled_value = measure.value * (10 ** scale)
+                dictionary[element_name] = scaled_value
             else:
-                if key == cosem.NEK_HAN_FIELD_METER_DATETIME:
-                    dictionary[key]: value.datetime.isoformat()
-                else:
-                    dictionary[key] = measure_to_dic(value)
+                dictionary[element_name] = measure.value
 
     return dictionary
+
+
+def decode_frame(frame: bytes) -> dict:
+    parsed = LlcPdu.parse(frame)
+    return normalize_llcpdu_frame_content(parsed)

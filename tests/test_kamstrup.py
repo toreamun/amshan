@@ -1,3 +1,4 @@
+from pprint import pprint
 from readams.meterdecode import kamstrup
 
 kamstrup_list_1_three_phase = bytes.fromhex(
@@ -14,10 +15,27 @@ def test_decode_list_1_three_phase():
     kamstrup_list_1_three_phase_parsed = kamstrup.LlcPdu.parse(kamstrup_list_1_three_phase)
     print(kamstrup_list_1_three_phase_parsed)
 
+
 def test_decode_list_2_single_phase():
     kamstrup_list_2_single_phase_parsed = kamstrup.LlcPdu.parse(kamstrup_list_2_single_phase)
     print(kamstrup_list_2_single_phase_parsed)
 
+
 def test_decode_list_2_three_phase():
     kamstrup_list_2_three_phase_parsed = kamstrup.LlcPdu.parse(kamstrup_list_2_three_phase)
     print(kamstrup_list_2_three_phase_parsed)
+
+
+def test_decode_frame_list_1_three_phase():
+    decoded = kamstrup.decode_frame(kamstrup_list_1_three_phase)
+    pprint(decoded)
+
+
+def test_decode_frame_list_2_three_phase():
+    decoded = kamstrup.decode_frame(kamstrup_list_2_three_phase)
+    pprint(decoded)
+
+
+def test_decode_frame_list_2_single_phase():
+    decoded = kamstrup.decode_frame(kamstrup_list_2_single_phase)
+    pprint(decoded)

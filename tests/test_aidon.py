@@ -1,4 +1,4 @@
-import pytest
+from pprint import pprint
 from readams.meterdecode import aidon
 import logging
 
@@ -22,3 +22,14 @@ class TestDecodeAidon:
         msg = aidon.LlcPdu.parse(self.aidon_list_3)
         print(msg)
 
+    def test_decode_frame_list_1(self):
+        decoded = aidon.decode_frame(self.aidon_list_1)
+        pprint(decoded)
+
+    def test_decode_frame_list_2(self):
+        decoded = aidon.decode_frame(self.aidon_list_2)
+        pprint(decoded)
+
+    def test_decode_frame_list_3(self):
+        decoded = aidon.decode_frame(self.aidon_list_3)
+        pprint(decoded)
