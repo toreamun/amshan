@@ -1,4 +1,5 @@
 import construct
+
 from readams.meterdecode import aidon
 from readams.meterdecode import kaifa
 from readams.meterdecode import kamstrup
