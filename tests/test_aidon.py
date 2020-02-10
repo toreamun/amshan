@@ -1,6 +1,7 @@
-from pprint import pprint
-from meterdecode import aidon
 import logging
+from pprint import pprint
+
+from meterdecode import aidon
 
 logging.basicConfig(level=logging.DEBUG)
 

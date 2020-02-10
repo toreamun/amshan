@@ -47,8 +47,8 @@ def get_field_lists():
     ]
 
     item_order_list_3_single_phase = item_order_list_3_three_phase[:8] \
-                                      + item_order_list_3_three_phase[10:11] \
-                                      + item_order_list_3_three_phase[13:]
+                                     + item_order_list_3_three_phase[10:11] \
+                                     + item_order_list_3_three_phase[13:]
 
     item_order_list_2_single_phase = item_order_list_3_single_phase[:-5]
 

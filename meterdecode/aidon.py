@@ -1,4 +1,5 @@
 import construct
+
 from meterdecode import obis_map, cosem
 
 AidonElement = construct.Struct(

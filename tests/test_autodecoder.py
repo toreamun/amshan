@@ -1,6 +1,6 @@
-from meterdecode import autodecoder
-import tests.test_kamstrup
 import tests.test_aidon
+import tests.test_kamstrup
+from meterdecode import autodecoder
 
 
 def test_decode_frame():

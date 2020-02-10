@@ -1,4 +1,5 @@
 from pprint import pprint
+
 from meterdecode import kamstrup
 
 list_1_three_phase = bytes.fromhex(

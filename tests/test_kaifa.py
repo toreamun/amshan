@@ -1,6 +1,7 @@
-from pprint import pprint
-from meterdecode import kaifa
 import logging
+from pprint import pprint
+
+from meterdecode import kaifa
 
 logging.basicConfig(level=logging.DEBUG)
 

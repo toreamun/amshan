@@ -52,4 +52,3 @@ def normalize_llcpdu_frame_content(frame: LlcPdu) -> dict:
 def decode_frame(frame: bytes) -> dict:
     parsed = LlcPdu.parse(frame)
     return normalize_llcpdu_frame_content(parsed)
-
