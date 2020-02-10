@@ -1,12 +1,13 @@
-import datetime
 import argparse
+import datetime
 import json
 import logging
 import sys
-import serial
+
 import paho.mqtt.client as mqtt
-from readams.meterdecode import hdlc
-from readams.meterdecode import autodecoder
+import serial
+
+from meterdecode import hdlc, autodecoder
 
 logging.basicConfig(
     level=logging.DEBUG,

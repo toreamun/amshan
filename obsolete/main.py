@@ -2,8 +2,7 @@ import argparse
 import asyncio
 import logging
 
-from readams.meterdecode import hdlc
-from readams.meterdecode import aidon
+from meterdecode import hdlc, aidon
 import sys
 import signal
 from hbmqtt.client import MQTTClient

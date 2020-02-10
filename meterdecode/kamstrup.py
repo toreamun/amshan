@@ -1,7 +1,6 @@
 import construct
 
-from readams.meterdecode import cosem
-from readams.meterdecode import obis_map
+from meterdecode import obis_map, cosem
 
 KamstrupElement = construct.Struct(
     "_element_type" / construct.Peek(cosem.CommonDataTypes),

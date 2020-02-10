@@ -1,5 +1,5 @@
 from pprint import pprint
-from readams.meterdecode import kamstrup
+from meterdecode import kamstrup
 
 list_1_three_phase = bytes.fromhex(
     "E6E700"

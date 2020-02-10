@@ -1,4 +1,4 @@
-from readams.meterdecode import autodecoder
+from meterdecode import autodecoder
 import tests.test_kamstrup
 import tests.test_aidon
 

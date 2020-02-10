@@ -1,5 +1,5 @@
 import construct
-from readams.meterdecode import cosem, obis_map
+from meterdecode import obis_map, cosem
 
 AidonElement = construct.Struct(
     construct.Const(cosem.CommonDataTypes.structure, cosem.CommonDataTypes),  # expect structure

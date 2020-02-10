@@ -1,5 +1,5 @@
 from pprint import pprint
-from readams.meterdecode import kaifa
+from meterdecode import kaifa
 import logging
 
 logging.basicConfig(level=logging.DEBUG)

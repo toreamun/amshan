@@ -1,5 +1,5 @@
 from pprint import pprint
-from readams.meterdecode import aidon
+from meterdecode import aidon
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
