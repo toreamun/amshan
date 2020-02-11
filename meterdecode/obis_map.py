@@ -1,6 +1,7 @@
 NEK_HAN_FIELD_OBIS_LIST_VER_ID = "list_ver_id"
 NEK_HAN_FIELD_METER_ID = "meter_id"
 NEK_HAN_FIELD_METER_TYPE = "meter_type"
+NEK_HAN_FIELD_METER_MANUFACTURER = "meter_manufacturer"
 NEK_HAN_FIELD_METER_DATETIME = "meter_datetime"
 NEK_HAN_FIELD_ACTIVE_POWER_IMPORT = "active_power_import"
 NEK_HAN_FIELD_ACTIVE_POWER_EXPORT = "active_power_export"

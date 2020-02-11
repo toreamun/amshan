@@ -2,7 +2,7 @@ import construct
 
 from meterdecode import obis_map, cosem
 
-KaifaNotificationBody = construct.Struct(
+NotificationBody = construct.Struct(
     construct.Const(cosem.CommonDataTypes.structure, cosem.CommonDataTypes),  # expect structure
     "length" / construct.Int8ub,
     "list_items" / construct.Array(construct.this.length, construct.Struct(
@@ -21,7 +21,7 @@ KaifaNotificationBody = construct.Struct(
     ))
 )
 
-LlcPdu = cosem.get_llc_pdu_struct(KaifaNotificationBody)
+LlcPdu = cosem.get_llc_pdu_struct(NotificationBody)
 
 
 def get_field_lists():
@@ -46,9 +46,9 @@ def get_field_lists():
         obis_map.NEK_HAN_FIELD_REACTIVE_POWER_EXPORT_HOUR
     ]
 
-    item_order_list_3_single_phase = item_order_list_3_three_phase[:8] \
-                                     + item_order_list_3_three_phase[10:11] \
-                                     + item_order_list_3_three_phase[13:]
+    item_order_list_3_single_phase = (item_order_list_3_three_phase[:8]
+                                      + item_order_list_3_three_phase[10:11]
+                                      + item_order_list_3_three_phase[13:])
 
     item_order_list_2_single_phase = item_order_list_3_single_phase[:-5]
 
@@ -75,12 +75,15 @@ _field_scaling = {
 }
 
 
-def normalize_llcpdu_frame_content(frame: LlcPdu) -> dict:
+def normalize_parsed_frame(frame: LlcPdu) -> dict:
     list_items = frame.information.notification_body.list_items
 
     current_list_names = next((x for x in _field_order_lists if len(x) == len(list_items)), None)
 
-    dictionary = {obis_map.NEK_HAN_FIELD_METER_DATETIME: frame.information.DateTime.datetime}
+    dictionary = {
+        obis_map.NEK_HAN_FIELD_METER_MANUFACTURER: "Kaifa",
+        obis_map.NEK_HAN_FIELD_METER_DATETIME: frame.information.DateTime.datetime
+    }
 
     for measure in list_items:
         element_name = current_list_names[measure.index]
@@ -100,4 +103,4 @@ def normalize_llcpdu_frame_content(frame: LlcPdu) -> dict:
 
 def decode_frame(frame: bytes) -> dict:
     parsed = LlcPdu.parse(frame)
-    return normalize_llcpdu_frame_content(parsed)
+    return normalize_parsed_frame(parsed)

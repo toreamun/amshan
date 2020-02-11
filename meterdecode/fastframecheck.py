@@ -1,7 +1,7 @@
 from array import array
 
 # FCS Look up table
-fcstab = [
+_fcs_lookup = [
     0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
     0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
     0x1081, 0x0108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
@@ -53,7 +53,7 @@ class FastFrameCheckSequence:
         """Calculate a new fcs CRC given the current CRC value and the new data."""
         crc_index = (crc ^ byte) & 0xff
         #        return (crc >> 8) ^ fast_frame_check_crc_table[crc_index]
-        return (crc >> 8) ^ fcstab[crc_index]
+        return (crc >> 8) ^ _fcs_lookup[crc_index]
 
     def update(self, byte):
         """Update the calculated CRC value for the specified input data."""
@@ -92,9 +92,9 @@ class FastFrameCheckSequence:
         fcs = 0xffff
         for i in range(start, start + length):
             index = (fcs ^ data[i]) & 0xff
-            fcs = ((fcs >> 8) ^ fast_frame_check_crc_table[index])
+            fcs = ((fcs >> 8) ^ _fast_frame_check_crc_table[index])
         fcs ^= 0xffff
         return fcs
 
 
-fast_frame_check_crc_table = FastFrameCheckSequence.compute_crc_table()
+_fast_frame_check_crc_table = FastFrameCheckSequence.compute_crc_table()

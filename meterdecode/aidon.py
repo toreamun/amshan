@@ -2,7 +2,7 @@ import construct
 
 from meterdecode import obis_map, cosem
 
-AidonElement = construct.Struct(
+Element = construct.Struct(
     construct.Const(cosem.CommonDataTypes.structure, cosem.CommonDataTypes),  # expect structure
     "length" / construct.Int8ub,
     "obis" / cosem.ObisCodeOctedStringField,
@@ -27,19 +27,19 @@ AidonElement = construct.Struct(
     )
 )
 
-AidonNotificationBody = construct.Struct(
+NotificationBody = construct.Struct(
     construct.Const(cosem.CommonDataTypes.array, cosem.CommonDataTypes),  # expect array
     "length" / construct.Int8ub,
-    "list_items" / construct.Array(construct.this.length, AidonElement)
+    "list_items" / construct.Array(construct.this.length, Element)
 )
 
-LlcPdu = cosem.get_llc_pdu_struct(AidonNotificationBody)
+LlcPdu = cosem.get_llc_pdu_struct(NotificationBody)
 
 
-def normalize_llcpdu_frame_content(frame: LlcPdu) -> dict:
+def normalize_parsed_frame(frame: LlcPdu) -> dict:
     list_items = frame.information.notification_body.list_items
 
-    dictionary = {}
+    dictionary = {obis_map.NEK_HAN_FIELD_METER_MANUFACTURER: "Aidon"}
     for measure in list_items:
         element_name = obis_map.obis_name_map[measure.obis]
 
@@ -58,4 +58,4 @@ def normalize_llcpdu_frame_content(frame: LlcPdu) -> dict:
 
 def decode_frame(frame: bytes) -> dict:
     parsed = LlcPdu.parse(frame)
-    return normalize_llcpdu_frame_content(parsed)
+    return normalize_parsed_frame(parsed)

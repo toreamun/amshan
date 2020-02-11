@@ -1,9 +1,8 @@
-import logging
 from pprint import pprint
 
-from meterdecode import aidon
+import construct
 
-logging.basicConfig(level=logging.DEBUG)
+from meterdecode import aidon
 
 list_1 = bytes.fromhex(
     "e6e700"
@@ -57,28 +56,37 @@ list_3 = bytes.fromhex(
     "02020f011620")
 
 
-class TestDecodeAidon:
+class TestParseAidon:
 
     def test_decode_list_1(self):
-        msg = aidon.LlcPdu.parse(list_1)
-        print(msg)
+        parsed = aidon.LlcPdu.parse(list_1)
+        assert isinstance(parsed, construct.Container)
+        print(parsed)
 
     def test_decode_list_2(self):
-        msg = aidon.LlcPdu.parse(list_2)
-        print(msg)
+        parsed = aidon.LlcPdu.parse(list_2)
+        assert isinstance(parsed, construct.Container)
+        print(parsed)
 
     def test_decode_list_3(self):
-        msg = aidon.LlcPdu.parse(list_3)
-        print(msg)
+        parsed = aidon.LlcPdu.parse(list_3)
+        assert isinstance(parsed, construct.Container)
+        print(parsed)
+
+
+class TestDecodeAidon:
 
     def test_decode_frame_list_1(self):
         decoded = aidon.decode_frame(list_1)
+        assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_2(self):
         decoded = aidon.decode_frame(list_2)
+        assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_3(self):
         decoded = aidon.decode_frame(list_3)
+        assert isinstance(decoded, dict)
         pprint(decoded)

@@ -1,3 +1,5 @@
+from typing import Optional
+
 import construct
 
 from meterdecode import kaifa, kamstrup, aidon
@@ -5,21 +7,21 @@ from meterdecode import kaifa, kamstrup, aidon
 
 class AutoDecoder:
     _decoder_functions = [
-        ("aidon", aidon.decode_frame),
-        ("kaifa", kaifa.decode_frame),
-        ("kamstrup", kamstrup.decode_frame)]
+        ("Aidon", aidon.decode_frame),
+        ("Kaifa", kaifa.decode_frame),
+        ("Kamstrup", kamstrup.decode_frame)]
 
     def __init__(self):
         self.__previous_success = None
 
     @property
-    def previous_decoder_name(self):
+    def previous_success_decoder(self):
         if self.__previous_success is not None:
             decoder_name, _ = AutoDecoder._decoder_functions[self.__previous_success]
             return decoder_name
         return None
 
-    def decode_frame(self, frame: bytes) -> dict:
+    def decode_frame(self, frame: bytes) -> Optional[dict]:
         previous_success_index = self.__previous_success if self.__previous_success else 0
 
         for i in range(len(AutoDecoder._decoder_functions)):

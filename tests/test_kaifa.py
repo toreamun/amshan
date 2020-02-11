@@ -1,6 +1,8 @@
 import logging
 from pprint import pprint
 
+import construct
+
 from meterdecode import kaifa
 
 logging.basicConfig(level=logging.DEBUG)
@@ -57,28 +59,36 @@ list_3 = bytes.fromhex(
     "06000d922d060030feb4")
 
 
+class TestParseKaifa:
+
+    def test_parse_list_1(self):
+        parsed = kaifa.LlcPdu.parse(list_1)
+        assert isinstance(parsed, construct.Container)
+        print(parsed)
+
+    def test_parse_list_2(self):
+        parsed = kaifa.LlcPdu.parse(list_2)
+        assert isinstance(parsed, construct.Container)
+        print(parsed)
+
+    def test_parse_list_3(self):
+        parsed = kaifa.LlcPdu.parse(list_3)
+        assert isinstance(parsed, construct.Container)
+        print(parsed)
+
+
 class TestDecodeKaifa:
-
-    def test_decode_list_1(self):
-        msg = kaifa.LlcPdu.parse(list_1)
-        print(msg)
-
-    def test_decode_list_2(self):
-        msg = kaifa.LlcPdu.parse(list_2)
-        print(msg)
-
-    def test_decode_list_3(self):
-        msg = kaifa.LlcPdu.parse(list_3)
-        print(msg)
-
     def test_decode_frame_list_1(self):
         decoded = kaifa.decode_frame(list_1)
+        assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_2(self):
         decoded = kaifa.decode_frame(list_2)
+        assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_3(self):
         decoded = kaifa.decode_frame(list_3)
+        assert isinstance(decoded, dict)
         pprint(decoded)

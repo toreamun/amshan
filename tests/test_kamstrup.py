@@ -1,5 +1,7 @@
 from pprint import pprint
 
+import construct
+
 from meterdecode import kamstrup
 
 list_1_three_phase = bytes.fromhex(
@@ -65,31 +67,35 @@ list_2_three_phase = bytes.fromhex(
     "09060101040800FF0600000000")
 
 
-def test_decode_list_1_three_phase():
-    kamstrup_list_1_three_phase_parsed = kamstrup.LlcPdu.parse(list_1_three_phase)
-    print(kamstrup_list_1_three_phase_parsed)
+class TestParseKamstrup:
+    def test_decode_list_1_three_phase(self):
+        parsed = kamstrup.LlcPdu.parse(list_1_three_phase)
+        assert isinstance(parsed, construct.Container)
+        print(parsed)
+
+    def test_decode_list_2_single_phase(self):
+        parsed = kamstrup.LlcPdu.parse(list_2_single_phase)
+        assert isinstance(parsed, construct.Container)
+        print(parsed)
+
+    def test_decode_list_2_three_phase(self):
+        parsed = kamstrup.LlcPdu.parse(list_2_three_phase)
+        assert isinstance(parsed, construct.Container)
+        print(parsed)
 
 
-def test_decode_list_2_single_phase():
-    kamstrup_list_2_single_phase_parsed = kamstrup.LlcPdu.parse(list_2_single_phase)
-    print(kamstrup_list_2_single_phase_parsed)
+class TestDecodeKamstrup:
+    def test_decode_frame_list_1_three_phase(self):
+        decoded = kamstrup.decode_frame(list_1_three_phase)
+        assert isinstance(decoded, dict)
+        pprint(decoded)
 
+    def test_decode_frame_list_2_three_phase(self):
+        decoded = kamstrup.decode_frame(list_2_three_phase)
+        assert isinstance(decoded, dict)
+        pprint(decoded)
 
-def test_decode_list_2_three_phase():
-    kamstrup_list_2_three_phase_parsed = kamstrup.LlcPdu.parse(list_2_three_phase)
-    print(kamstrup_list_2_three_phase_parsed)
-
-
-def test_decode_frame_list_1_three_phase():
-    decoded = kamstrup.decode_frame(list_1_three_phase)
-    pprint(decoded)
-
-
-def test_decode_frame_list_2_three_phase():
-    decoded = kamstrup.decode_frame(list_2_three_phase)
-    pprint(decoded)
-
-
-def test_decode_frame_list_2_single_phase():
-    decoded = kamstrup.decode_frame(list_2_single_phase)
-    pprint(decoded)
+    def test_decode_frame_list_2_single_phase(self):
+        decoded = kamstrup.decode_frame(list_2_single_phase)
+        assert isinstance(decoded, dict)
+        pprint(decoded)
