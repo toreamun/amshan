@@ -2,6 +2,7 @@ import argparse
 import datetime
 import json
 import logging
+import signal
 import sys
 
 import paho.mqtt.client as mqtt
@@ -20,6 +21,10 @@ LOG = logging.getLogger('')
 def get_arg_parser():
     parser = argparse.ArgumentParser('read HAN port')
     parser.add_argument('-v', dest='verbose', default=False)
+    parser.add_argument('-s', dest='serialport', required=True, help="input serial port")
+    parser.add_argument('-mh', dest='mqtthost', default='localhost', help="mqtt host")
+    parser.add_argument('-mp', dest='mqttport', type=int, default=1883, help="mqtt port port")
+    parser.add_argument('-t', dest='mqtttopic', default='han', help="mqtt publish topic")
     #    parser.add_argument('-sourceip', required=True)
     #    parser.add_argument('-mqtturl', required=True)
     return parser
@@ -30,12 +35,12 @@ decoder = autodecoder.AutoDecoder()
 
 def new_packet(frame: hdlc.HdlcFrame):
     if frame.is_good:
-        LOG.info("Got frame info content: %s", frame.information.hex())
+        LOG.debug("Got frame info content: %s", frame.information.hex())
         decoded_frame = decoder.decode_frame(frame.information)
         if decoded_frame:
             json_frame = json.dumps(decoded_frame, default=_json_converter)
             LOG.debug("Decoded frame: %s", json_frame)
-            mqttc.publish("han", json_frame)
+            mqttc.publish(args.mqtttopic, json_frame)
         else:
             LOG.error("Could not decode frame: %s", frame.frame_data.hex())
 
@@ -50,28 +55,30 @@ def _json_converter(o):
 
 def handler(signal_received, frame):
     # Handle any cleanup here
-    print('SIGINT or CTRL-C detected. Exiting gracefully')
+    LOG.info('SIGINT or CTRL-C detected. Exiting gracefully')
     mqttc.loop_stop()
     ser.close()
     exit(0)
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, handler)
+
     args = get_arg_parser().parse_args()
 
     frame_reader = hdlc.HdlcOctetStuffedFrameReader(new_packet)
 
     mqttc = mqtt.Client()
     mqttc.enable_logger(LOG)
-    mqttc.connect("192.168.1.16")
+    mqttc.connect(args.mqtthost, port=args.mqttport)
     mqttc.loop_start()
 
-    ser = serial.Serial('/dev/ttys001')
+    ser = serial.Serial(args.serialport)
     ser.timeout = 0.5
 
-    LOG.info("Serial port %s opened", ser.name)
+    LOG.info("Serial port %s opened with baudrate %s and parity %d", ser.name, ser.baudrate, ser.parity)
 
-    while ser.isOpen():
+    while True:
         read_len = ser.in_waiting if ser.in_waiting > 0 else 1
         data = ser.read(read_len)
         if len(data) > 0:
