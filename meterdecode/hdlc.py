@@ -8,8 +8,9 @@ class HdlcFrame:
     _buffer = None
     _ffc = None
 
-    def __init__(self):
-        self._unescaped_buffer = bytearray()
+    def __init__(self, use_octet_stuffing: bool = False):
+        self._use_octet_stuffing = use_octet_stuffing
+        self._raw_buffer = bytearray()
         self._buffer = bytearray()
         self._ffc = fastframecheck.FastFrameCheckSequence()
         self._escape_next = False
@@ -21,7 +22,7 @@ class HdlcFrame:
         return len(self._buffer)
 
     def append(self, byte):
-        self._unescaped_buffer.append(byte)
+        self._raw_buffer.append(byte)
 
         if self._escape_next:
             self._escape_next = False
@@ -29,7 +30,7 @@ class HdlcFrame:
             self._buffer.append(unescaped)
             self._ffc.update(unescaped)
         else:
-            if byte == 0x7d:
+            if self._use_octet_stuffing and byte == 0x7d:
                 self._escape_next = True
                 self._escape_count += 1
             else:
@@ -50,7 +51,7 @@ class HdlcFrame:
 
     @property
     def unescaped_frame_data(self):
-        return self._unescaped_buffer
+        return self._raw_buffer
 
     @property
     def escape_next(self):
@@ -64,21 +65,25 @@ class HdlcFrame:
     def frame_format(self):
         if len(self) >= 2:
             return self._buffer[0] << 8 | self._buffer[1]
+        return None
 
     @property
     def frame_format_type(self):
         if self.frame_format is not None:
             return (self.frame_format >> 12) & 0xf
+        return None
 
     @property
     def segmentation(self):
         if self.frame_format is not None:
             return ((self.frame_format >> 11) & 0x1) == 0x1
+        return None
 
     @property
     def frame_length(self):
         if self.frame_format is not None:
             return self.frame_format & 0x4ff
+        return None
 
     @property
     def destination_address(self):
@@ -104,6 +109,7 @@ class HdlcFrame:
         if self.control_position is not None:
             if len(self._buffer) > self.control_position + 3:
                 return self._buffer[self.control_position + 2] << 8 | self._buffer[self.control_position + 1]
+        return None
 
     @property
     def frame_check_sequence(self):
@@ -111,6 +117,7 @@ class HdlcFrame:
         if self.control_position is not None:
             if len(self._buffer) >= self.control_position + 3:
                 return self._buffer[len(self._buffer) - 1] << 8 | self._buffer[len(self._buffer) - 2]
+        return None
 
     @property
     def information(self):
