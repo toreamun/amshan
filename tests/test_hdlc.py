@@ -1,4 +1,4 @@
-from meterdecode import hdlc
+from meterdecode import hdlc, autodecoder
 
 _frame_list_1 = bytes.fromhex(
     "7e"
@@ -23,20 +23,33 @@ _frame_with_control_caracter_in_content = bytes.fromhex(
     "ea5e"
     "7e")
 
+_aidon_frame_with_escape_character_in_content = bytes.fromhex(
+    "7e"
+    "a02a410883130413e6e7000f40000000000101020309060100010700ff060000067d02020f00161b1c05"
+    "7e")
+
 
 def test_frame_with_escape_character():
-    frame_reader = hdlc.HdlcOctetStuffedFrameReader()
-    frames = frame_reader.read(_frame_with_escape_character)
+    frame_reader = hdlc.HdlcFrameReader(False)
+    frames = frame_reader.read(_aidon_frame_with_escape_character_in_content)
 
     assert frames is not None
     assert len(frames) == 1
     assert frames[0].is_good
 
+    decoder = autodecoder.AutoDecoder()
+    decoded = decoder.decode_frame(frames[0].information)
+    print(decoded)
+
 
 def test_frame_with_control_caracter_in_content():
-    frame_reader = hdlc.HdlcOctetStuffedFrameReader()
+    frame_reader = hdlc.HdlcFrameReader(False)
     frames = frame_reader.read(_frame_with_control_caracter_in_content)
 
     assert frames is not None
     assert len(frames) == 1
     assert frames[0].is_good
+
+    decoder = autodecoder.AutoDecoder()
+    decoded = decoder.decode_frame(frames[0].information)
+    print(decoded)

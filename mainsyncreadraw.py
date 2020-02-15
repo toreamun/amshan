@@ -80,7 +80,7 @@ if __name__ == '__main__':
         logfile = open(args.dumpfile, "w+")
 
     decoder = autodecoder.AutoDecoder()
-    frame_reader = hdlc.HdlcOctetStuffedFrameReader()
+    frame_reader = hdlc.HdlcFrameReader(False)
 
     mqttc = mqtt.Client()
     mqttc.enable_logger(LOG)

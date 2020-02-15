@@ -176,11 +176,11 @@ class HdlcFrame:
         return None
 
 
-class HdlcOctetStuffedFrameReader:
+class HdlcFrameReader:
     CONTROL_ESCAPE = b'\x7d'
     FLAG_SEQUENCE = b'\x7e'
 
-    def __init__(self, use_octet_stuffing: bool = False, logger=None):
+    def __init__(self, use_octet_stuffing, logger=None):
         self._use_octet_stuffing = use_octet_stuffing
         self._logger = logger or logging.getLogger(__name__)
         self._buffer = bytearray()
