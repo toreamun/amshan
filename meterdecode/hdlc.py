@@ -4,67 +4,26 @@ from typing import List
 from meterdecode import fastframecheck
 
 
-class HdlcFrame:
-    _buffer = None
-    _ffc = None
+class HdlcFrameHeader:
 
-    def __init__(self, use_octet_stuffing: bool = False):
-        self._use_octet_stuffing = use_octet_stuffing
-        self._raw_buffer = bytearray()
-        self._buffer = bytearray()
-        self._ffc = fastframecheck.FastFrameCheckSequence()
-        self._escape_next = False
-        self._escape_count = 0
-        self.is_header_good = None
-        self.control_position = None
+    def __init__(self, frame):
+        self._frame = frame
+        self._control_position = None
+        self._is_header_good = None
 
-    def __len__(self):
-        return len(self._buffer)
+    def update(self):
+        if self._control_position is None:
+            self._control_position = self._get_control_field_position()
 
-    def append(self, byte):
-        self._raw_buffer.append(byte)
-
-        if self._escape_next:
-            self._escape_next = False
-            unescaped = byte ^ 0x20
-            self._buffer.append(unescaped)
-            self._ffc.update(unescaped)
-        else:
-            if self._use_octet_stuffing and byte == 0x7d:
-                self._escape_next = True
-                self._escape_count += 1
-            else:
-                self._buffer.append(byte)
-                self._ffc.update(byte)
-
-        if self.control_position is None:
-            self.control_position = self._get_control_field_position()
-
-        if self.control_position is not None:
-            if self.is_header_good is None:
-                if len(self._buffer) == self.control_position + 3:
-                    self.is_header_good = self.is_good
-
-    @property
-    def frame_data(self):
-        return self._buffer
-
-    @property
-    def unescaped_frame_data(self):
-        return self._raw_buffer
-
-    @property
-    def escape_next(self):
-        return self._escape_next
-
-    @property
-    def is_good(self):
-        return self._ffc.is_good
+        if self._control_position is not None:
+            if self._is_header_good is None:
+                if len(self._frame.frame_data) == self._control_position + 3:
+                    self._is_header_good = self._frame.is_good
 
     @property
     def frame_format(self):
-        if len(self) >= 2:
-            return self._buffer[0] << 8 | self._buffer[1]
+        if len(self._frame) >= 2:
+            return self._frame.frame_data[0] << 8 | self._frame.frame_data[1]
         return None
 
     @property
@@ -87,7 +46,7 @@ class HdlcFrame:
 
     @property
     def destination_address(self):
-        if len(self) >= 2:
+        if len(self._frame) >= 2:
             return self._get_address(2)
         return None
 
@@ -100,41 +59,34 @@ class HdlcFrame:
 
     @property
     def control(self):
-        if self.control_position is not None and len(self) >= self.control_position:
-            return self._buffer[self.control_position]
+        if self._control_position is not None and len(self._frame) >= self._control_position:
+            return self._frame.frame_data[self._control_position]
         return None
 
     @property
     def header_check_sequence(self):
-        if self.control_position is not None:
-            if len(self._buffer) > self.control_position + 3:
-                return self._buffer[self.control_position + 2] << 8 | self._buffer[self.control_position + 1]
+        if self._control_position is not None:
+            if len(self._frame.frame_data) > self._control_position + 3:
+                return self._frame.frame_data[self._control_position + 2] << 8 | self._frame.frame_data[
+                    self._control_position + 1]
         return None
 
     @property
-    def frame_check_sequence(self):
-        """Frame check sequence if complete frame has been read. None or invalid number if not."""
-        if self.control_position is not None:
-            if len(self._buffer) >= self.control_position + 3:
-                return self._buffer[len(self._buffer) - 1] << 8 | self._buffer[len(self._buffer) - 2]
-        return None
-
-    @property
-    def information(self):
-        if self.is_good and self.control_position is not None and len(self._buffer) > self.control_position + 3:
-            return self._buffer[self.control_position + 3:-2]
+    def information_position(self):
+        if self._control_position is not None:
+            return self._control_position + 3
         return None
 
     def _get_address(self, position):
-        if len(self) > position:
+        if len(self._frame) > position:
             adr = bytearray()
 
             i = position
             while True:
-                if i >= len(self):
+                if i >= len(self._frame):
                     return None
 
-                current = self._buffer[i]
+                current = self._frame.frame_data[i]
                 adr.append(current)
 
                 if (current & 0x01) == 0x01:
@@ -153,11 +105,83 @@ class HdlcFrame:
         return None
 
 
+class HdlcFrame:
+
+    def __init__(self, use_octet_stuffing: bool = False):
+        self._use_octet_stuffing = use_octet_stuffing
+        self._raw_buffer = bytearray()
+        self._buffer = bytearray()
+        self._ffc = fastframecheck.FastFrameCheckSequence()
+        self._escape_next = False
+        self._header = HdlcFrameHeader(self)
+
+    def __len__(self):
+        return len(self._buffer)
+
+    def append(self, byte):
+        self._raw_buffer.append(byte)
+
+        if self._use_octet_stuffing:
+            if self._escape_next:
+                self._escape_next = False
+                unescaped = byte ^ 0x20
+                self._buffer.append(unescaped)
+                self._ffc.update(unescaped)
+            else:
+                if byte == 0x7d:
+                    self._escape_next = True
+                else:
+                    self._buffer.append(byte)
+                    self._ffc.update(byte)
+        else:
+            self._buffer.append(byte)
+            self._ffc.update(byte)
+
+        self._header.update()
+
+    @property
+    def frame_data(self):
+        return self._buffer
+
+    @property
+    def unescaped_frame_data(self):
+        return self._raw_buffer
+
+    @property
+    def escape_next(self):
+        return self._escape_next
+
+    @property
+    def is_good(self):
+        return self._ffc.is_good
+
+    @property
+    def header(self):
+        return self._header
+
+    @property
+    def frame_check_sequence(self):
+        """Frame check sequence if complete frame has been read. None or invalid number if not."""
+        if self._header.information_position is not None:
+            if len(self._buffer) >= self._header.information_position:
+                return self._buffer[len(self._buffer) - 1] << 8 | self._buffer[len(self._buffer) - 2]
+        return None
+
+    @property
+    def information(self):
+        if self.is_good:
+            info_position = self._header.information_position
+            if info_position is not None and len(self._buffer) > info_position:
+                return self._buffer[info_position:-2]
+        return None
+
+
 class HdlcOctetStuffedFrameReader:
     CONTROL_ESCAPE = b'\x7d'
     FLAG_SEQUENCE = b'\x7e'
 
-    def __init__(self, logger=None):
+    def __init__(self, use_octet_stuffing: bool = False, logger=None):
+        self._use_octet_stuffing = use_octet_stuffing
         self._logger = logger or logging.getLogger(__name__)
         self._buffer = bytearray()
         self._buffer_pos = 0
@@ -177,7 +201,7 @@ class HdlcOctetStuffedFrameReader:
                 if flag_pos > 0:
                     # trim data before flag sequence
                     self._buffer = self._buffer[flag_pos:]
-                self._frame = HdlcFrame()
+                self._frame = HdlcFrame(self._use_octet_stuffing)
             self._buffer_pos = 0
 
         if len(self._buffer) > 0:
@@ -212,18 +236,15 @@ class HdlcOctetStuffedFrameReader:
 
                                 frames_received.append(self._frame)
 
-                                if self._frame._escape_count > 0 and self._frame.is_good:
-                                    print("Escaped and good!")
-
-                                if self._frame.segmentation:
+                                if self._frame.header.segmentation:
                                     print("Is segmentation")
 
-                        self._frame = HdlcFrame()
+                        self._frame = HdlcFrame(self._use_octet_stuffing)
                         self._buffer = self._buffer[self._buffer_pos:]
                         self._buffer_pos = -1
 
                 else:
-                    if current == self.CONTROL_ESCAPE[0]:
+                    if self._use_octet_stuffing and current == self.CONTROL_ESCAPE[0]:
                         self._logger.debug("Found control escape")
 
                     self._frame.append(current)
