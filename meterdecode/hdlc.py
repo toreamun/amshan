@@ -193,16 +193,7 @@ class HdlcOctetStuffedFrameReader:
         self._buffer.extend(data)
 
         if self._frame is None:
-            flag_pos = self._buffer.find(self.FLAG_SEQUENCE)
-            if flag_pos == -1:
-                # flag sequence not found
-                self._buffer.clear()
-            if flag_pos >= 0:
-                if flag_pos > 0:
-                    # trim data before flag sequence
-                    self._buffer = self._buffer[flag_pos:]
-                self._frame = HdlcFrame(self._use_octet_stuffing)
-            self._buffer_pos = 0
+            self._trim_buffer()
 
         if len(self._buffer) > 0:
             while self._buffer_pos < len(self._buffer):
@@ -252,3 +243,15 @@ class HdlcOctetStuffedFrameReader:
                 self._buffer_pos += 1
 
         return frames_received
+
+    def _trim_buffer(self):
+        flag_pos = self._buffer.find(self.FLAG_SEQUENCE)
+        if flag_pos == -1:
+            # flag sequence not found
+            self._buffer.clear()
+        if flag_pos >= 0:
+            if flag_pos > 0:
+                # trim data before flag sequence
+                self._buffer = self._buffer[flag_pos:]
+            self._frame = HdlcFrame(self._use_octet_stuffing)
+        self._buffer_pos = 0
