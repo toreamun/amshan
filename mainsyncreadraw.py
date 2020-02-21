@@ -38,7 +38,7 @@ def frame_received(frame: hdlc.HdlcFrame):
         if decoded_frame:
             json_frame = json.dumps(decoded_frame, default=_json_converter)
             LOG.debug("Decoded frame: %s", json_frame)
-            mqttc.publish(args.mqtttopic, json_frame)
+           # mqttc.publish(args.mqtttopic, json_frame)
         else:
             LOG.error("Could not decode frame: %s", frame.frame_data.hex())
 
@@ -89,6 +89,9 @@ if __name__ == '__main__':
 
     ser = serial.Serial(args.serialport)
     ser.timeout = 0.5
+    ser.flush()
+    ser.flushOutput()
+    ser.flushInput()
 
     LOG.info("Serial port %s opened with baudrate %s and parity %s", ser.name, ser.baudrate, ser.parity)
 
@@ -97,11 +100,20 @@ if __name__ == '__main__':
         data = ser.read(read_len)
 
         if len(data) > 0:
+            if len(data) > 2:
+                LOG.debug("%d bytes read from serial", len(data))
+
             if args.dumpfile:
                 dump_to_file(data)
 
             frames = frame_reader.read(data)
             if len(frames):
                 LOG.debug("Frame count: %d", len(frames))
-                for f in frames:
-                    frame_received(f)
+
+                if len(frames) > 10:
+                    pass
+                else:
+                    for f in frames:
+                        frame_received(f)
+
+            frames.clear()
