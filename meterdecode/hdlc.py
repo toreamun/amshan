@@ -18,7 +18,7 @@ class HdlcFrameHeader:
 
     def update(self):
         """Update fields when more frame data has been read. Used by parent HdlcFrame."""
-        if self._control_position is None:
+        if self._control_position is None and len(self._frame) > 3:
             self._control_position = self._get_control_field_position()
 
         if self._control_position is not None:
@@ -93,7 +93,7 @@ class HdlcFrameHeader:
         It indicates the type of commands or responses,
         and contains sequence numbers, where appropriate (frames I, RR and RNR).
         """
-        is_available = self._control_position is not None and len(self._frame) >= self._control_position
+        is_available = self._control_position is not None and len(self._frame) > self._control_position
         if is_available:
             return self._frame.frame_data[self._control_position]
         return None
