@@ -1,55 +1,178 @@
-from meterdecode import hdlc, autodecoder
+import pytest
 
-_frame_list_1 = bytes.fromhex(
-    "7e"
-    "a027010201105a87e6e7000f40000000090c07e4020f06010830ff80000002010600001fc7cec3"
-    "7e")
+from meterdecode import hdlc
 
-_frame_list_2 = bytes.fromhex(
-    "7e"
-    "a079010201108093e6e7000f40000000090c07e4020f06010832ff800000020d09074b464d5f30303109103639373036333134303236313434373609084d413330344833450600001fbf0600000000060000000006000001c406000089540600007fcd06000014b8060000085406000000000600000893384f"
-    "7e")
+FLAG_SEQUENCE = "7e"
+CONTROL_ESCAPE = "7d"
 
-_frame_with_escape_character = bytes.fromhex(
-    "7e"
-    "a079010201108093e6e7000f40000000090c07e4020f0601001eff800000020d09074b464d5f30303109103639373036333134303236313434373609084d413330344833450600001d150600000000060000000006000001bd0600008352060000801d06000008f706000008520600000000060000089a"
-    "7d43"
-    "7e")
-
-_frame_with_control_caracter_in_content = bytes.fromhex(
-    "7e"
-    "a027010201105a87e6e7000f40000000090c07e4020f06011922ff800000020106000015"
-    "7e"
-    "ea5e"
-    "7e")
-
-_aidon_frame_with_escape_character_in_content = bytes.fromhex(
-    "7e"
+FRAME_EMPTY_INFO = "a00801020110378d"
+FRAME_SHORT_INFO = "a00C0102011027a00201e7de"
+FRAME_WITH_ESCAPE_CHARACTER_IN_INFO = \
     "a02a410883130413e6e7000f40000000000101020309060100010700ff060000067d02020f00161b1c05"
-    "7e")
+FRAME_WITH_FLAG_SEQUENCE_CHARACTER_IN_INFO = \
+    "a027010201105a87e6e7000f40000000090c07e4020f06011922ff8000000201060000157eea5e"
+STUFFED_FRAME_SHORT_INFO = "a00d0102011063ab7d5e7d5d7d23932D"
 
 
-def test_frame_with_escape_character():
-    frame_reader = hdlc.HdlcFrameReader(False)
-    frames = frame_reader.read(_aidon_frame_with_escape_character_in_content)
+class TestHdlcFrameReader:
 
-    assert frames is not None
-    assert len(frames) == 1
-    assert frames[0].is_good
+    def test_frame_with_escape_character(self):
+        data_feed = bytes.fromhex(
+            FLAG_SEQUENCE +
+            FRAME_WITH_ESCAPE_CHARACTER_IN_INFO +
+            FLAG_SEQUENCE)
 
-    decoder = autodecoder.AutoDecoder()
-    decoded = decoder.decode_frame(frames[0].information)
-    print(decoded)
+        frame_reader = hdlc.HdlcFrameReader(False)
+        frames = frame_reader.read(data_feed)
 
+        assert frames is not None
+        assert len(frames) == 1
+        assert frames[0].is_good_ffc
+        assert frames[0].is_expected_length
+        assert frames[0].information == bytes.fromhex(FRAME_WITH_ESCAPE_CHARACTER_IN_INFO)[8:-2]
 
-def test_frame_with_control_caracter_in_content():
-    frame_reader = hdlc.HdlcFrameReader(False)
-    frames = frame_reader.read(_frame_with_control_caracter_in_content)
+    def test_frame_with_control_caracter_in_content(self):
+        data_feed = bytes.fromhex(
+            FLAG_SEQUENCE +
+            FRAME_WITH_FLAG_SEQUENCE_CHARACTER_IN_INFO +
+            FLAG_SEQUENCE)
 
-    assert frames is not None
-    assert len(frames) == 1
-    assert frames[0].is_good
+        frame_reader = hdlc.HdlcFrameReader(False)
+        frames = frame_reader.read(data_feed)
 
-    decoder = autodecoder.AutoDecoder()
-    decoded = decoder.decode_frame(frames[0].information)
-    print(decoded)
+        assert frames is not None
+        assert len(frames) == 1
+        assert frames[0].is_good_ffc
+        assert frames[0].is_expected_length
+        assert frames[0].information == bytes.fromhex(FRAME_WITH_FLAG_SEQUENCE_CHARACTER_IN_INFO)[8:-2]
+
+    @pytest.mark.parametrize("data_feed", [
+        bytes.fromhex("c3" + FLAG_SEQUENCE + FRAME_SHORT_INFO + FLAG_SEQUENCE),
+        bytes.fromhex("0600001fc7cec3" + FLAG_SEQUENCE + FRAME_SHORT_INFO + FLAG_SEQUENCE)
+    ])
+    def test_start_read_in_frame(self, data_feed):
+        frame_reader = hdlc.HdlcFrameReader(False)
+        frames = frame_reader.read(data_feed)
+
+        assert frames is not None
+        assert len(frames) == 1
+        assert frames[0].is_good_ffc
+        assert frames[0].is_expected_length
+        assert frames[0].information == bytes.fromhex(FRAME_SHORT_INFO)[8:-2]
+
+    def test_empty_info_frame(self):
+        data_feed = bytes.fromhex(
+            FLAG_SEQUENCE +
+            FRAME_EMPTY_INFO +
+            FLAG_SEQUENCE)
+
+        frame_reader = hdlc.HdlcFrameReader()
+        frames = frame_reader.read(data_feed)
+
+        assert frames is not None
+        assert len(frames) == 1
+        assert frames[0].is_good_ffc
+        assert frames[0].is_expected_length
+        assert not frames[0].header.header_check_sequence is None
+        assert frames[0].information is None
+
+    def test_too_short_frame_is_discarded(self):
+        data_feed = bytes.fromhex(
+            FLAG_SEQUENCE +
+            "a0080102011037" +
+            FLAG_SEQUENCE)
+
+        frame_reader = hdlc.HdlcFrameReader()
+        frames = frame_reader.read(data_feed)
+
+        assert frames is not None
+        assert len(frames) == 0
+
+    def test_abort_sequence(self):
+        data_feed = bytes.fromhex(
+            FLAG_SEQUENCE +
+            FRAME_SHORT_INFO +
+            CONTROL_ESCAPE +
+            FLAG_SEQUENCE)
+
+        frame_reader = hdlc.HdlcFrameReader()
+        frames = frame_reader.read(data_feed)
+
+        assert frames is not None
+        assert len(frames) == 0
+
+    def test_single_flag_sequences_between_frames(self):
+        data_feed = bytes.fromhex(
+            FLAG_SEQUENCE +
+            FRAME_SHORT_INFO +
+            FLAG_SEQUENCE +
+            FRAME_EMPTY_INFO +
+            FLAG_SEQUENCE)
+
+        frame_reader = hdlc.HdlcFrameReader()
+        frames = frame_reader.read(data_feed)
+
+        assert frames is not None
+        assert len(frames) == 2
+        assert frames[0].is_good_ffc
+        assert frames[0].is_expected_length
+        assert frames[0].information == bytes.fromhex(FRAME_SHORT_INFO)[8:-2]
+        assert frames[1].is_good_ffc
+        assert frames[1].is_expected_length
+        assert frames[1].information is None
+
+    def test_two_flag_sequences_between_frames(self):
+        data_feed = bytes.fromhex(
+            FLAG_SEQUENCE +
+            FRAME_SHORT_INFO +
+            FLAG_SEQUENCE + FLAG_SEQUENCE +
+            FRAME_EMPTY_INFO +
+            FLAG_SEQUENCE)
+
+        frame_reader = hdlc.HdlcFrameReader()
+        frames = frame_reader.read(data_feed)
+
+        assert frames is not None
+        assert len(frames) == 2
+        assert frames[0].is_good_ffc
+        assert frames[0].is_expected_length
+        assert frames[0].information == bytes.fromhex(FRAME_SHORT_INFO)[8:-2]
+        assert frames[1].is_good_ffc
+        assert frames[1].is_expected_length
+        assert frames[1].information is None
+
+    def test_many_flag_sequences_between_frames(self):
+        data_feed = bytes.fromhex(
+            FLAG_SEQUENCE +
+            FRAME_SHORT_INFO +
+            FLAG_SEQUENCE + FLAG_SEQUENCE + FLAG_SEQUENCE + FLAG_SEQUENCE + FLAG_SEQUENCE + FLAG_SEQUENCE +
+            FRAME_EMPTY_INFO +
+            FLAG_SEQUENCE)
+
+        frame_reader = hdlc.HdlcFrameReader()
+        frames = frame_reader.read(data_feed)
+
+        assert frames is not None
+        assert len(frames) == 2
+        assert frames[0].is_good_ffc
+        assert frames[0].is_expected_length
+        assert frames[0].information == bytes.fromhex(FRAME_SHORT_INFO)[8:-2]
+        assert frames[1].is_good_ffc
+        assert frames[1].is_expected_length
+        assert frames[1].information is None
+
+    def test_stuffed_frame_short_info(self):
+        data_feed = bytes.fromhex(
+            FLAG_SEQUENCE +
+            STUFFED_FRAME_SHORT_INFO +
+            FLAG_SEQUENCE)
+
+        frame_reader = hdlc.HdlcFrameReader(True)
+        frames = frame_reader.read(data_feed)
+
+        assert frames is not None
+        assert len(frames) == 1
+        assert frames[0].is_good_ffc
+        assert frames[0].is_expected_length
+        assert not frames[0].header.header_check_sequence is None
+        assert frames[0].information == bytes.fromhex("7e7d03")

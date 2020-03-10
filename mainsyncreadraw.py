@@ -32,13 +32,13 @@ def get_arg_parser():
 
 
 def frame_received(frame: hdlc.HdlcFrame):
-    if frame.is_good:
+    if frame.is_good_ffc:
         LOG.debug("Got frame info content: %s", frame.information.hex())
         decoded_frame = decoder.decode_frame(frame.information)
         if decoded_frame:
             json_frame = json.dumps(decoded_frame, default=_json_converter)
             LOG.debug("Decoded frame: %s", json_frame)
-           # mqttc.publish(args.mqtttopic, json_frame)
+        # mqttc.publish(args.mqtttopic, json_frame)
         else:
             LOG.error("Could not decode frame: %s", frame.frame_data.hex())
 
