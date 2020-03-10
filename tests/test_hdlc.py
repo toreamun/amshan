@@ -353,3 +353,50 @@ class TestHdlcFrameHeader:
         assert frame.header.information_position == 8
         assert frame.header.control == int(FRAME_SHORT_INFO[5 * 2:6 * 2], 16)
         assert frame.header.header_check_sequence == int(FRAME_SHORT_INFO[6 * 2:8 * 2], 16)
+
+
+class TestHdlcFrame:
+
+    def test_empty_frame(self):
+        frame = hdlc.HdlcFrame()
+
+        assert frame.header is not None
+        assert frame.frame_data is not None
+        assert len(frame.frame_data) == 0
+        assert len(frame) == 0
+        assert frame.information is None
+        assert frame.frame_check_sequence is None
+        assert frame.is_good_ffc is False
+        assert frame.is_expected_length is False
+
+    def test_empty_info_frame(self):
+        frame = hdlc.HdlcFrame()
+
+        frame_data = bytes.fromhex(FRAME_EMPTY_INFO)
+        for b in frame_data:
+            frame.append(b)
+
+        assert frame.header is not None
+        assert frame.frame_data is not None
+        assert len(frame.frame_data) == len(frame_data)
+        assert len(frame) == len(frame_data)
+        assert frame.information is None
+        assert frame.frame_check_sequence == int(FRAME_EMPTY_INFO[-4:], 16)
+        assert frame.is_good_ffc
+        assert frame.is_expected_length
+
+    def test_short_info_frame(self):
+        frame = hdlc.HdlcFrame()
+
+        frame_data = bytes.fromhex(FRAME_SHORT_INFO)
+        for b in frame_data:
+            frame.append(b)
+
+        assert frame.header is not None
+        assert frame.frame_data is not None
+        assert len(frame.frame_data) == len(frame_data)
+        assert len(frame) == len(frame_data)
+        assert frame.information == bytes.fromhex(FRAME_SHORT_INFO)[-4:-2]
+        assert frame.frame_check_sequence == int(FRAME_SHORT_INFO[-4:], 16)
+        assert frame.is_good_ffc
+        assert frame.is_expected_length
