@@ -107,8 +107,8 @@ class HdlcFrameHeader:
         """
         is_available = self._control_position is not None and len(self._frame.frame_data) > self._control_position + 2
         if is_available:
-            return (self._frame.frame_data[self._control_position + 2] << 8
-                    | self._frame.frame_data[self._control_position + 1])
+            return (self._frame.frame_data[self._control_position + 1] << 8
+                    | self._frame.frame_data[self._control_position + 2])
         return None
 
     @property
@@ -215,7 +215,7 @@ class HdlcFrame:
         """Frame check sequence if complete frame has been read. None or invalid number if not."""
         if self._header.information_position is not None:
             if len(self._buffer) >= self._header.information_position:
-                return self._buffer[len(self._buffer) - 1] << 8 | self._buffer[len(self._buffer) - 2]
+                return self._buffer[len(self._buffer) - 2] << 8 | self._buffer[len(self._buffer) - 1]
         return None
 
     @property
