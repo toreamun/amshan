@@ -176,3 +176,180 @@ class TestHdlcFrameReader:
         assert frames[0].is_expected_length
         assert not frames[0].header.header_check_sequence is None
         assert frames[0].information == bytes.fromhex("7e7d03")
+
+
+class TestHdlcFrameHeader:
+
+    def test_empty_frame(self):
+        frame = hdlc.HdlcFrame()
+
+        assert frame.header is not None
+
+        assert frame.header.frame_format is None
+        assert frame.header.frame_format_type is None
+        assert frame.header.segmentation is None
+        assert frame.header.frame_length is None
+        assert frame.header.destination_address is None
+        assert frame.header.source_address is None
+        assert frame.header.information_position is None
+        assert frame.header.control is None
+        assert frame.header.header_check_sequence is None
+
+    def test_read_byte(self):
+        frame = hdlc.HdlcFrame()
+
+        fragment = bytes.fromhex(FRAME_SHORT_INFO)[:1]
+        for b in fragment:
+            frame.append(b)
+
+        assert frame.header is not None
+
+        assert frame.header.frame_format is None
+        assert frame.header.frame_format_type is None
+        assert frame.header.segmentation is None
+        assert frame.header.frame_length is None
+        assert frame.header.destination_address is None
+        assert frame.header.source_address is None
+        assert frame.header.information_position is None
+        assert frame.header.control is None
+        assert frame.header.header_check_sequence is None
+
+    def test_read_including_frame_format(self):
+        frame = hdlc.HdlcFrame()
+
+        fragment = bytes.fromhex(FRAME_SHORT_INFO)[:2]
+        for b in fragment:
+            frame.append(b)
+
+        assert frame.header is not None
+
+        assert frame.header.frame_format is not None
+        assert frame.header.frame_format_type == (int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0xf000) >> 12
+        assert frame.header.segmentation == int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0x800
+        assert frame.header.frame_length == int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0x7ff
+
+        assert frame.header.destination_address is None
+        assert frame.header.source_address is None
+        assert frame.header.information_position is None
+        assert frame.header.control is None
+        assert frame.header.header_check_sequence is None
+
+    def test_read_including_destination_address(self):
+        frame = hdlc.HdlcFrame()
+
+        fragment = bytes.fromhex(FRAME_SHORT_INFO)[:3]
+        for b in fragment:
+            frame.append(b)
+
+        assert frame.header is not None
+
+        assert frame.header.frame_format is not None
+        assert frame.header.frame_format_type == (int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0xf000) >> 12
+        assert frame.header.segmentation == int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0x800
+        assert frame.header.frame_length == int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0x7ff
+
+        assert frame.header.destination_address == bytes.fromhex(FRAME_SHORT_INFO[2 * 2:3 * 2])
+        assert frame.header.source_address is None
+        assert frame.header.information_position is None
+        assert frame.header.control is None
+        assert frame.header.header_check_sequence is None
+
+    def test_read_including_halve_source_address(self):
+        frame = hdlc.HdlcFrame()
+
+        fragment = bytes.fromhex(FRAME_SHORT_INFO)[:4]
+        for b in fragment:
+            frame.append(b)
+
+        assert frame.header is not None
+
+        assert frame.header.frame_format is not None
+        assert frame.header.frame_format_type == (int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0xf000) >> 12
+        assert frame.header.segmentation == int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0x800
+        assert frame.header.frame_length == int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0x7ff
+
+        assert frame.header.destination_address == bytes.fromhex(FRAME_SHORT_INFO[2 * 2:3 * 2])
+        assert frame.header.source_address is None
+        assert frame.header.information_position is None
+        assert frame.header.control is None
+        assert frame.header.header_check_sequence is None
+
+    def test_read_including_source_address(self):
+        frame = hdlc.HdlcFrame()
+
+        fragment = bytes.fromhex(FRAME_SHORT_INFO)[:5]
+        for b in fragment:
+            frame.append(b)
+
+        assert frame.header is not None
+
+        assert frame.header.frame_format is not None
+        assert frame.header.frame_format_type == (int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0xf000) >> 12
+        assert frame.header.segmentation == int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0x800
+        assert frame.header.frame_length == int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0x7ff
+
+        assert frame.header.destination_address == bytes.fromhex(FRAME_SHORT_INFO[2 * 2:3 * 2])
+        assert frame.header.source_address == bytes.fromhex(FRAME_SHORT_INFO[3 * 2:5 * 2])
+        assert frame.header.information_position == 8
+        assert frame.header.control is None
+        assert frame.header.header_check_sequence is None
+
+    def test_read_including_control(self):
+        frame = hdlc.HdlcFrame()
+
+        fragment = bytes.fromhex(FRAME_SHORT_INFO)[:6]
+        for b in fragment:
+            frame.append(b)
+
+        assert frame.header is not None
+
+        assert frame.header.frame_format is not None
+        assert frame.header.frame_format_type == (int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0xf000) >> 12
+        assert frame.header.segmentation == int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0x800
+        assert frame.header.frame_length == int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0x7ff
+
+        assert frame.header.destination_address == bytes.fromhex(FRAME_SHORT_INFO[2 * 2:3 * 2])
+        assert frame.header.source_address == bytes.fromhex(FRAME_SHORT_INFO[3 * 2:5 * 2])
+        assert frame.header.information_position == 8
+        assert frame.header.control == 16
+        assert frame.header.header_check_sequence is None
+
+    def test_read_halve_header_check_sequence(self):
+        frame = hdlc.HdlcFrame()
+
+        fragment = bytes.fromhex(FRAME_SHORT_INFO)[:7]
+        for b in fragment:
+            frame.append(b)
+
+        assert frame.header is not None
+
+        assert frame.header.frame_format is not None
+        assert frame.header.frame_format_type == (int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0xf000) >> 12
+        assert frame.header.segmentation == int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0x800
+        assert frame.header.frame_length == int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0x7ff
+
+        assert frame.header.destination_address == bytes.fromhex(FRAME_SHORT_INFO[2 * 2:3 * 2])
+        assert frame.header.source_address == bytes.fromhex(FRAME_SHORT_INFO[3 * 2:5 * 2])
+        assert frame.header.information_position == 8
+        assert frame.header.control == int(FRAME_SHORT_INFO[5 * 2:6 * 2], 16)
+        assert frame.header.header_check_sequence is None
+
+    def test_read_header_check_sequence(self):
+        frame = hdlc.HdlcFrame()
+
+        fragment = bytes.fromhex(FRAME_SHORT_INFO)[:8]
+        for b in fragment:
+            frame.append(b)
+
+        assert frame.header is not None
+
+        assert frame.header.frame_format is not None
+        assert frame.header.frame_format_type == (int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0xf000) >> 12
+        assert frame.header.segmentation == int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0x800
+        assert frame.header.frame_length == int(FRAME_SHORT_INFO[0 * 2:2 * 2], 16) & 0x7ff
+
+        assert frame.header.destination_address == bytes.fromhex(FRAME_SHORT_INFO[2 * 2:3 * 2])
+        assert frame.header.source_address == bytes.fromhex(FRAME_SHORT_INFO[3 * 2:5 * 2])
+        assert frame.header.information_position == 8
+        assert frame.header.control == int(FRAME_SHORT_INFO[5 * 2:6 * 2], 16)
+        assert frame.header.header_check_sequence == int(FRAME_SHORT_INFO[6 * 2:8 * 2], 16)
