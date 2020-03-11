@@ -24,13 +24,13 @@ def compute_fcs_16_crc_table():
 class FastFrameCheckSequence16:
     """16 bit Fast Frame Check Sequence (FCS)"""
 
-    INIT_FCS_16 = 0xffff  # Initial FCS value
-    GOOD_FCS_16 = 0xf0b8  # Good final FCS value
+    _INIT_FCS_16 = 0xffff  # Initial FCS value
+    _GOOD_FCS_16 = 0xf0b8  # Good final FCS value
 
     _fast_frame_check_crc_table = compute_fcs_16_crc_table()
 
     def __init__(self):
-        self._crc_value = self.INIT_FCS_16
+        self._crc_value = self._INIT_FCS_16
 
     @staticmethod
     def _next(crc, byte):
@@ -50,15 +50,15 @@ class FastFrameCheckSequence16:
         when the FCS operation passes over the complemented FCS.  A good
         frame is indicated by this "good FCS" value
         """
-        return self.GOOD_FCS_16 == self._crc_value
+        return self._GOOD_FCS_16 == self._crc_value
 
     @property
     def checksum(self):
-        return self._crc_value ^ 0xffff
+        return self._crc_value ^ 0xffff  # complement
 
     @staticmethod
     def compute_checksum(data, start, length):
-        fcs = FastFrameCheckSequence16.INIT_FCS_16
+        fcs = FastFrameCheckSequence16._INIT_FCS_16
 
         for i in range(start, start + length):
             index = (fcs ^ data[i]) & 0xff
