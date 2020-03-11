@@ -31,7 +31,7 @@ class TestHdlcFrameReader:
         assert frames[0].is_expected_length
         assert frames[0].information == bytes.fromhex(FRAME_WITH_ESCAPE_CHARACTER_IN_INFO)[8:-2]
 
-    def test_frame_with_control_caracter_in_content(self):
+    def test_frame_with_control_character_in_content(self):
         data_feed = bytes.fromhex(
             FLAG_SEQUENCE +
             FRAME_WITH_FLAG_SEQUENCE_CHARACTER_IN_INFO +
