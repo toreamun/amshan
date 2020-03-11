@@ -187,11 +187,7 @@ class TestHdlcFrameReader:
         frames = frame_reader.read(data_feed)
 
         assert frames is not None
-        assert len(frames) == 1
-        assert frames[0].is_good_ffc is False
-        assert frames[0].is_expected_length is False
-        assert not frames[0].header.header_check_sequence is None
-        assert frames[0].information is not None
+        assert len(frames) == 0
 
 
 class TestHdlcFrameHeader:

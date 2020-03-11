@@ -274,15 +274,15 @@ class HdlcFrameReader:
         self._buffer.extend(data_chunk)
 
         if self.is_in_hunt_mode:
-            self._trim_buffer()
+            self._trim_buffer_to_flag_or_end()
 
         if len(self._buffer) > 0:
             while self._buffer_pos < len(self._buffer):
                 is_frame_end = self._read_next()
                 if is_frame_end:
                     frames_received.append(self._frame)
-                    self._frame = None
-                    self._raw_frame_data.clear()
+                    self._trim_buffer_to_current_position()
+                    self._goto_hunt_mode()
 
         return frames_received
 
@@ -293,17 +293,18 @@ class HdlcFrameReader:
         frame_complete = False
 
         if is_flag:
-            frame_complete = self._handle_flaq_sequence()
+            frame_complete = self._handle_flag_sequence()
         elif not self.is_in_hunt_mode:
             self._append_to_frame(current)
 
             if len(self._frame) > HdlcFrameHeader.MAX_FRAME_LENGTH:
                 self._logger.warning("Max frame length reached. Discard frame: %s", self._raw_frame_data.hex())
-                frame_complete = True
+                self._goto_hunt_mode()
+                frame_complete = False
 
         return frame_complete
 
-    def _handle_flaq_sequence(self):
+    def _handle_flag_sequence(self):
         frame_complete = False
 
         if self.is_in_hunt_mode:
@@ -319,22 +320,20 @@ class HdlcFrameReader:
             # Frames which are too short are silently discarded, and not counted as a FCS error.
             self._logger.info("Found flag sequence. Too short frame (%d bytes). Discard frame: %s",
                               len(self._frame), self._raw_frame_data.hex())
-            self._frame = None
-            self._raw_frame_data.clear()
+            self._goto_hunt_mode()
             frame_complete = False
 
-        elif self._raw_frame_data[-1:][0] == self.CONTROL_ESCAPE:
+        # check if previous octet was Control Escape
+        elif len(self._raw_frame_data) > 1 and self._raw_frame_data[-1:][0] == self.CONTROL_ESCAPE:
             # Frames which end with a Control Escape octet
             # followed immediately by a closing Flag Sequence,
             # are silently discarded, and not counted as a FCS error.
             self._logger.info("Abort sequence. Discard frame: %s", self._raw_frame_data.hex())
-            self._frame = None
-            self._raw_frame_data.clear()
+            self._goto_hunt_mode()
             frame_complete = False
 
         elif self._frame.is_expected_length:
             self._logger.info("Frame of length %d successfully received", len(self._frame))
-            self._trim_to_current()
             frame_complete = True
 
         else:
@@ -357,11 +356,15 @@ class HdlcFrameReader:
         else:
             self._frame.append(current)
 
-    def _trim_to_current(self):
+    def _goto_hunt_mode(self):
+        self._frame = None
+        self._raw_frame_data.clear()
+
+    def _trim_buffer_to_current_position(self):
         self._buffer = self._buffer[self._buffer_pos - 1:]
         self._buffer_pos = 0
 
-    def _trim_buffer(self):
+    def _trim_buffer_to_flag_or_end(self):
         flag_pos = self._buffer.find(self.FLAG_SEQUENCE)
         if flag_pos == -1:
             # flag sequence not found
