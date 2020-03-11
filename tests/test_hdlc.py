@@ -181,7 +181,7 @@ class TestHdlcFrameReader:
         data_feed = bytes.fromhex(
             FLAG_SEQUENCE +
             FRAME_SHORT_INFO) + \
-                    bytearray(hdlc.HdlcFrameHeader.MAX_FRAME_LENGTH)
+                    bytearray(hdlc.HdlcFrame.MAX_FRAME_LENGTH)
 
         frame_reader = hdlc.HdlcFrameReader()
         frames = frame_reader.read(data_feed)

@@ -50,9 +50,6 @@ class HdlcFrameHeader:
             return ((self.frame_format >> 11) & 0x1) == 0x1
         return None
 
-    # Frame length is specified with 11 bit.
-    MAX_FRAME_LENGTH: int = 0b11111111111
-
     @property
     def frame_length(self) -> Optional[int]:
         """
@@ -174,6 +171,9 @@ class HdlcFrame:
         self._ffc = fastframecheck.FastFrameCheckSequence()
         self._escape_next = False
         self._header = HdlcFrameHeader(self)
+
+    # Frame length is specified with 11 bit.
+    MAX_FRAME_LENGTH: int = 0b11111111111
 
     def __len__(self):
         """
@@ -297,7 +297,7 @@ class HdlcFrameReader:
         elif not self.is_in_hunt_mode:
             self._append_to_frame(current)
 
-            if len(self._frame) > HdlcFrameHeader.MAX_FRAME_LENGTH:
+            if len(self._frame) > HdlcFrame.MAX_FRAME_LENGTH:
                 self._logger.warning("Max frame length reached. Discard frame: %s", self._raw_frame_data.hex())
                 self._goto_hunt_mode()
                 frame_complete = False
