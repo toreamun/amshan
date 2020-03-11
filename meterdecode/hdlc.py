@@ -168,7 +168,7 @@ class HdlcFrame:
     def __init__(self):
         """Construct HdlcFrame."""
         self._buffer = bytearray()
-        self._ffc = fastframecheck.FastFrameCheckSequence()
+        self._ffc = fastframecheck.FastFrameCheckSequence16()
         self._escape_next = False
         self._header = HdlcFrameHeader(self)
 

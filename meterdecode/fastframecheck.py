@@ -21,7 +21,7 @@ def compute_fcs_16_crc_table():
     return crc_table
 
 
-class FastFrameCheckSequence:
+class FastFrameCheckSequence16:
     """16 bit Fast Frame Check Sequence (FCS)"""
 
     INIT_FCS_16 = 0xffff  # Initial FCS value
@@ -36,11 +36,11 @@ class FastFrameCheckSequence:
     def _next(crc, byte):
         """Calculate a new fcs CRC given the current CRC value and the new data."""
         crc_index = (crc ^ byte) & 0xff
-        return (crc >> 8) ^ FastFrameCheckSequence._fast_frame_check_crc_table[crc_index]
+        return (crc >> 8) ^ FastFrameCheckSequence16._fast_frame_check_crc_table[crc_index]
 
     def update(self, byte):
         """Update the calculated CRC value for the specified input data."""
-        self._crc_value = FastFrameCheckSequence._next(self._crc_value, byte)
+        self._crc_value = FastFrameCheckSequence16._next(self._crc_value, byte)
         return self._crc_value
 
     @property
@@ -58,10 +58,10 @@ class FastFrameCheckSequence:
 
     @staticmethod
     def compute_checksum(data, start, length):
-        fcs = FastFrameCheckSequence.INIT_FCS_16
+        fcs = FastFrameCheckSequence16.INIT_FCS_16
 
         for i in range(start, start + length):
             index = (fcs ^ data[i]) & 0xff
-            fcs = ((fcs >> 8) ^ FastFrameCheckSequence._fast_frame_check_crc_table[index])
+            fcs = ((fcs >> 8) ^ FastFrameCheckSequence16._fast_frame_check_crc_table[index])
 
         return fcs ^ 0xffff  # complement
