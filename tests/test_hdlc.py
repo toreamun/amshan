@@ -177,6 +177,22 @@ class TestHdlcFrameReader:
         assert not frames[0].header.header_check_sequence is None
         assert frames[0].information == bytes.fromhex("7e7d03")
 
+    def test_too_long_frame_is_discarded(self):
+        data_feed = bytes.fromhex(
+            FLAG_SEQUENCE +
+            FRAME_SHORT_INFO) + \
+                    bytearray(hdlc.HdlcFrameHeader.MAX_FRAME_LENGTH)
+
+        frame_reader = hdlc.HdlcFrameReader()
+        frames = frame_reader.read(data_feed)
+
+        assert frames is not None
+        assert len(frames) == 1
+        assert frames[0].is_good_ffc is False
+        assert frames[0].is_expected_length is False
+        assert not frames[0].header.header_check_sequence is None
+        assert frames[0].information is not None
+
 
 class TestHdlcFrameHeader:
 
