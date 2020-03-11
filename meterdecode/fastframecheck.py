@@ -7,7 +7,7 @@ from array import array
 
 def compute_fcs_16_crc_table():
     """Generate a FCS-16 table"""
-    polynomial = 0x8408
+    polynomial = 0x8408  # The FCS-16 generator polynomial: x**0 + x**5 + x**12 + x**16.
     crc_table = array('H')
     for byte in range(256):
         crc = 0
