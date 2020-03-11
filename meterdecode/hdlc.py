@@ -45,7 +45,7 @@ class HdlcFrameHeader:
 
     @property
     def segmentation(self) -> Optional[bool]:
-        """The value of frame format Segmenation flag when frame format has been read."""
+        """The value of frame format Segmentation flag when frame format has been read."""
         if self.frame_format is not None:
             return ((self.frame_format >> 11) & 0x1) == 0x1
         return None
@@ -105,7 +105,7 @@ class HdlcFrameHeader:
         This check sequence is applied to only the header,
         i.e., the bits between the opening flag sequence and the header check sequence.
         """
-        is_available = self._control_position is not None and len(self._frame.frame_data) > self._control_position + 2
+        is_available = self._control_position is not None and len(self._frame) > self._control_position + 2
         if is_available:
             return (self._frame.frame_data[self._control_position + 1] << 8
                     | self._frame.frame_data[self._control_position + 2])
@@ -167,7 +167,7 @@ class HdlcFrame:
 
     def __init__(self):
         """Construct HdlcFrame."""
-        self._buffer = bytearray()
+        self._frame_data = bytearray()
         self._ffc = fastframecheck.FastFrameCheckSequence16()
         self._escape_next = False
         self._header = HdlcFrameHeader(self)
@@ -180,11 +180,11 @@ class HdlcFrame:
         Length of currently parsed bytes.
         Note that expected complete frame length is found in header when header has been read.
         """
-        return len(self._buffer)
+        return len(self._frame_data)
 
     def append(self, byte) -> None:
         """Append byte to frame."""
-        self._buffer.append(byte)
+        self._frame_data.append(byte)
         self._ffc.update(byte)
         self._header.update()
 
@@ -193,7 +193,7 @@ class HdlcFrame:
         """
         Frame data bytes. Data has been unescaped when the reader uses octet frame stuffing (see constructor).
         """
-        return self._buffer
+        return self._frame_data
 
     @property
     def is_good_ffc(self) -> bool:
@@ -217,16 +217,16 @@ class HdlcFrame:
     def frame_check_sequence(self) -> Optional[int]:
         """Frame check sequence if complete frame has been read. None or invalid number if not."""
         if self._header.information_position is not None:
-            if len(self._buffer) >= self._header.information_position:
-                return self._buffer[len(self._buffer) - 2] << 8 | self._buffer[len(self._buffer) - 1]
+            if len(self._frame_data) >= self._header.information_position:
+                return self._frame_data[len(self._frame_data) - 2] << 8 | self._frame_data[len(self._frame_data) - 1]
         return None
 
     @property
     def information(self) -> Optional[bytearray]:
         """Information field when the field has been read and is available."""
         info_position = self._header.information_position
-        if info_position is not None and len(self._buffer) > info_position:
-            return self._buffer[info_position:-2]
+        if info_position is not None and len(self._frame_data) > info_position:
+            return self._frame_data[info_position:-2]
         return None
 
 
@@ -246,24 +246,24 @@ class HdlcFrameReader:
         :param use_octet_stuffing: true to use octet stuffing (0x7D as escape octet)
         """
         self._use_octet_stuffing = use_octet_stuffing
-        self._escape_next = False
+        self._unescape_next = False
         self._logger = logger or logging.getLogger(__name__)
         self._buffer = bytearray()
         self._raw_frame_data = bytearray()
         self._buffer_pos = 0
-        self._frame: HdlcFrame = None
+        self._frame: Optional[HdlcFrame] = None
 
     @property
     def unescape_next(self) -> bool:
         """True if octet stuffing is used and next octet is escaped and must be unescaped."""
-        return self._escape_next
+        return self._unescape_next
 
     @property
     def is_in_hunt_mode(self) -> bool:
         """True when reader is hunting for start of frame."""
         return self._frame is None
 
-    def read(self, data_chunk: bytes) -> List[HdlcFrame]:
+    def read(self, data_chunk: bytes) -> List:
         """
         Call this function to read chunks of bytes.
         :param data_chunk: next bytes to parsed.
@@ -288,15 +288,14 @@ class HdlcFrameReader:
 
     def _read_next(self) -> bool:
         current = self._buffer[self._buffer_pos]
-        is_flag = current == self.FLAG_SEQUENCE
         self._buffer_pos += 1
         frame_complete = False
 
+        is_flag = current == self.FLAG_SEQUENCE
         if is_flag:
             frame_complete = self._handle_flag_sequence()
         elif not self.is_in_hunt_mode:
             self._append_to_frame(current)
-
             if len(self._frame) > HdlcFrame.MAX_FRAME_LENGTH:
                 self._logger.warning("Max frame length reached. Discard frame: %s", self._raw_frame_data.hex())
                 self._goto_hunt_mode()
@@ -310,18 +309,15 @@ class HdlcFrameReader:
         if self.is_in_hunt_mode:
             self._logger.debug("Found flag sequence in frame hunt mode")
             self._frame = HdlcFrame()
-            frame_complete = False
 
         elif len(self._frame) == 0:
             self._logger.debug("Found new flag sequence. Ignore")
-            frame_complete = False
 
         elif self._frame.header.header_check_sequence is None:
             # Frames which are too short are silently discarded, and not counted as a FCS error.
             self._logger.info("Found flag sequence. Too short frame (%d bytes). Discard frame: %s",
                               len(self._frame), self._raw_frame_data.hex())
             self._goto_hunt_mode()
-            frame_complete = False
 
         # check if previous octet was Control Escape
         elif len(self._raw_frame_data) > 1 and self._raw_frame_data[-1:][0] == self.CONTROL_ESCAPE:
@@ -330,10 +326,9 @@ class HdlcFrameReader:
             # are silently discarded, and not counted as a FCS error.
             self._logger.info("Abort sequence. Discard frame: %s", self._raw_frame_data.hex())
             self._goto_hunt_mode()
-            frame_complete = False
 
         elif self._frame.is_expected_length:
-            self._logger.info("Frame of length %d successfully received", len(self._frame))
+            self._logger.info("Frame of length %d received", len(self._frame))
             frame_complete = True
 
         else:
@@ -344,13 +339,13 @@ class HdlcFrameReader:
     def _append_to_frame(self, current):
         self._raw_frame_data.append(current)
         if self._use_octet_stuffing:
-            if self._escape_next:
-                self._escape_next = False
+            if self._unescape_next:
+                self._unescape_next = False
                 unescaped = current ^ 0x20
                 self._frame.append(unescaped)
             else:
-                if current == 0x7d:
-                    self._escape_next = True
+                if current == HdlcFrameReader.CONTROL_ESCAPE:
+                    self._unescape_next = True
                 else:
                     self._frame.append(current)
         else:
