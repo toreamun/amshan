@@ -249,9 +249,8 @@ class HdlcFrameReader:
         self._use_abort_sequence = use_abort_sequence
         self._unescape_next = False
         self._logger = logger or logging.getLogger(__name__)
-        self._buffer = bytearray()
+        self._buffer = ReaderBuffer()
         self._raw_frame_data = bytearray()
-        self._buffer_pos = 0
         self._frame: Optional[HdlcFrame] = None
 
     @property
@@ -275,10 +274,10 @@ class HdlcFrameReader:
         self._buffer.extend(data_chunk)
 
         if self.is_in_hunt_mode:
-            self._trim_buffer_to_flag_or_end()
+            self._buffer.trim_buffer_to_flag_or_end()
 
         if len(self._buffer) > 0:
-            while self._buffer_pos < len(self._buffer):
+            while self._buffer.position < len(self._buffer):
                 frame_complete = self._read_next()
                 if frame_complete:
                     self._logger.info(
@@ -288,14 +287,14 @@ class HdlcFrameReader:
                         "good" if self._frame.is_good_ffc else "bad")
                     frames_received.append(self._frame)
                     self._start_frame()
-                    self._trim_buffer_to_current_position()
+                    self._buffer.trim_buffer_to_current_position()
 
         return frames_received
 
     def _read_next(self) -> bool:
         frame_complete = False
 
-        current = self._buffer[self._buffer_pos]
+        current = self._buffer.current
         is_flag = current == self.FLAG_SEQUENCE
         if is_flag:
             frame_complete = self._handle_flag_sequence()
@@ -306,7 +305,7 @@ class HdlcFrameReader:
                 self._goto_hunt_mode()
                 frame_complete = False
 
-        self._buffer_pos += 1
+        self._buffer.move_next()
         return frame_complete
 
     def _handle_flag_sequence(self):
@@ -368,14 +367,39 @@ class HdlcFrameReader:
 
     def _goto_hunt_mode(self):
         self._frame = None
-        self._trim_buffer_to_flag_or_end()
+        self._buffer.trim_buffer_to_flag_or_end()
 
-    def _trim_buffer_to_current_position(self):
+
+class ReaderBuffer:
+    """Buffer class used by HdlcFrameReader"""
+
+    def __init__(self):
+        self._buffer = bytearray()
+        self._buffer_pos = None
+
+    def __len__(self):
+        return len(self._buffer)
+
+    @property
+    def position(self) -> int:
+        return self._buffer_pos
+
+    @property
+    def current(self):
+        return self._buffer[self._buffer_pos]
+
+    def extend(self, data_chunk: bytes):
+        self._buffer.extend(data_chunk)
+
+    def move_next(self):
+        self._buffer_pos += 1
+
+    def trim_buffer_to_current_position(self):
         self._buffer = self._buffer[self._buffer_pos:]
         self._buffer_pos = 0
 
-    def _trim_buffer_to_flag_or_end(self):
-        flag_pos = self._buffer.find(self.FLAG_SEQUENCE)
+    def trim_buffer_to_flag_or_end(self):
+        flag_pos = self._buffer.find(HdlcFrameReader.FLAG_SEQUENCE)
         if flag_pos == -1:
             # flag sequence not found
             self._buffer.clear()
