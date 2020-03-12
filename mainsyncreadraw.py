@@ -57,7 +57,8 @@ def handler(signal_received, frame):
     LOG.info('SIGINT or CTRL-C detected. Exiting gracefully')
     mqttc.loop_stop()
     ser.close()
-    logfile.close()
+    if args.dumpfile:
+        logfile.close()
     exit(0)
 
 
@@ -100,20 +101,17 @@ if __name__ == '__main__':
         data = ser.read(read_len)
 
         if len(data) > 0:
-            if len(data) > 2:
-                LOG.debug("%d bytes read from serial", len(data))
+            # if len(data) > 2:
+            #    LOG.debug("%d bytes read from serial", len(data))
 
             if args.dumpfile:
                 dump_to_file(data)
 
             frames = frame_reader.read(data)
             if len(frames):
-                LOG.debug("Frame count: %d", len(frames))
+                #    LOG.debug("Frame count: %d", len(frames))
 
-                if len(frames) > 10:
-                    pass
-                else:
-                    for f in frames:
-                        frame_received(f)
+                for f in frames:
+                    frame_received(f)
 
             frames.clear()
