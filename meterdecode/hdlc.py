@@ -240,12 +240,13 @@ class HdlcFrameReader:
     # The octet stream is examined on an octet-by-octet basis for the value 01111110 (hexadecimal 0x7e).
     FLAG_SEQUENCE = 0x7e
 
-    def __init__(self, use_octet_stuffing: bool = False, logger=None) -> None:
+    def __init__(self, use_octet_stuffing: bool = False, use_abort_sequence=False, logger=None) -> None:
         """
         Construct HHdlcFrameReader.
         :param use_octet_stuffing: true to use octet stuffing (0x7D as escape octet)
         """
         self._use_octet_stuffing = use_octet_stuffing
+        self._use_abort_sequence = use_abort_sequence
         self._unescape_next = False
         self._logger = logger or logging.getLogger(__name__)
         self._buffer = bytearray()
@@ -319,8 +320,9 @@ class HdlcFrameReader:
                               len(self._frame), self._raw_frame_data.hex())
             self._goto_hunt_mode()
 
-        # check if previous octet was Control Escape
-        elif len(self._raw_frame_data) > 1 and self._raw_frame_data[-1:][0] == self.CONTROL_ESCAPE:
+        # check if previous octet was Control Escape if abort sequence is activated
+        elif (self._use_abort_sequence and
+              len(self._raw_frame_data) > 1 and self._raw_frame_data[-1:][0] == self.CONTROL_ESCAPE):
             # Frames which end with a Control Escape octet
             # followed immediately by a closing Flag Sequence,
             # are silently discarded, and not counted as a FCS error.
