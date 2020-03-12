@@ -279,19 +279,23 @@ class HdlcFrameReader:
 
         if len(self._buffer) > 0:
             while self._buffer_pos < len(self._buffer):
-                is_frame_end = self._read_next()
-                if is_frame_end:
+                frame_complete = self._read_next()
+                if frame_complete:
+                    self._logger.info(
+                        "Frame of %s length %d received with %s checksum.",
+                        "expected" if self._frame.is_expected_length else "unexpected",
+                        len(self._frame),
+                        "good" if self._frame.is_good_ffc else "bad")
                     frames_received.append(self._frame)
+                    self._start_frame()
                     self._trim_buffer_to_current_position()
-                    self._goto_hunt_mode()
 
         return frames_received
 
     def _read_next(self) -> bool:
-        current = self._buffer[self._buffer_pos]
-        self._buffer_pos += 1
         frame_complete = False
 
+        current = self._buffer[self._buffer_pos]
         is_flag = current == self.FLAG_SEQUENCE
         if is_flag:
             frame_complete = self._handle_flag_sequence()
@@ -302,6 +306,7 @@ class HdlcFrameReader:
                 self._goto_hunt_mode()
                 frame_complete = False
 
+        self._buffer_pos += 1
         return frame_complete
 
     def _handle_flag_sequence(self):
@@ -309,10 +314,11 @@ class HdlcFrameReader:
 
         if self.is_in_hunt_mode:
             self._logger.debug("Found flag sequence in frame hunt mode")
-            self._frame = HdlcFrame()
+            self._start_frame()
 
         elif len(self._frame) == 0:
-            self._logger.debug("Found new flag sequence. Ignore")
+            # Found new flag sequence. Two is normal ( end + start), one is allowed, and many possible if time fill.
+            pass
 
         elif self._frame.header.header_check_sequence is None:
             # Frames which are too short are silently discarded, and not counted as a FCS error.
@@ -329,8 +335,11 @@ class HdlcFrameReader:
             self._logger.info("Abort sequence. Discard frame: %s", self._raw_frame_data.hex())
             self._goto_hunt_mode()
 
+        elif self._use_octet_stuffing:
+            # Control Escape is never in content when using octet stuffing
+            frame_complete = True
+
         elif self._frame.is_expected_length:
-            self._logger.info("Frame of length %d received", len(self._frame))
             frame_complete = True
 
         else:
@@ -353,12 +362,16 @@ class HdlcFrameReader:
         else:
             self._frame.append(current)
 
-    def _goto_hunt_mode(self):
-        self._frame = None
+    def _start_frame(self):
+        self._frame = HdlcFrame()
         self._raw_frame_data.clear()
 
+    def _goto_hunt_mode(self):
+        self._frame = None
+        self._trim_buffer_to_flag_or_end()
+
     def _trim_buffer_to_current_position(self):
-        self._buffer = self._buffer[self._buffer_pos - 1:]
+        self._buffer = self._buffer[self._buffer_pos:]
         self._buffer_pos = 0
 
     def _trim_buffer_to_flag_or_end(self):
