@@ -276,25 +276,24 @@ class HdlcFrameReader:
         if self.is_in_hunt_mode:
             self._buffer.trim_buffer_to_flag_or_end()
 
-        if len(self._buffer) > 0:
-            while self._buffer.position < len(self._buffer):
-                frame_complete = self._read_next()
-                if frame_complete:
-                    self._logger.info(
-                        "Frame of %s length %d received with %s checksum.",
-                        "expected" if self._frame.is_expected_length else "unexpected",
-                        len(self._frame),
-                        "good" if self._frame.is_good_ffc else "bad")
-                    frames_received.append(self._frame)
-                    self._start_frame()
-                    self._buffer.trim_buffer_to_current_position()
+        while self._buffer.is_available:
+            frame_complete = self._read_next()
+            if frame_complete:
+                self._logger.info(
+                    "Frame of %s length %d received with %s checksum.",
+                    "expected" if self._frame.is_expected_length else "unexpected",
+                    len(self._frame),
+                    "good" if self._frame.is_good_ffc else "bad")
+                frames_received.append(self._frame)
+                self._start_frame()
+                self._buffer.trim_buffer_to_current_position()
 
         return frames_received
 
     def _read_next(self) -> bool:
         frame_complete = False
 
-        current = self._buffer.current
+        current = self._buffer.pop()
         is_flag = current == self.FLAG_SEQUENCE
         if is_flag:
             frame_complete = self._handle_flag_sequence()
@@ -305,7 +304,6 @@ class HdlcFrameReader:
                 self._goto_hunt_mode()
                 frame_complete = False
 
-        self._buffer.move_next()
         return frame_complete
 
     def _handle_flag_sequence(self):
@@ -375,30 +373,28 @@ class ReaderBuffer:
 
     def __init__(self):
         self._buffer = bytearray()
-        self._buffer_pos = None
-
-    def __len__(self):
-        return len(self._buffer)
+        self._buffer_pos = 0
 
     @property
-    def position(self) -> int:
-        return self._buffer_pos
+    def is_available(self) -> bool:
+        return len(self._buffer) > self._buffer_pos
 
-    @property
-    def current(self):
-        return self._buffer[self._buffer_pos]
+    def pop(self):
+        if self.is_available:
+            byte = self._buffer[self._buffer_pos]
+            self._buffer_pos += 1
+            return byte
+        return None
 
     def extend(self, data_chunk: bytes):
         self._buffer.extend(data_chunk)
-
-    def move_next(self):
-        self._buffer_pos += 1
 
     def trim_buffer_to_current_position(self):
         self._buffer = self._buffer[self._buffer_pos:]
         self._buffer_pos = 0
 
     def trim_buffer_to_flag_or_end(self):
+        self.trim_buffer_to_current_position()
         flag_pos = self._buffer.find(HdlcFrameReader.FLAG_SEQUENCE)
         if flag_pos == -1:
             # flag sequence not found
