@@ -33,29 +33,28 @@ def get_arg_parser():
     return parser
 
 
-def _json_converter(o):
+def json_converter(o):
     if isinstance(o, datetime.datetime):
         return o.isoformat()
     return None
 
 
-def signal_handler(signal_received, frame):
-    # Handle any cleanup here
-    LOG.info('SIGINT or CTRL-C detected. Exiting gracefully')
+def signal_handler(signal_number, stack_frame):
+    LOG.info("%s signal received. Exiting gracefully.", signal.Signals(signal_number).name)
     close_resources()
     exit(0)
 
 
 def close_resources():
-    if mqtt_client is not None:
-        LOG.debug("Close MQTT client")
-        mqtt_client.loop_stop()
     if ser is not None and ser.isOpen():
         LOG.debug("Close serial port %s", ser.name)
         ser.close()
     if logfile is not None and logfile:
-        LOG.debug("Close logfile %s", logfile.name)
+        LOG.debug("Close frame logfile %s", logfile.name)
         logfile.close()
+    if mqtt_client is not None:
+        LOG.debug("Close MQTT client")
+        mqtt_client.loop_stop()
 
 
 def dump_to_file(dump_data: bytes):
@@ -73,7 +72,7 @@ def hdlc_frame_received(frame: hdlc.HdlcFrame):
         LOG.debug("Got frame info content: %s", frame.information.hex())
         decoded_frame = decoder.decode_frame(frame.information)
         if decoded_frame:
-            json_frame = json.dumps(decoded_frame, default=_json_converter)
+            json_frame = json.dumps(decoded_frame, default=json_converter)
             LOG.debug("Decoded frame: %s", json_frame)
             mqtt_client.publish(args.mqtttopic, json_frame)
         else:
