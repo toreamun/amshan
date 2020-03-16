@@ -2,7 +2,7 @@ from pprint import pprint
 
 import construct
 
-from meterdecode import aidon
+from smartmeterdecode import aidon
 
 list_1 = bytes.fromhex(
     "e6e700"
