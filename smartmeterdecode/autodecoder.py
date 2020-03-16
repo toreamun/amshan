@@ -9,7 +9,8 @@ class AutoDecoder:
     _decoder_functions = [
         ("Aidon", aidon.decode_frame),
         ("Kaifa", kaifa.decode_frame),
-        ("Kamstrup", kamstrup.decode_frame)]
+        ("Kamstrup", kamstrup.decode_frame),
+    ]
 
     def __init__(self):
         self.__previous_success = None
@@ -22,7 +23,9 @@ class AutoDecoder:
         return None
 
     def decode_frame(self, frame: bytes) -> Optional[dict]:
-        previous_success_index = self.__previous_success if self.__previous_success else 0
+        previous_success_index = (
+            self.__previous_success if self.__previous_success else 0
+        )
 
         for i in range(len(AutoDecoder._decoder_functions)):
             index = (i + previous_success_index) % len(AutoDecoder._decoder_functions)

@@ -8,7 +8,7 @@ from array import array
 def compute_fcs_16_crc_table():
     """Generate a FCS-16 table"""
     polynomial = 0x8408  # The FCS-16 generator polynomial: x**0 + x**5 + x**12 + x**16.
-    crc_table = array('H')
+    crc_table = array("H")
     for byte in range(256):
         crc = 0
         for bit in range(8):
@@ -24,8 +24,8 @@ def compute_fcs_16_crc_table():
 class FastFrameCheckSequence16:
     """16 bit Fast Frame Check Sequence (FCS)"""
 
-    _INIT_FCS_16 = 0xffff  # Initial FCS value
-    _GOOD_FCS_16 = 0xf0b8  # Good final FCS value
+    _INIT_FCS_16 = 0xFFFF  # Initial FCS value
+    _GOOD_FCS_16 = 0xF0B8  # Good final FCS value
 
     _fast_frame_check_crc_table = compute_fcs_16_crc_table()
 
@@ -35,8 +35,10 @@ class FastFrameCheckSequence16:
     @staticmethod
     def _next(crc, byte):
         """Calculate a new fcs CRC given the current CRC value and the new data."""
-        crc_index = (crc ^ byte) & 0xff
-        return (crc >> 8) ^ FastFrameCheckSequence16._fast_frame_check_crc_table[crc_index]
+        crc_index = (crc ^ byte) & 0xFF
+        return (crc >> 8) ^ FastFrameCheckSequence16._fast_frame_check_crc_table[
+            crc_index
+        ]
 
     def update(self, byte):
         """Update the calculated CRC value for the specified input data."""
@@ -54,14 +56,16 @@ class FastFrameCheckSequence16:
 
     @property
     def checksum(self):
-        return self._crc_value ^ 0xffff  # complement
+        return self._crc_value ^ 0xFFFF  # complement
 
     @staticmethod
     def compute_checksum(data, start, length):
         fcs = FastFrameCheckSequence16._INIT_FCS_16
 
         for i in range(start, start + length):
-            index = (fcs ^ data[i]) & 0xff
-            fcs = ((fcs >> 8) ^ FastFrameCheckSequence16._fast_frame_check_crc_table[index])
+            index = (fcs ^ data[i]) & 0xFF
+            fcs = (fcs >> 8) ^ FastFrameCheckSequence16._fast_frame_check_crc_table[
+                index
+            ]
 
-        return fcs ^ 0xffff  # complement
+        return fcs ^ 0xFFFF  # complement

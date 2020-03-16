@@ -40,7 +40,7 @@ class HdlcFrameHeader:
     def frame_format_type(self) -> Optional[int]:
         """The value of frame format type sub-field when frame format has been read."""
         if self.frame_format is not None:
-            return (self.frame_format >> 12) & 0xf
+            return (self.frame_format >> 12) & 0xF
         return None
 
     @property
@@ -58,7 +58,7 @@ class HdlcFrameHeader:
         excluding the opening and closing frame flag sequences.
         """
         if self.frame_format is not None:
-            return self.frame_format & 0x4ff
+            return self.frame_format & 0x4FF
         return None
 
     @property
@@ -93,7 +93,10 @@ class HdlcFrameHeader:
         It indicates the type of commands or responses,
         and contains sequence numbers, where appropriate (frames I, RR and RNR).
         """
-        is_available = self._control_position is not None and len(self._frame) > self._control_position
+        is_available = (
+            self._control_position is not None
+            and len(self._frame) > self._control_position
+        )
         if is_available:
             return self._frame.frame_data[self._control_position]
         return None
@@ -105,10 +108,15 @@ class HdlcFrameHeader:
         This check sequence is applied to only the header,
         i.e., the bits between the opening flag sequence and the header check sequence.
         """
-        is_available = self._control_position is not None and len(self._frame) > self._control_position + 2
+        is_available = (
+            self._control_position is not None
+            and len(self._frame) > self._control_position + 2
+        )
         if is_available:
-            return (self._frame.frame_data[self._control_position + 1] << 8
-                    | self._frame.frame_data[self._control_position + 2])
+            return (
+                self._frame.frame_data[self._control_position + 1] << 8
+                | self._frame.frame_data[self._control_position + 2]
+            )
         return None
 
     @property
@@ -218,7 +226,10 @@ class HdlcFrame:
         """Frame check sequence if complete frame has been read. None or invalid number if not."""
         if self._header.information_position is not None:
             if len(self._frame_data) >= self._header.information_position:
-                return self._frame_data[len(self._frame_data) - 2] << 8 | self._frame_data[len(self._frame_data) - 1]
+                return (
+                    self._frame_data[len(self._frame_data) - 2] << 8
+                    | self._frame_data[len(self._frame_data) - 1]
+                )
         return None
 
     @property
@@ -234,13 +245,15 @@ class HdlcFrameReader:
     """Use this class to HDLC-frames as stream of bytes."""
 
     # The Control Escape octet is defined as binary 01111101 (hexadecimal 0x7d)
-    CONTROL_ESCAPE = 0x7d
+    CONTROL_ESCAPE = 0x7D
 
     # The Flag Sequence indicates the beginning or end of a frame.
     # The octet stream is examined on an octet-by-octet basis for the value 01111110 (hexadecimal 0x7e).
-    FLAG_SEQUENCE = 0x7e
+    FLAG_SEQUENCE = 0x7E
 
-    def __init__(self, use_octet_stuffing: bool = False, use_abort_sequence=False, logger=None) -> None:
+    def __init__(
+        self, use_octet_stuffing: bool = False, use_abort_sequence=False, logger=None
+    ) -> None:
         """
         Construct HHdlcFrameReader.
         :param use_octet_stuffing: true to use octet stuffing (0x7D as escape octet)
@@ -283,7 +296,8 @@ class HdlcFrameReader:
                     "Frame of %s length %d received with %s checksum.",
                     "expected" if self._frame.is_expected_length else "unexpected",
                     len(self._frame),
-                    "good" if self._frame.is_good_ffc else "bad")
+                    "good" if self._frame.is_good_ffc else "bad",
+                )
                 frames_received.append(self._frame)
                 self._start_frame()
                 self._buffer.trim_buffer_to_current_position()
@@ -300,7 +314,10 @@ class HdlcFrameReader:
         elif not self.is_in_hunt_mode:
             self._append_to_frame(current)
             if len(self._frame) > HdlcFrame.MAX_FRAME_LENGTH:
-                self._logger.warning("Max frame length reached. Discard frame: %s", self._raw_frame_data.hex())
+                self._logger.warning(
+                    "Max frame length reached. Discard frame: %s",
+                    self._raw_frame_data.hex(),
+                )
                 self._goto_hunt_mode()
                 frame_complete = False
 
@@ -319,17 +336,25 @@ class HdlcFrameReader:
 
         elif self._frame.header.header_check_sequence is None:
             # Frames which are too short are silently discarded, and not counted as a FCS error.
-            self._logger.info("Found flag sequence. Too short frame (%d bytes). Discard frame: %s",
-                              len(self._frame), self._raw_frame_data.hex())
+            self._logger.info(
+                "Found flag sequence. Too short frame (%d bytes). Discard frame: %s",
+                len(self._frame),
+                self._raw_frame_data.hex(),
+            )
             self._goto_hunt_mode()
 
         # check if previous octet was Control Escape if abort sequence is activated
-        elif (self._use_abort_sequence and
-              len(self._raw_frame_data) > 1 and self._raw_frame_data[-1:][0] == self.CONTROL_ESCAPE):
+        elif (
+            self._use_abort_sequence
+            and len(self._raw_frame_data) > 1
+            and self._raw_frame_data[-1:][0] == self.CONTROL_ESCAPE
+        ):
             # Frames which end with a Control Escape octet
             # followed immediately by a closing Flag Sequence,
             # are silently discarded, and not counted as a FCS error.
-            self._logger.info("Abort sequence. Discard frame: %s", self._raw_frame_data.hex())
+            self._logger.info(
+                "Abort sequence. Discard frame: %s", self._raw_frame_data.hex()
+            )
             self._goto_hunt_mode()
 
         elif self._use_octet_stuffing:
@@ -390,7 +415,7 @@ class ReaderBuffer:
         self._buffer.extend(data_chunk)
 
     def trim_buffer_to_current_position(self):
-        self._buffer = self._buffer[self._buffer_pos:]
+        self._buffer = self._buffer[self._buffer_pos :]
         self._buffer_pos = 0
 
     def trim_buffer_to_flag_or_end(self):

@@ -5,12 +5,8 @@ import construct
 from smartmeterdecode import aidon
 
 list_1 = bytes.fromhex(
-    "e6e700"
-    "0f"
-    "40000000"
-    "00"
-    "0101"
-    "020309060100010700ff060000011802020f00161b")
+    "e6e700" "0f" "40000000" "00" "0101" "020309060100010700ff060000011802020f00161b"
+)
 
 list_2 = bytes.fromhex(
     "e6e700"
@@ -29,7 +25,8 @@ list_2 = bytes.fromhex(
     "020309060100470700ff10000902020fff1621"
     "020309060100200700ff1208e202020fff1623"
     "020309060100340700ff1208fd02020fff1623"
-    "020309060100480700ff12090402020fff1623")
+    "020309060100480700ff12090402020fff1623"
+)
 
 list_3 = bytes.fromhex(
     "e6e700"
@@ -53,11 +50,11 @@ list_3 = bytes.fromhex(
     "02020f01161e020309060100020800ff0600000000"
     "02020f01161e020309060100030800ff060000e383"
     "02020f011620020309060100040800ff0600029b5b"
-    "02020f011620")
+    "02020f011620"
+)
 
 
 class TestParseAidon:
-
     def test_decode_list_1(self):
         parsed = aidon.LlcPdu.parse(list_1)
         assert isinstance(parsed, construct.Container)
@@ -75,7 +72,6 @@ class TestParseAidon:
 
 
 class TestDecodeAidon:
-
     def test_decode_frame_list_1(self):
         decoded = aidon.decode_frame(list_1)
         assert isinstance(decoded, dict)

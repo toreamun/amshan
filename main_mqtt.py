@@ -12,24 +12,41 @@ import serial
 from smartmeterdecode import hdlc, autodecoder
 
 logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(levelname)7s: %(message)s',
-    stream=sys.stderr,
+    level=logging.DEBUG, format="%(levelname)7s: %(message)s", stream=sys.stderr,
 )
-LOG = logging.getLogger('')
+LOG = logging.getLogger("")
 
 
 def get_arg_parser():
-    parser = argparse.ArgumentParser('read HAN port')
-    parser.add_argument('-v', dest='verbose', default=False)
-    parser.add_argument('-s', dest='serialport', required=True, help="input serial port")
-    parser.add_argument('-sp', dest='ser_parity', required=False, choices=['N', 'O', 'E'],
-                        help="input serial port parity")
-    parser.add_argument('-sb', dest='ser_baudrate', type=int, required=False, help="input serial port baud rate")
-    parser.add_argument('-mh', dest='mqtthost', default='localhost', help="mqtt host")
-    parser.add_argument('-mp', dest='mqttport', type=int, default=1883, help="mqtt port port")
-    parser.add_argument('-t', dest='mqtttopic', default='han', help="mqtt publish topic")
-    parser.add_argument('-dumpfile', dest='dumpfile', help="dump received bytes to file")
+    parser = argparse.ArgumentParser("read HAN port")
+    parser.add_argument("-v", dest="verbose", default=False)
+    parser.add_argument(
+        "-s", dest="serialport", required=True, help="input serial port"
+    )
+    parser.add_argument(
+        "-sp",
+        dest="ser_parity",
+        required=False,
+        choices=["N", "O", "E"],
+        help="input serial port parity",
+    )
+    parser.add_argument(
+        "-sb",
+        dest="ser_baudrate",
+        type=int,
+        required=False,
+        help="input serial port baud rate",
+    )
+    parser.add_argument("-mh", dest="mqtthost", default="localhost", help="mqtt host")
+    parser.add_argument(
+        "-mp", dest="mqttport", type=int, default=1883, help="mqtt port port"
+    )
+    parser.add_argument(
+        "-t", dest="mqtttopic", default="han", help="mqtt publish topic"
+    )
+    parser.add_argument(
+        "-dumpfile", dest="dumpfile", help="dump received bytes to file"
+    )
     return parser
 
 
@@ -40,7 +57,9 @@ def json_converter(o):
 
 
 def signal_handler(signal_number, stack_frame):
-    LOG.info("%s signal received. Exiting gracefully.", signal.Signals(signal_number).name)
+    LOG.info(
+        "%s signal received. Exiting gracefully.", signal.Signals(signal_number).name
+    )
     close_resources()
     exit(0)
 
@@ -59,12 +78,12 @@ def close_resources():
 
 def dump_to_file(dump_data: bytes):
     for b in dump_data:
-        is_flag = b == b'\x7e'[0]
+        is_flag = b == b"\x7e"[0]
         if is_flag:
-            logfile.write('\n')
-        logfile.write('{:02x}'.format(b))
+            logfile.write("\n")
+        logfile.write("{:02x}".format(b))
         if is_flag:
-            logfile.write('\n')
+            logfile.write("\n")
 
 
 def hdlc_frame_received(frame: hdlc.HdlcFrame):
@@ -81,7 +100,7 @@ def hdlc_frame_received(frame: hdlc.HdlcFrame):
         LOG.warning("Got invalid frame: %s", frame.frame_data.hex())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     args = get_arg_parser().parse_args()
 
@@ -103,7 +122,12 @@ if __name__ == '__main__':
         try:
             mqtt_client.connect(args.mqtthost, port=args.mqttport)
         except Exception as ex:
-            LOG.error("Could connect to MQTT host %s on port %s: %s", args.mqtthost, args.mqttport, ex)
+            LOG.error(
+                "Could connect to MQTT host %s on port %s: %s",
+                args.mqtthost,
+                args.mqttport,
+                ex,
+            )
             raise
         mqtt_client.loop_start()
 
@@ -122,7 +146,12 @@ if __name__ == '__main__':
             LOG.error("Could not open serial: %s", ex.strerror)
             raise
 
-        LOG.info("Serial port %s opened with baudrate %s and parity %s", ser.name, ser.baudrate, ser.parity)
+        LOG.info(
+            "Serial port %s opened with baudrate %s and parity %s",
+            ser.name,
+            ser.baudrate,
+            ser.parity,
+        )
 
         while True:
             try:

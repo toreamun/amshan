@@ -8,12 +8,7 @@ from smartmeterdecode import kaifa
 logging.basicConfig(level=logging.DEBUG)
 
 list_1 = bytes.fromhex(
-    'e6e700'
-    '0f'
-    '40000000'
-    '090c07e3020401173416ff800000'
-    '0201'
-    '06000016dc'
+    "e6e700" "0f" "40000000" "090c07e3020401173416ff800000" "0201" "06000016dc"
 )
 
 list_2 = bytes.fromhex(
@@ -33,7 +28,8 @@ list_2 = bytes.fromhex(
     "0600004702"
     "0600000878"
     "0600000000"
-    "060000088c")
+    "060000088c"
+)
 
 list_3 = bytes.fromhex(
     "e6e700"
@@ -56,11 +52,11 @@ list_3 = bytes.fromhex(
     "060000089d"
     "090c07e40119060e000aff800000"
     "0604be76e80600000000"
-    "06000d922d060030feb4")
+    "06000d922d060030feb4"
+)
 
 
 class TestParseKaifa:
-
     def test_parse_list_1(self):
         parsed = kaifa.LlcPdu.parse(list_1)
         assert isinstance(parsed, construct.Container)
