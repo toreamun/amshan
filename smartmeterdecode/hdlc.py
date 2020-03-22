@@ -424,8 +424,7 @@ class ReaderBuffer:
         if flag_pos == -1:
             # flag sequence not found
             self._buffer.clear()
-        if flag_pos >= 0:
-            if flag_pos > 0:
-                # trim data before flag sequence
-                self._buffer = self._buffer[flag_pos:]
+        if flag_pos > 0:
+            # trim data before flag sequence
+            self._buffer = self._buffer[flag_pos:]
         self._buffer_pos = 0
