@@ -40,7 +40,7 @@ class HdlcFrameHeader:
     def frame_format_type(self) -> Optional[int]:
         """The value of frame format type sub-field when frame format has been read."""
         if self.frame_format is not None:
-            return (self.frame_format >> 12) & 0xF
+            return (self.frame_format >> 12) & 0b1111
         return None
 
     @property
@@ -58,7 +58,7 @@ class HdlcFrameHeader:
         excluding the opening and closing frame flag sequences.
         """
         if self.frame_format is not None:
-            return self.frame_format & 0x4FF
+            return self.frame_format & 0b11111111111
         return None
 
     @property
