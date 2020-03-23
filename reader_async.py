@@ -1,15 +1,13 @@
 import argparse
+import asyncio
 import datetime
 import json
 import logging
-import signal
 import sys
-import time
-import asyncio
+
 import serial_asyncio
 
-
-from smartmeterdecode import hdlc, autodecoder
+from smartmeterdecode import hdlc, autodecoder, smasyncio
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(levelname)7s: %(message)s", stream=sys.stderr,
@@ -72,37 +70,76 @@ def hdlc_frame_received(frame: hdlc.HdlcFrame):
 
 async def process_frames(queue):
     while True:
-        frame = await queue.get()
-        hdlc_frame_received(frame)
+        try:
+            frame = await queue.get()
+            hdlc_frame_received(frame)
+        except Exception as ex:
+            LOG.error(ex)
+            raise
 
 
-async def read_task(args, queue):
-
+async def read(args, queue):
     frame_reader = hdlc.HdlcFrameReader(False)
-    reader, writer = await serial_asyncio.open_serial_connection(url=args.serialport)
 
-    while True:
-        data = await reader.read(1024)
-        frames = frame_reader.read(data)
-        if len(frames):
-            for f in frames:
-                await queue.put(f)
+    try:
+        reader, writer = await serial_asyncio.open_serial_connection(
+            url=args.serialport
+        )
 
-    reader.close()
-    writer.close()
+        while True:
+            data = await reader.read(1024)
+            frames = frame_reader.read(data)
+            if len(frames):
+                for f in frames:
+                    await queue.put(f)
+
+        reader.close()
+        writer.close()
+    except Exception as ex:
+        LOG.error(ex)
+        raise
 
 
-def main():
+async def main():
     args = get_arg_parser().parse_args()
 
     queue = asyncio.Queue()
 
-    asyncio.ensure_future(read_task(args, queue))
-    asyncio.ensure_future(process_frames(queue))
-
     loop = asyncio.get_event_loop()
-    loop.run_forever()
+
+    def tcp_connection_factory(): return smasyncio.create_meter_tcp_connection(
+        loop, queue, host="ustaoset.amundsen.org", port="3001"
+    )
+
+    def serial_connection_factory(): return smasyncio.create_meter_serial_connection(
+        loop, queue, url=args.serialport
+    )
+
+    connection = smasyncio.SmartMeterConnection(tcp_connection_factory)
+
+    await asyncio.gather(
+        asyncio.create_task(process_frames(queue)), connection.connect()
+    )
+
+    #    on_con_lost = loop.create_future()
+    #    reader_factory = SmartMeterReader.create_reader_factory(queue, on_con_lost)
+    # serial_asyncio.open_serial_connection()
+    #    transport, protocol = await serial_asyncio.create_serial_connection(loop, lambda: SmartMeterReader(queue, on_con_lost), url=args.serialport)
+    #    loop.run_until_complete(reader)
+    #    transport, protocol = await create_meter_serial_connection(loop, queue, url=args.serialport)
+    #    connection_factory = smasyncio.create_meter_tcp_connection(loop, queue, host="ustaoset.amundsen.org", port="3001")
+    #    reader_task = asyncio.create_task(reader)
+    #    await reader_task
+    #    await asyncio.create_task(process_frames(queue))
+    #    await reader
+    # transport.close()
+    #    res = await asyncio.wait(
+    #        [protocol.on_connection_lost, asyncio.create_task(process_frames(queue))],
+    #        return_when=asyncio.FIRST_COMPLETED,
+    #    )
+
+    LOG.info("Done...")
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
