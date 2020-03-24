@@ -39,7 +39,7 @@ class SmartMeterProtocol(asyncio.Protocol):
             peer_name = self._transport.get_extra_info("peername")
             if peer_name:
                 host, port = peer_name
-                info = "host {} on port {}".format(host, port)
+                info = "host {} and port {}".format(host, port)
 
         if not info:
             info = str(self._transport)
@@ -54,7 +54,7 @@ class SmartMeterProtocol(asyncio.Protocol):
         When the connection is closed, connection_lost() is called.
         """
         self._transport = transport
-        self._logger.debug("Connected to %s", self._get_transport_info())
+        self._logger.info("Connected to smart meter on %s", self._get_transport_info())
 
     def connection_lost(self, exc):
         """Called when the connection is lost or closed.
