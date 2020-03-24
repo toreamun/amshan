@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from abc import ABCMeta, abstractmethod
 from typing import Optional, Callable, Tuple
 
 import serial_asyncio
@@ -9,19 +10,21 @@ from smartmeterdecode import hdlc
 
 class SmartMeterProtocol(asyncio.Protocol):
     def __init__(
-        self,
-        queue: asyncio.Queue,
-        on_connection_lost: asyncio.Future = None,
-        frame_reader=hdlc.HdlcFrameReader(
-            use_octet_stuffing=False, use_abort_sequence=True
-        ),
+            self,
+            queue: asyncio.Queue,
+            on_connection_lost: asyncio.Future = None,
+            frame_reader=None,
     ) -> None:
         super().__init__()
         self._logger = logging.getLogger(__name__)
         self._transport = None
         self._queue = queue
         self._on_con_lost_future = on_connection_lost
-        self._frame_reader = frame_reader
+        self._frame_reader = (
+            frame_reader
+            if frame_reader
+            else hdlc.HdlcFrameReader(use_octet_stuffing=False, use_abort_sequence=True)
+        )
 
     @property
     def on_connection_lost(self) -> Optional[asyncio.Future]:
@@ -86,14 +89,51 @@ class SmartMeterProtocol(asyncio.Protocol):
             self._queue.put_nowait(frame)
 
 
+class BackOffStrategy(metaclass=ABCMeta):
+    @abstractmethod
+    def failure(self):
+        pass
+
+    @abstractmethod
+    def reset(self):
+        pass
+
+    @property
+    @abstractmethod
+    def current_delay_sec(self):
+        pass
+
+
+class ExponentialBackOff(BackOffStrategy):
+    DEFAULT_MAX_DELAY_SEC = 60
+
+    def __init__(self):
+        self._delay = 0
+        self.max_delay = ExponentialBackOff.DEFAULT_MAX_DELAY_SEC
+
+    def failure(self):
+        self._delay = self._delay * 2
+        if self._delay == 0:
+            self._delay = 1
+
+        return self._delay if self._delay < self.max_delay else self.max_delay
+
+    def reset(self):
+        self._delay = 0
+
+    @property
+    def current_delay_sec(self):
+        return self._delay
+
+
 class SmartMeterConnection:
     """
     Maintain connection to smart meter data feed.
     """
 
     def __init__(
-        self,
-        connection_factory: Callable[[], Tuple[asyncio.Transport, SmartMeterProtocol]],
+            self,
+            connection_factory: Callable[[], Tuple[asyncio.Transport, SmartMeterProtocol]],
     ) -> None:
         """
         Initialize class.
@@ -105,7 +145,8 @@ class SmartMeterConnection:
         ] = connection_factory
         self._connection: (asyncio.Transport, SmartMeterProtocol) = None
         self._is_closing = False
-        self._connection_count = 0
+        self._logger = logging.getLogger(__name__)
+        self.back_off = ExponentialBackOff()
 
     async def connect(self):
         """
@@ -113,13 +154,31 @@ class SmartMeterConnection:
         The connection is not reconnected on connection loss if close() was called on this instance.
         """
         while not self._is_closing:
-            self._connection_count = self._connection_count + 1
-            self._connection = await self._connection_factory()
-            _, protocol = self._connection
-            await protocol.on_connection_lost
-            self._connection = None
+            await self._try_connect()
+            if self._connection:
+                _, protocol = self._connection
+                await protocol.on_connection_lost
+                self._connection = None
+                self._is_closing = False  # done closing if that was the case of connection loss
 
-        self._is_closing = False
+    async def _try_connect(self):
+        if self.back_off.current_delay_sec > 0:
+            self._logger.info(
+                "Back-off for %d sec before reconnecting to smart meter.",
+                self.back_off.current_delay_sec,
+            )
+            await asyncio.sleep(self.back_off.current_delay_sec)
+
+        try:
+            self._logger.debug("Try to connect to smart meter.")
+            self._connection = await self._connection_factory()
+            self.back_off.reset()
+        except asyncio.CancelledError:
+            raise
+        except Exception as ex:
+            self._connection = None
+            self.back_off.failure()
+            self._logger.warning("Error connecting to smart meter: %s", ex)
 
     def close(self):
         """Close current connection, if any, and stop reconnecting."""
@@ -130,7 +189,7 @@ class SmartMeterConnection:
 
 
 async def create_meter_serial_connection(
-    loop, queue: asyncio.Queue, *args, **kwargs
+        loop, queue: asyncio.Queue, *args, **kwargs
 ) -> (serial_asyncio.SerialTransport, SmartMeterProtocol):
     """
     Create serial connection using :class:`SmartMeterProtocol`
@@ -148,7 +207,7 @@ async def create_meter_serial_connection(
 
 
 async def create_meter_tcp_connection(
-    loop, queue: asyncio.Queue, *args, **kwargs
+        loop, queue: asyncio.Queue, *args, **kwargs
 ) -> (asyncio.Transport, SmartMeterProtocol):
     """
     Create TCP connection using :class:`SmartMeterProtocol`
