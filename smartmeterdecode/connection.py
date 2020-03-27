@@ -14,7 +14,7 @@ class SmartMeterProtocol(asyncio.Protocol):
         queue: asyncio.Queue,
         frame_reader=None,
         on_connection_lost: asyncio.Future = None,
-        loop: asyncio.AbstractEventLoop = None
+        loop: asyncio.AbstractEventLoop = None,
     ) -> None:
         super().__init__()
         self._logger = logging.getLogger(__name__)

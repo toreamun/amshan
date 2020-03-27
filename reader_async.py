@@ -7,7 +7,7 @@ import sys
 
 import serial_asyncio
 
-from smartmeterdecode import hdlc, autodecoder, smasyncio
+from smartmeterdecode import hdlc, autodecoder, connection
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(levelname)7s: %(message)s", stream=sys.stderr,
@@ -107,15 +107,15 @@ async def main():
 
     loop = asyncio.get_event_loop()
 
-    def tcp_connection_factory(): return smasyncio.create_meter_tcp_connection(
+    def tcp_connection_factory(): return connection.create_meter_tcp_connection(
         loop, queue, host="ustaoset.amundsen.org", port="3001"
     )
 
-    def serial_connection_factory(): return smasyncio.create_meter_serial_connection(
+    def serial_connection_factory(): return connection.create_meter_serial_connection(
         loop, queue, url=args.serialport
     )
 
-    connection = smasyncio.SmartMeterConnection(tcp_connection_factory)
+    connection = connection.SmartMeterConnection(tcp_connection_factory)
 
     await asyncio.gather(
         asyncio.create_task(process_frames(queue)), connection.connect()
