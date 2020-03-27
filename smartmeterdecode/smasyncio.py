@@ -10,16 +10,21 @@ from smartmeterdecode import hdlc
 
 class SmartMeterProtocol(asyncio.Protocol):
     def __init__(
-            self,
-            queue: asyncio.Queue,
-            on_connection_lost: asyncio.Future = None,
-            frame_reader=None,
+        self,
+        queue: asyncio.Queue,
+        frame_reader=None,
+        on_connection_lost: asyncio.Future = None,
+        loop: asyncio.AbstractEventLoop = None
     ) -> None:
         super().__init__()
         self._logger = logging.getLogger(__name__)
         self._transport = None
         self._queue = queue
-        self._on_con_lost_future = on_connection_lost
+        self._on_con_lost_future = (
+            on_connection_lost
+            if on_connection_lost
+            else (loop if loop else asyncio.get_event_loop()).create_future()
+        )
         self._frame_reader = (
             frame_reader
             if frame_reader
@@ -132,8 +137,8 @@ class SmartMeterConnection:
     """
 
     def __init__(
-            self,
-            connection_factory: Callable[[], Tuple[asyncio.Transport, SmartMeterProtocol]],
+        self,
+        connection_factory: Callable[[], Tuple[asyncio.Transport, SmartMeterProtocol]],
     ) -> None:
         """
         Initialize class.
@@ -159,7 +164,9 @@ class SmartMeterConnection:
                 _, protocol = self._connection
                 await protocol.on_connection_lost
                 self._connection = None
-                self._is_closing = False  # done closing if that was the case of connection loss
+                self._is_closing = (
+                    False  # done closing if that was the case of connection loss
+                )
 
     async def _try_connect(self):
         if self.back_off.current_delay_sec > 0:
@@ -189,7 +196,7 @@ class SmartMeterConnection:
 
 
 async def create_meter_serial_connection(
-        loop, queue: asyncio.Queue, *args, **kwargs
+    loop, queue: asyncio.Queue, *args, **kwargs
 ) -> (serial_asyncio.SerialTransport, SmartMeterProtocol):
     """
     Create serial connection using :class:`SmartMeterProtocol`
@@ -207,7 +214,7 @@ async def create_meter_serial_connection(
 
 
 async def create_meter_tcp_connection(
-        loop, queue: asyncio.Queue, *args, **kwargs
+    loop, queue: asyncio.Queue, *args, **kwargs
 ) -> (asyncio.Transport, SmartMeterProtocol):
     """
     Create TCP connection using :class:`SmartMeterProtocol`
