@@ -168,9 +168,9 @@ class SmartMeterConnection:
         """
 
         self._connection_factory: Callable[
-            [], (asyncio.Transport, SmartMeterProtocol)
+            [], Tuple[asyncio.Transport, SmartMeterProtocol]
         ] = connection_factory
-        self._connection: (asyncio.Transport, SmartMeterProtocol) = None
+        self._connection: Optional[Tuple[asyncio.Transport, SmartMeterProtocol]] = None
         self._is_closing: asyncio.Event = asyncio.Event()
         self.back_off = ExponentialBackOff()
 
@@ -234,7 +234,7 @@ class SmartMeterConnection:
 
 async def create_meter_serial_connection(
     loop, queue: asyncio.Queue, *args, **kwargs
-) -> (serial_asyncio.SerialTransport, SmartMeterProtocol):
+) -> Tuple[serial_asyncio.SerialTransport, SmartMeterProtocol]:
     """
     Create serial connection using :class:`SmartMeterProtocol`
 
@@ -251,7 +251,7 @@ async def create_meter_serial_connection(
 
 async def create_meter_tcp_connection(
     loop, queue: asyncio.Queue, *args, **kwargs
-) -> (asyncio.Transport, SmartMeterProtocol):
+) -> Tuple[asyncio.Transport, SmartMeterProtocol]:
     """
     Create TCP connection using :class:`SmartMeterProtocol`
 
