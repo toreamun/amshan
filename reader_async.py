@@ -1,13 +1,16 @@
 import argparse
 import asyncio
+import concurrent
 import datetime
 import json
 import logging
+import socket
 import sys
 
 import serial_asyncio
+from serial import PARITY_NONE
 
-from smartmeterdecode import hdlc, autodecoder, connection
+from smartmeterdecode import autodecoder, hdlc, meter_connection, obis_map
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(levelname)7s: %(message)s", stream=sys.stderr,
@@ -100,43 +103,89 @@ async def read(args, queue):
         raise
 
 
+async def get_meter_info(queue):
+    decoder = autodecoder.AutoDecoder()
+    for _ in range(10):
+        frame = await asyncio.wait_for(queue.get(), 12)
+        if frame.is_good_ffc and frame.is_expected_length:
+            decoded_frame = decoder.decode_frame(frame.information)
+            if decoded_frame:
+                if (
+                    obis_map.NEK_HAN_FIELD_METER_ID in decoded_frame
+                    and obis_map.NEK_HAN_FIELD_METER_MANUFACTURER
+                ):
+                    return (
+                        decoded_frame[obis_map.NEK_HAN_FIELD_METER_MANUFACTURER],
+                        decoded_frame[obis_map.NEK_HAN_FIELD_METER_ID]
+                    )
+    raise TimeoutError()
+
+
 async def main():
     args = get_arg_parser().parse_args()
 
     queue = asyncio.Queue()
 
+
     loop = asyncio.get_event_loop()
 
-    def tcp_connection_factory(): return connection.create_meter_tcp_connection(
-        loop, queue, host="ustaoset.amundsen.org", port="3001"
-    )
+    host = "ustaoset.amundsen.org"
+    port = 3001
 
-    def serial_connection_factory(): return connection.create_meter_serial_connection(
-        loop, queue, url=args.serialport
-    )
+    #    await asyncio.wait_for(loop.sock_connect(sock, address),timeout=1)
 
-    connection = connection.SmartMeterConnection(tcp_connection_factory)
-
-    await asyncio.gather(
-        asyncio.create_task(process_frames(queue)), connection.connect()
-    )
-
-    #    on_con_lost = loop.create_future()
-    #    reader_factory = SmartMeterReader.create_reader_factory(queue, on_con_lost)
-    # serial_asyncio.open_serial_connection()
-    #    transport, protocol = await serial_asyncio.create_serial_connection(loop, lambda: SmartMeterReader(queue, on_con_lost), url=args.serialport)
-    #    loop.run_until_complete(reader)
-    #    transport, protocol = await create_meter_serial_connection(loop, queue, url=args.serialport)
-    #    connection_factory = smasyncio.create_meter_tcp_connection(loop, queue, host="ustaoset.amundsen.org", port="3001")
-    #    reader_task = asyncio.create_task(reader)
-    #    await reader_task
-    #    await asyncio.create_task(process_frames(queue))
-    #    await reader
+    # try:
+    #     transport, protocol = await loop.create_connection(
+    #         lambda: meter_connection.SmartMeterProtocol(queue),
+    #         host=host,
+    #         port=port,
+    #     )
+    # except TimeoutError as ex:
+    #     LOG.exception("con")
+    #     pass
+    #
+    # async def read_queue():
+    #     while True:
+    #         await queue.get()
+    #         LOG.debug("Got frame from queue")
+    #
+    # read_queue_task = asyncio.create_task(read_queue())
+    #
+    # await asyncio.sleep(15)
+    #
     # transport.close()
-    #    res = await asyncio.wait(
-    #        [protocol.on_connection_lost, asyncio.create_task(process_frames(queue))],
-    #        return_when=asyncio.FIRST_COMPLETED,
-    #    )
+    #
+    # await asyncio.sleep(2)
+    #
+    # await read_queue_task
+
+
+#    meter_info = await get_meter_info(queue)
+#    LOG.debug(meter_info)
+
+    #    c = await serial_asyncio.open_serial_connection(url = "/dev/tty01", baudrate=2400, parity="E", bytesize=8)
+
+    def tcp_connection_factory():
+        return meter_connection.create_meter_tcp_connection(
+            loop, queue, host="ustaoset.amundsen.org", port="3001"
+        )
+
+    def serial_connection_factory():
+        return meter_connection.create_meter_serial_connection(
+            loop, queue, url=args.serialport)
+
+    connection = meter_connection.SmartMeterConnection(tcp_connection_factory)
+
+    asyncio.create_task(process_frames(queue))
+
+    connect_task = asyncio.create_task(connection.connect_loop())
+
+    await asyncio.sleep(8)
+
+    connection.close()
+
+    await asyncio.sleep(2000)
+
 
     LOG.info("Done...")
 

@@ -2,7 +2,7 @@ from typing import Optional
 
 import construct
 
-from smartmeterdecode import kaifa, kamstrup, aidon
+from smartmeterdecode import aidon, kaifa, kamstrup
 
 
 class AutoDecoder:

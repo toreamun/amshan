@@ -1,5 +1,6 @@
 from array import array
 
+
 """
 16-bit Fast Frame Check Sequence (FCS) Implementation derived from https://tools.ietf.org/rfc/rfc1662#appendix-C
 """

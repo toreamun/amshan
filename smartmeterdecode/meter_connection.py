@@ -2,7 +2,7 @@ import asyncio
 import logging
 from abc import ABCMeta, abstractmethod
 from asyncio import FIRST_COMPLETED
-from typing import Optional, Callable, Tuple
+from typing import Callable, Optional, Tuple
 
 import serial_asyncio
 

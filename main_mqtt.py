@@ -9,7 +9,7 @@ import time
 import paho.mqtt.client as mqtt
 import serial
 
-from smartmeterdecode import hdlc, autodecoder
+from smartmeterdecode import autodecoder, hdlc
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(levelname)7s: %(message)s", stream=sys.stderr,

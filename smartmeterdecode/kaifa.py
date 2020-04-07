@@ -1,6 +1,6 @@
 import construct
 
-from smartmeterdecode import obis_map, cosem
+from smartmeterdecode import cosem, obis_map
 
 NotificationBody = construct.Struct(
     construct.Const(
