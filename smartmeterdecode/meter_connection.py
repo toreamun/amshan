@@ -2,7 +2,7 @@ import asyncio
 import logging
 from abc import ABCMeta, abstractmethod
 from asyncio import FIRST_COMPLETED
-from typing import Callable, Optional, Tuple
+from typing import Callable, ClassVar, Optional, Tuple
 
 import serial_asyncio
 
@@ -13,7 +13,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class SmartMeterProtocol(asyncio.ReadTransport):
 
-    connections = 0
+    connections: ClassVar[int] = 0
 
     def __init__(self, queue: asyncio.Queue, frame_reader=None) -> None:
         super().__init__()

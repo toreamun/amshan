@@ -44,7 +44,7 @@ NotificationBody = construct.Struct(
 LlcPdu = cosem.get_llc_pdu_struct(NotificationBody)
 
 
-def normalize_parsed_frame(frame: LlcPdu) -> dict:
+def normalize_parsed_frame(frame: construct.Struct) -> dict:
     list_items = frame.information.notification_body.list_items
 
     dictionary = {obis_map.NEK_HAN_FIELD_METER_MANUFACTURER: "Aidon"}

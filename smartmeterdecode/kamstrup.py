@@ -35,7 +35,7 @@ _field_scaling = {
 }
 
 
-def normalize_parsed_frame(frame: LlcPdu) -> dict:
+def normalize_parsed_frame(frame: construct.Struct) -> dict:
     dictionary = {
         obis_map.NEK_HAN_FIELD_METER_MANUFACTURER: "Kamstrup",
         obis_map.NEK_HAN_FIELD_METER_DATETIME: frame.information.DateTime.datetime,

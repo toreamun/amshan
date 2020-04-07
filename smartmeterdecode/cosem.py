@@ -52,7 +52,7 @@ ObisCode = construct.ExprAdapter(
 )
 
 
-def type_code_to_type(type_code: CommonDataTypes):
+def type_code_to_type(type_code: construct.Enum):
     return construct.Switch(
         type_code,
         {
