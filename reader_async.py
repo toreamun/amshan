@@ -6,11 +6,14 @@ import json
 import logging
 import socket
 import sys
+from asyncio import AbstractEventLoop, BaseProtocol, BaseTransport
+from typing import Optional, Tuple
 
 import serial_asyncio
 from serial import PARITY_NONE
 
 from smartmeterdecode import autodecoder, hdlc, meter_connection, obis_map
+from smartmeterdecode.meter_connection import SmartMeterProtocol
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(levelname)7s: %(message)s", stream=sys.stderr,
@@ -121,6 +124,24 @@ async def get_meter_info(queue):
     raise TimeoutError()
 
 
+async def create_meter_serial_connection(
+        queue: asyncio.Queue, loop: Optional[AbstractEventLoop] = None, *args, **kwargs
+) -> Tuple[BaseTransport, BaseProtocol]:
+    """
+    Create serial connection using :class:`SmartMeterProtocol`
+
+    :param queue: Queue for received frames
+    :param loop: The event handler
+    :param args: Passed to the :class:`serial.Serial` init function
+    :param kwargs: Passed to the :class:`serial.Serial` init function
+    :return: Tuple of transport and protocol
+    """
+    loop = loop if loop else asyncio.get_event_loop()
+    return await serial_asyncio.create_serial_connection(
+        loop, lambda: SmartMeterProtocol(queue), *args, **kwargs
+    )
+
+
 async def main():
     args = get_arg_parser().parse_args()
 
@@ -167,24 +188,23 @@ async def main():
 
     def tcp_connection_factory():
         return meter_connection.create_meter_tcp_connection(
-            loop, queue, host="ustaoset.amundsen.org", port="3001"
+            queue, host="ustaoset.amundsen.org", port="3001"
         )
 
     def serial_connection_factory():
         return meter_connection.create_meter_serial_connection(
             loop, queue, url=args.serialport)
 
-    connection = meter_connection.SmartMeterConnection(tcp_connection_factory)
+    connection = meter_connection.ConnectionManager(tcp_connection_factory)
 
     asyncio.create_task(process_frames(queue))
 
     connect_task = asyncio.create_task(connection.connect_loop())
+    await connect_task
 
-    await asyncio.sleep(8)
-
-    connection.close()
-
-    await asyncio.sleep(2000)
+#    await asyncio.sleep(8)
+#    connection.close()
+#    await asyncio.sleep(2000)
 
 
     LOG.info("Done...")
