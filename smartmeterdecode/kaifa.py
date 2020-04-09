@@ -4,7 +4,7 @@ import construct
 
 from smartmeterdecode import cosem, obis_map
 
-NotificationBody = construct.Struct(
+NotificationBody: construct.Struct = construct.Struct(
     construct.Const(
         cosem.CommonDataTypes.structure, cosem.CommonDataTypes
     ),  # expect structure
@@ -30,7 +30,7 @@ NotificationBody = construct.Struct(
     ),
 )
 
-LlcPdu = cosem.get_llc_pdu_struct(NotificationBody)
+LlcPdu: construct.Struct = cosem.get_llc_pdu_struct(NotificationBody)
 
 
 def get_field_lists() -> List[List[str]]:

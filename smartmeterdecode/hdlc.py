@@ -2,15 +2,18 @@
 Use this module to read HDLC frames
 """
 import logging
+import typing
 from typing import List, Optional
 
 from smartmeterdecode import fastframecheck
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HdlcFrameHeader:
     """The start (header) of an HdlcFrame."""
 
-    def __init__(self, frame):
+    def __init__(self, frame: "HdlcFrame") -> None:
         """The header constructor used by parent frame"""
         self._frame = frame
         self._control_position = None
@@ -98,7 +101,7 @@ class HdlcFrameHeader:
             and len(self._frame) > self._control_position
         )
         if is_available:
-            return self._frame.frame_data[self._control_position]
+            return self._frame.frame_data[typing.cast(int, self._control_position)]
         return None
 
     @property
@@ -114,8 +117,9 @@ class HdlcFrameHeader:
         )
         if is_available:
             return (
-                self._frame.frame_data[self._control_position + 1] << 8
-                | self._frame.frame_data[self._control_position + 2]
+                self._frame.frame_data[typing.cast(int, self._control_position) + 1]
+                << 8
+                | self._frame.frame_data[typing.cast(int, self._control_position) + 2]
             )
         return None
 
@@ -157,7 +161,7 @@ class HdlcFrameHeader:
 
         return None
 
-    def _get_control_field_position(self):
+    def _get_control_field_position(self) -> Optional[int]:
         destination_adr = self.destination_address
         if destination_adr is not None:
             source_adr = self.source_address
@@ -173,7 +177,7 @@ class HdlcFrame:
     and when done reading information.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Construct HdlcFrame."""
         self._frame_data = bytearray()
         self._ffc = fastframecheck.FastFrameCheckSequence16()
@@ -183,14 +187,14 @@ class HdlcFrame:
     # Frame length is specified with 11 bit.
     MAX_FRAME_LENGTH: int = 0b11111111111
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         Length of currently parsed bytes.
         Note that expected complete frame length is found in header when header has been read.
         """
         return len(self._frame_data)
 
-    def append(self, byte) -> None:
+    def append(self, byte: int) -> None:
         """Append byte to frame."""
         self._frame_data.append(byte)
         self._ffc.update(byte)
@@ -245,14 +249,14 @@ class HdlcFrameReader:
     """Use this class to HDLC-frames as stream of bytes."""
 
     # The Control Escape octet is defined as binary 01111101 (hexadecimal 0x7d)
-    CONTROL_ESCAPE = 0x7D
+    CONTROL_ESCAPE: int = 0x7D
 
     # The Flag Sequence indicates the beginning or end of a frame.
     # The octet stream is examined on an octet-by-octet basis for the value 01111110 (hexadecimal 0x7e).
-    FLAG_SEQUENCE = 0x7E
+    FLAG_SEQUENCE: int = 0x7E
 
     def __init__(
-        self, use_octet_stuffing: bool = False, use_abort_sequence=False, logger=None
+        self, use_octet_stuffing: bool = False, use_abort_sequence: bool = False
     ) -> None:
         """
         Construct HHdlcFrameReader.
@@ -261,8 +265,7 @@ class HdlcFrameReader:
         self._use_octet_stuffing = use_octet_stuffing
         self._use_abort_sequence = use_abort_sequence
         self._unescape_next = False
-        self._logger = logger or logging.getLogger(__name__)
-        self._buffer = ReaderBuffer()
+        self._buffer = _ReaderBuffer()
         self._raw_frame_data = bytearray()
         self._frame: Optional[HdlcFrame] = None
 
@@ -276,7 +279,7 @@ class HdlcFrameReader:
         """True when reader is hunting for start of frame."""
         return self._frame is None
 
-    def read(self, data_chunk: bytes) -> List:
+    def read(self, data_chunk: bytes) -> List[HdlcFrame]:
         """
         Call this function to read chunks of bytes.
         :param data_chunk: next bytes to parsed.
@@ -292,13 +295,17 @@ class HdlcFrameReader:
         while self._buffer.is_available:
             frame_complete = self._read_next()
             if frame_complete:
-                self._logger.info(
+                _LOGGER.info(
                     "Frame of %s length %d received with %s checksum.",
-                    "expected" if self._frame.is_expected_length else "unexpected",
-                    len(self._frame),
-                    "good" if self._frame.is_good_ffc else "bad",
+                    "expected"
+                    if typing.cast(HdlcFrame, self._frame).is_expected_length
+                    else "unexpected",
+                    len(typing.cast(HdlcFrame, self._frame)),
+                    "good"
+                    if typing.cast(HdlcFrame, self._frame).is_good_ffc
+                    else "bad",
                 )
-                frames_received.append(self._frame)
+                frames_received.append(typing.cast(HdlcFrame, self._frame))
                 self._start_frame()
                 self._buffer.trim_buffer_to_current_position()
 
@@ -313,8 +320,8 @@ class HdlcFrameReader:
             frame_complete = self._handle_flag_sequence()
         elif not self.is_in_hunt_mode:
             self._append_to_frame(current)
-            if len(self._frame) > HdlcFrame.MAX_FRAME_LENGTH:
-                self._logger.warning(
+            if len(typing.cast(HdlcFrame, self._frame)) > HdlcFrame.MAX_FRAME_LENGTH:
+                _LOGGER.warning(
                     "Max frame length reached. Discard frame: %s",
                     self._raw_frame_data.hex(),
                 )
@@ -327,7 +334,7 @@ class HdlcFrameReader:
         frame_complete = False
 
         if self.is_in_hunt_mode:
-            self._logger.debug("Found flag sequence in frame hunt mode")
+            _LOGGER.debug("Found flag sequence in frame hunt mode")
             self._start_frame()
 
         elif len(self._frame) == 0:
@@ -336,7 +343,7 @@ class HdlcFrameReader:
 
         elif self._frame.header.header_check_sequence is None:
             # Frames which are too short are silently discarded, and not counted as a FCS error.
-            self._logger.info(
+            _LOGGER.info(
                 "Found flag sequence. Too short frame (%d bytes). Discard frame: %s",
                 len(self._frame),
                 self._raw_frame_data.hex(),
@@ -352,7 +359,7 @@ class HdlcFrameReader:
             # Frames which end with a Control Escape octet
             # followed immediately by a closing Flag Sequence,
             # are silently discarded, and not counted as a FCS error.
-            self._logger.info(
+            _LOGGER.info(
                 "Abort sequence. Discard frame: %s", self._raw_frame_data.hex()
             )
             self._goto_hunt_mode()
@@ -393,10 +400,10 @@ class HdlcFrameReader:
         self._buffer.trim_buffer_to_flag_or_end()
 
 
-class ReaderBuffer:
+class _ReaderBuffer:
     """Buffer class used by HdlcFrameReader"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._buffer = bytearray()
         self._buffer_pos = 0
 
@@ -404,21 +411,21 @@ class ReaderBuffer:
     def is_available(self) -> bool:
         return len(self._buffer) > self._buffer_pos
 
-    def pop(self):
+    def pop(self) -> Optional[int]:
         if self.is_available:
             byte = self._buffer[self._buffer_pos]
             self._buffer_pos += 1
             return byte
         return None
 
-    def extend(self, data_chunk: bytes):
+    def extend(self, data_chunk: bytes) -> None:
         self._buffer.extend(data_chunk)
 
-    def trim_buffer_to_current_position(self):
+    def trim_buffer_to_current_position(self) -> None:
         self._buffer = self._buffer[self._buffer_pos :]
         self._buffer_pos = 0
 
-    def trim_buffer_to_flag_or_end(self):
+    def trim_buffer_to_flag_or_end(self) -> None:
         self.trim_buffer_to_current_position()
         flag_pos = self._buffer.find(HdlcFrameReader.FLAG_SEQUENCE)
         if flag_pos == -1:

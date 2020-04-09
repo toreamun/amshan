@@ -2,7 +2,7 @@ import construct
 
 from smartmeterdecode import cosem, obis_map
 
-Element = construct.Struct(
+Element: construct.Struct = construct.Struct(
     construct.Const(
         cosem.CommonDataTypes.structure, cosem.CommonDataTypes
     ),  # expect structure
@@ -35,13 +35,13 @@ Element = construct.Struct(
     ),
 )
 
-NotificationBody = construct.Struct(
+NotificationBody: construct.Struct = construct.Struct(
     construct.Const(cosem.CommonDataTypes.array, cosem.CommonDataTypes),  # expect array
     "length" / construct.Int8ub,
     "list_items" / construct.Array(construct.this.length, Element),
 )
 
-LlcPdu = cosem.get_llc_pdu_struct(NotificationBody)
+LlcPdu: construct.Struct = cosem.get_llc_pdu_struct(NotificationBody)
 
 
 def normalize_parsed_frame(frame: construct.Struct) -> dict:

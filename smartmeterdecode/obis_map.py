@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 NEK_HAN_FIELD_OBIS_LIST_VER_ID = "list_ver_id"
 NEK_HAN_FIELD_METER_ID = "meter_id"
 NEK_HAN_FIELD_METER_TYPE = "meter_type"
@@ -18,7 +20,7 @@ NEK_HAN_FIELD_ACTIVE_POWER_EXPORT_HOUR = "active_power_export_hour"
 NEK_HAN_FIELD_REACTIVE_POWER_IMPORT_HOUR = "reactive_power_import_hour"
 NEK_HAN_FIELD_REACTIVE_POWER_EXPORT_HOUR = "reactive_power_export_hour"
 
-name_obis_map = {
+name_obis_map: Dict[str, List[str]] = {
     NEK_HAN_FIELD_OBIS_LIST_VER_ID: ["1.1.0.2.129.255"],
     NEK_HAN_FIELD_METER_ID: ["0.0.96.1.0.255", "1.1.0.0.5.255"],
     NEK_HAN_FIELD_METER_TYPE: ["0.0.96.1.7.255", "1.1.96.1.1.255"],
@@ -39,7 +41,7 @@ name_obis_map = {
     NEK_HAN_FIELD_REACTIVE_POWER_EXPORT_HOUR: ["1.0.4.8.0.255", "1.1.4.8.0.255"],
 }
 
-obis_name_map = {}
+obis_name_map: Dict[str, str] = {}
 for name, obis_values in name_obis_map.items():
     for obis in obis_values:
         obis_name_map[obis] = name

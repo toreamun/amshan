@@ -2,7 +2,7 @@ import construct
 
 from smartmeterdecode import cosem, obis_map
 
-Element = construct.Struct(
+Element: construct.Struct = construct.Struct(
     "_element_type" / construct.Peek(cosem.CommonDataTypes),
     "obis"
     / construct.If(
@@ -18,7 +18,7 @@ Element = construct.Struct(
     ),
 )
 
-NotificationBody = construct.Struct(
+NotificationBody: construct.Struct = construct.Struct(
     construct.Const(
         cosem.CommonDataTypes.structure, cosem.CommonDataTypes
     ),  # expect structure
@@ -26,7 +26,7 @@ NotificationBody = construct.Struct(
     "list_items" / construct.GreedyRange(Element),
 )
 
-LlcPdu = cosem.get_llc_pdu_struct(NotificationBody)
+LlcPdu: construct.Struct = cosem.get_llc_pdu_struct(NotificationBody)
 
 _field_scaling = {
     "1.1.31.7.0.255": -2,

@@ -12,11 +12,11 @@ class AutoDecoder:
         ("Kamstrup", kamstrup.decode_frame),
     ]
 
-    def __init__(self):
-        self.__previous_success = None
+    def __init__(self) -> None:
+        self.__previous_success: Optional[int] = None
 
     @property
-    def previous_success_decoder(self):
+    def previous_success_decoder(self) -> Optional[str]:
         if self.__previous_success is not None:
             decoder_name, _ = AutoDecoder._decoder_functions[self.__previous_success]
             return decoder_name

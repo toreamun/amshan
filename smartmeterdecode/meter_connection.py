@@ -3,9 +3,17 @@ import datetime
 import logging
 import typing
 from abc import ABCMeta, abstractmethod
-from asyncio import (FIRST_COMPLETED, AbstractEventLoop, BaseProtocol,
-                     BaseTransport, CancelledError, Event, Future, Queue,
-                     ReadTransport)
+from asyncio import (
+    FIRST_COMPLETED,
+    AbstractEventLoop,
+    BaseProtocol,
+    BaseTransport,
+    CancelledError,
+    Event,
+    Future,
+    Queue,
+    ReadTransport,
+)
 from typing import Callable, ClassVar, Optional, Tuple
 
 from smartmeterdecode import hdlc
@@ -14,20 +22,20 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class SmartMeterProtocol(ReadTransport):
-    connections: ClassVar[int] = 0
+    total_instance_counter: ClassVar[int] = 0
 
     def __init__(self, queue: Queue, frame_reader: hdlc.HdlcFrameReader = None) -> None:
         super().__init__()
         self.queue: Queue = queue
+        self.done: Future = Future()
+        self.id: int = SmartMeterProtocol.connections
         self._frame_reader = (
             frame_reader
             if frame_reader
             else hdlc.HdlcFrameReader(use_octet_stuffing=False, use_abort_sequence=True)
         )
-        self.done: Future = Future()
         self._transport: Optional[BaseTransport] = None
         self._transport_info: Optional[str] = None
-        self.id: int = SmartMeterProtocol.connections
         SmartMeterProtocol.connections += 1
 
     def _set_transport_info(self) -> None:
@@ -141,14 +149,14 @@ class ConnectionManager:
 
         self.back_off_connect_error: BackOffStrategy = ExponentialBackOff()
 
-        self.connection_lost_back_off_threshold = (
+        self.connection_lost_back_off_threshold: int = (
             ConnectionManager.DEFAULT_CONNECTION_LOST_BACK_OFF_SLEEP_SEC
         )
-        self.connection_lost_back_off_sleep_sec = (
+        self.connection_lost_back_off_sleep_sec: int = (
             ConnectionManager.DEFAULT_CONNECTION_LOST_BACK_OFF_SLEEP_SEC
         )
         self._connection_lost_last_time: Optional[datetime.datetime] = None
-        self._connection_lost_sleep_before_reconnect = False
+        self._connection_lost_sleep_before_reconnect: bool = False
 
     def close(self):
         """Close current connection, if any, and stop reconnecting."""
@@ -234,7 +242,7 @@ class BackOffStrategy(metaclass=ABCMeta):
     Create sub-classes to implement different strategies.
     """
 
-    DEFAULT_MAX_DELAY_SEC = 60
+    DEFAULT_MAX_DELAY_SEC: int = 60
 
     @abstractmethod
     def failure(self) -> None:
