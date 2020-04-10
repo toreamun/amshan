@@ -21,14 +21,59 @@ from smartmeterdecode import hdlc
 _LOGGER = logging.getLogger(__name__)
 
 
+class BackOffStrategy(metaclass=ABCMeta):
+    """
+    Back-off strategy base class.
+    Create sub-classes to implement different strategies.
+    """
+
+    DEFAULT_MAX_DELAY_SEC: int = 60
+
+    @abstractmethod
+    def failure(self) -> None:
+        """Call this after a failure."""
+        pass
+
+    @abstractmethod
+    def reset(self) -> None:
+        """Call this after success to reset."""
+        pass
+
+    @property
+    @abstractmethod
+    def current_delay_sec(self) -> int:
+        """Current back-off delay in seconds."""
+        pass
+
+
+class ExponentialBackOff(BackOffStrategy):
+    """Exponential back-off strategy."""
+
+    def __init__(self) -> None:
+        self._delay: int = 0
+        self.max_delay: int = super().DEFAULT_MAX_DELAY_SEC
+
+    def failure(self) -> None:
+        self._delay = self._delay * 2
+        if self._delay == 0:
+            self._delay = 1
+
+    def reset(self) -> None:
+        self._delay = 0
+
+    @property
+    def current_delay_sec(self) -> int:
+        return self._delay if self._delay < self.max_delay else self.max_delay
+
+
 class SmartMeterProtocol(ReadTransport):
     total_instance_counter: ClassVar[int] = 0
 
     def __init__(self, queue: Queue, frame_reader: hdlc.HdlcFrameReader = None) -> None:
         super().__init__()
         self.queue: Queue = queue
-        self.done: Future = Future()
-        self.id: int = SmartMeterProtocol.connections
+        self._done: Future = Future()
+        self.id: int = SmartMeterProtocol.total_instance_counter
         self._frame_reader = (
             frame_reader
             if frame_reader
@@ -36,7 +81,11 @@ class SmartMeterProtocol(ReadTransport):
         )
         self._transport: Optional[BaseTransport] = None
         self._transport_info: Optional[str] = None
-        SmartMeterProtocol.connections += 1
+        SmartMeterProtocol.total_instance_counter += 1
+
+    @property
+    def done(self) -> typing.Awaitable:
+        return self._done
 
     def _set_transport_info(self) -> None:
         if self._transport:
@@ -98,7 +147,7 @@ class SmartMeterProtocol(ReadTransport):
                     ex,
                 )
 
-        self.done.set_result(True)
+        self._done.set_result(True)
 
     def data_received(self, data: bytes) -> None:
         """Called when some data is received.
@@ -234,51 +283,6 @@ class ConnectionManager:
                 self._connection = None
                 self.back_off_connect_error.failure()
                 _LOGGER.warning("Error connecting: %s", ex)
-
-
-class BackOffStrategy(metaclass=ABCMeta):
-    """
-    Back-off strategy base class.
-    Create sub-classes to implement different strategies.
-    """
-
-    DEFAULT_MAX_DELAY_SEC: int = 60
-
-    @abstractmethod
-    def failure(self) -> None:
-        """Call this after a failure."""
-        pass
-
-    @abstractmethod
-    def reset(self) -> None:
-        """Call this after success to reset."""
-        pass
-
-    @property
-    @abstractmethod
-    def current_delay_sec(self) -> int:
-        """Current back-off delay in seconds."""
-        pass
-
-
-class ExponentialBackOff(BackOffStrategy):
-    """Exponential back-off strategy."""
-
-    def __init__(self) -> None:
-        self._delay = 0
-        self.max_delay = super().DEFAULT_MAX_DELAY_SEC
-
-    def failure(self) -> None:
-        self._delay = self._delay * 2
-        if self._delay == 0:
-            self._delay = 1
-
-    def reset(self) -> None:
-        self._delay = 0
-
-    @property
-    def current_delay_sec(self) -> int:
-        return self._delay if self._delay < self.max_delay else self.max_delay
 
 
 async def create_meter_tcp_connection(

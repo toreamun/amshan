@@ -200,11 +200,11 @@ async def main():
     asyncio.create_task(process_frames(queue))
 
     connect_task = asyncio.create_task(connection.connect_loop())
-    await connect_task
+#    await connect_task
 
-#    await asyncio.sleep(8)
-#    connection.close()
-#    await asyncio.sleep(2000)
+    await asyncio.sleep(8)
+    connection.close()
+    await asyncio.sleep(2000)
 
 
     LOG.info("Done...")
