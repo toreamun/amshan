@@ -1,3 +1,4 @@
+"""Mappings between OBIS codes and keys used in decoded data."""
 from typing import Dict, List
 
 NEK_HAN_FIELD_OBIS_LIST_VER_ID = "list_ver_id"

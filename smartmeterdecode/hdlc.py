@@ -1,6 +1,4 @@
-"""
-Use this module to read HDLC frames
-"""
+"""Use this module to read HDLC frames."""
 import logging
 import typing
 from typing import List, Optional
@@ -14,7 +12,11 @@ class HdlcFrameHeader:
     """The start (header) of an HdlcFrame."""
 
     def __init__(self, frame: "HdlcFrame") -> None:
-        """The header constructor used by parent frame"""
+        """
+        Initialize header.
+
+        Used by parent frame.
+        """
         self._frame = frame
         self._control_position = None
         self._is_header_good = None
@@ -31,8 +33,7 @@ class HdlcFrameHeader:
 
     @property
     def frame_format(self) -> Optional[int]:
-        """The value of frame format if the value has been read."""
-
+        """Return the value of frame format if the value has been read."""
         # The length of the frame format field is two bytes. It consists of three sub-fields referred to as the Format
         # type sub-field (4 bit), the Segmentation bit (S, 1 bit) and the frame length sub-field (11 bit).
         if len(self._frame) >= 2:
@@ -41,14 +42,14 @@ class HdlcFrameHeader:
 
     @property
     def frame_format_type(self) -> Optional[int]:
-        """The value of frame format type sub-field when frame format has been read."""
+        """Return the value of frame format type sub-field when frame format has been read."""
         if self.frame_format is not None:
             return (self.frame_format >> 12) & 0b1111
         return None
 
     @property
     def segmentation(self) -> Optional[bool]:
-        """The value of frame format Segmentation flag when frame format has been read."""
+        """Return the value of frame format Segmentation flag when frame format has been read."""
         if self.frame_format is not None:
             return ((self.frame_format >> 11) & 0x1) == 0x1
         return None
@@ -56,7 +57,8 @@ class HdlcFrameHeader:
     @property
     def frame_length(self) -> Optional[int]:
         """
-        The value of frame format length sub-field when frame format has been read.
+        Return the value of frame format length sub-field when frame format has been read.
+
         The value of the frame length subfield is the count of octets in the frame
         excluding the opening and closing frame flag sequences.
         """
@@ -67,9 +69,11 @@ class HdlcFrameHeader:
     @property
     def destination_address(self) -> Optional[bytearray]:
         """
-        The value of destination address when the field has been read.
+        Return the value of destination address when the field has been read.
+
         Depending on the direction of the data transfer, both the client and the server addresses can
         be destination or source addresses.
+
         The client address shall always be expressed on one byte.
         """
         if len(self._frame) >= 2:
@@ -79,9 +83,11 @@ class HdlcFrameHeader:
     @property
     def source_address(self) -> Optional[bytearray]:
         """
-        The value of source address when the field has been read.
+        Return the value of source address when the field has been read.
+
         Depending on the direction of the data transfer, both the client and the server addresses can
         be destination or source addresses.
+
         The client address shall always be expressed on one byte.
         """
         destination_adr = self.destination_address
@@ -92,7 +98,8 @@ class HdlcFrameHeader:
     @property
     def control(self) -> Optional[int]:
         """
-        The value of control field when the field has been read.
+        Return the value of control field when the field has been read.
+
         It indicates the type of commands or responses,
         and contains sequence numbers, where appropriate (frames I, RR and RNR).
         """
@@ -108,6 +115,7 @@ class HdlcFrameHeader:
     def header_check_sequence(self) -> Optional[int]:
         """
         Header check sequence (HCS) field when the field has been read.
+
         This check sequence is applied to only the header,
         i.e., the bits between the opening flag sequence and the header check sequence.
         """
@@ -127,6 +135,7 @@ class HdlcFrameHeader:
     def information_position(self) -> Optional[int]:
         """
         Information field position when the field position is known and is available.
+
         Frames that do not have an information field or have an empty information field,
         e.g., as with some supervisory frames, do not contain an HCS and FCS, only an FCS.
         """
@@ -136,7 +145,6 @@ class HdlcFrameHeader:
 
     def _get_address(self, position) -> Optional[bytearray]:
         """Get variable length address from position."""
-
         # As specified in ISO/IEC 13239:2002, 4.7.1, The address field range can be extended by reserving the first
         # transmitted bit (low-order) of each address octet which would then be set to binary zero to indicate that
         # the following octet is an extension of the address field. The format of the extended octet(s) shall be the
@@ -172,7 +180,8 @@ class HdlcFrameHeader:
 
 class HdlcFrame:
     """
-    Use this class to read HDLC frames. Call append for each byte.
+    Use this class to read HDLC frames by calling append for each byte.
+
     is_good is true when checksum is ok. This can be the case both when header is read
     and when done reading information.
     """
@@ -190,6 +199,7 @@ class HdlcFrame:
     def __len__(self) -> int:
         """
         Length of currently parsed bytes.
+
         Note that expected complete frame length is found in header when header has been read.
         """
         return len(self._frame_data)
@@ -203,21 +213,24 @@ class HdlcFrame:
     @property
     def frame_data(self) -> bytearray:
         """
-        Frame data bytes. Data has been unescaped when the reader uses octet frame stuffing (see constructor).
+        Return frame data bytes.
+
+        Data has been unescaped when the reader uses octet frame stuffing (see constructor).
         """
         return self._frame_data
 
     @property
     def is_good_ffc(self) -> bool:
         """
-        Current Fast Frame Check calculation state is good when true.
+        Return Current Fast Frame Check calculation state.
+
         Can be true for both end of header and body.
         """
         return self._ffc.is_good
 
     @property
     def is_expected_length(self) -> bool:
-        """True when current length is the same as length from header."""
+        """Return True when current length is the same as length from header."""
         return self._header.frame_length == len(self)
 
     @property
@@ -260,6 +273,7 @@ class HdlcFrameReader:
     ) -> None:
         """
         Construct HHdlcFrameReader.
+
         :param use_octet_stuffing: true to use octet stuffing (0x7D as escape octet)
         """
         self._use_octet_stuffing = use_octet_stuffing
@@ -271,17 +285,18 @@ class HdlcFrameReader:
 
     @property
     def unescape_next(self) -> bool:
-        """True if octet stuffing is used and next octet is escaped and must be unescaped."""
+        """Return True if octet stuffing is used and next octet is escaped and must be unescaped."""
         return self._unescape_next
 
     @property
     def is_in_hunt_mode(self) -> bool:
-        """True when reader is hunting for start of frame."""
+        """Return True when reader is hunting for start of frame."""
         return self._frame is None
 
     def read(self, data_chunk: bytes) -> List[HdlcFrame]:
         """
         Call this function to read chunks of bytes.
+
         :param data_chunk: next bytes to parsed.
         :return: frame when a frame is complete (both with correct and incorrect checksum).
         """
@@ -401,7 +416,7 @@ class HdlcFrameReader:
 
 
 class _ReaderBuffer:
-    """Buffer class used by HdlcFrameReader"""
+    """Buffer class used by HdlcFrameReader."""
 
     def __init__(self) -> None:
         self._buffer = bytearray()

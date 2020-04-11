@@ -1,3 +1,4 @@
+"""Decoding support for Aidon meters."""
 import construct
 
 from smartmeterdecode import cosem, obis_map
@@ -45,6 +46,7 @@ LlcPdu: construct.Struct = cosem.get_llc_pdu_struct(NotificationBody)
 
 
 def normalize_parsed_frame(frame: construct.Struct) -> dict:
+    """Convert data from meters construct structure to a dictionary with common key names."""
     list_items = frame.information.notification_body.list_items
 
     dictionary = {obis_map.NEK_HAN_FIELD_METER_MANUFACTURER: "Aidon"}
@@ -67,5 +69,6 @@ def normalize_parsed_frame(frame: construct.Struct) -> dict:
 
 
 def decode_frame(frame: bytes) -> dict:
+    """Decode meter LLC PDU frame as a dictionary."""
     parsed = LlcPdu.parse(frame)
     return normalize_parsed_frame(parsed)

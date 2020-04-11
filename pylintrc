@@ -1,0 +1,5 @@
+[MESSAGES CONTROL]
+# Reasons disabled:
+# format - handled by black
+disable=
+    format

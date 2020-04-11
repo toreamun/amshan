@@ -1,3 +1,4 @@
+"""Async meter connection module."""
 import asyncio
 import datetime
 import logging
@@ -12,7 +13,7 @@ from asyncio import (
     Event,
     Future,
     Queue,
-    ReadTransport,
+    Protocol,
 )
 from typing import Callable, ClassVar, Optional, Tuple
 
@@ -24,6 +25,7 @@ _LOGGER = logging.getLogger(__name__)
 class BackOffStrategy(metaclass=ABCMeta):
     """
     Back-off strategy base class.
+
     Create sub-classes to implement different strategies.
     """
 
@@ -42,7 +44,7 @@ class BackOffStrategy(metaclass=ABCMeta):
     @property
     @abstractmethod
     def current_delay_sec(self) -> int:
-        """Current back-off delay in seconds."""
+        """Return current back-off delay in seconds."""
         pass
 
 
@@ -50,28 +52,54 @@ class ExponentialBackOff(BackOffStrategy):
     """Exponential back-off strategy."""
 
     def __init__(self) -> None:
+        """Initialize ExponentialBackOff."""
         self._delay: int = 0
         self.max_delay: int = super().DEFAULT_MAX_DELAY_SEC
 
     def failure(self) -> None:
+        """Call this after a failure."""
         self._delay = self._delay * 2
         if self._delay == 0:
             self._delay = 1
 
     def reset(self) -> None:
+        """Call this after success to reset."""
         self._delay = 0
 
     @property
     def current_delay_sec(self) -> int:
+        """Return current back-off delay in seconds."""
         return self._delay if self._delay < self.max_delay else self.max_delay
 
 
-class SmartMeterProtocol(ReadTransport):
+class SmartMeterProtocol(Protocol):
+    """
+    Network protocol that reads smart meter frames from a stream and forwards them to a queue.
+
+    When the user wants to requests a transport to use with this protocol,
+    they pass a SmartMeterProtocol factory to a utility function (e.g.,
+    EventLoop.create_connection() or serial_asyncio.create_serial_connection).
+
+    Example:
+        await serial_asyncio.create_serial_connection(loop, lambda: SmartMeterProtocol(queue), url = "/dev/tty01")
+    """
+
+    # Total number of this class that has been created.
+    # The number is used when initializing trace id for new instances.
     total_instance_counter: ClassVar[int] = 0
 
-    def __init__(self, queue: Queue, frame_reader: hdlc.HdlcFrameReader = None) -> None:
+    def __init__(
+        self, destination_queue: Queue, frame_reader: hdlc.HdlcFrameReader = None
+    ) -> None:
+        """
+        Initialize SmartMeterProtocol.
+
+        :param destination_queue: destination queue for decoded frames.
+        :param frame_reader: optional frame reader.
+        A frame reader with both octet stuffing and abort sequence disabled is created if None.
+        """
         super().__init__()
-        self.queue: Queue = queue
+        self.queue: Queue = destination_queue
         self._done: Future = Future()
         self.id: int = SmartMeterProtocol.total_instance_counter
         self._frame_reader = (
@@ -85,6 +113,7 @@ class SmartMeterProtocol(ReadTransport):
 
     @property
     def done(self) -> typing.Awaitable:
+        """Return Awaitable that can be used to wait for connection to be lost or closed."""
         return self._done
 
     def _set_transport_info(self) -> None:
@@ -101,8 +130,10 @@ class SmartMeterProtocol(ReadTransport):
                 self._transport_info = str(self._transport)
 
     def connection_made(self, transport: BaseTransport) -> None:
-        """Called when a connection is made.
+        """
+        Connect the transport with this protocol instance.
 
+        Called when a connection is made.
         The argument is the transport representing the connection.
         To receive data, wait for data_received() calls.
         When the connection is closed, connection_lost() is called.
@@ -114,11 +145,15 @@ class SmartMeterProtocol(ReadTransport):
         )
 
     def connection_lost(self, exc: Optional[Exception]) -> None:
-        """Called when the connection is lost or closed.
+        """
+        Signal that the transport connected to this protocol instance has been lost or closed.
 
+        Called when the connection is lost or closed.
         The argument is an exception object or None (the latter
         meaning a regular EOF is received or the connection was
         aborted or closed).
+
+        This method set the Done property.
         """
         if exc:
             _LOGGER.warning(
@@ -150,16 +185,17 @@ class SmartMeterProtocol(ReadTransport):
         self._done.set_result(True)
 
     def data_received(self, data: bytes) -> None:
-        """Called when some data is received.
-
-        The argument is a bytes object.
-        """
+        """Receive data from the transport and put frame(s) on the queue if frame(s) are complete."""
         frames = self._frame_reader.read(data)
         for frame in frames:
             self.queue.put_nowait(frame)
 
     def eof_received(self) -> bool:
-        """Called when the other end signals it won’t send any more data"""
+        """
+        Return False to close the transport.
+
+        Called when the other end signals it won’t send any more data.
+        """
         _LOGGER.debug(
             "%s: eof_received - the other end (%s) signaled it won’t send any more data. Close transport",
             self._instance_id(),
@@ -176,6 +212,7 @@ class SmartMeterProtocol(ReadTransport):
 class ConnectionManager:
     """
     Maintain connection and reconnect if connection is lost.
+
     Reconnecting uses a back-off retry strategy, and has a simple circuit breaker for connection lost.
     """
 
@@ -187,9 +224,9 @@ class ConnectionManager:
     ) -> None:
         """
         Initialize class.
+
         :param connection_factory: A factory function that returns a Transport and SmartMeterProtocol tuple.
         """
-
         self._connection_factory: Callable[
             [], Tuple[BaseTransport, BaseProtocol]
         ] = connection_factory
@@ -219,6 +256,7 @@ class ConnectionManager:
     async def connect_loop(self):
         """
         Connect to meter using connection factory, and keep reconnecting if connection is lost.
+
         The connection is not reconnected on connection loss if close() was called on this instance.
         """
         while not self._is_closing.is_set():
@@ -289,7 +327,7 @@ async def create_meter_tcp_connection(
     queue: Queue, loop: Optional[AbstractEventLoop] = None, *args, **kwargs
 ) -> Tuple[BaseTransport, BaseProtocol]:
     """
-    Create TCP connection using :class:`SmartMeterProtocol`
+    Create TCP connection using :class:`SmartMeterProtocol`.
 
     :param queue: Queue for received frames
     :param loop: The event handler

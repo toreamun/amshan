@@ -1,3 +1,4 @@
+"""Decoding support for Kaifa meters."""
 from typing import List
 
 import construct
@@ -33,7 +34,7 @@ NotificationBody: construct.Struct = construct.Struct(
 LlcPdu: construct.Struct = cosem.get_llc_pdu_struct(NotificationBody)
 
 
-def get_field_lists() -> List[List[str]]:
+def _get_field_lists() -> List[List[str]]:
     item_order_list_3_three_phase = [
         obis_map.NEK_HAN_FIELD_OBIS_LIST_VER_ID,
         obis_map.NEK_HAN_FIELD_METER_ID,
@@ -74,7 +75,7 @@ def get_field_lists() -> List[List[str]]:
     ]
 
 
-_field_order_lists: List[List[str]] = get_field_lists()
+_field_order_lists: List[List[str]] = _get_field_lists()
 
 _field_scaling = {
     obis_map.NEK_HAN_FIELD_CURRENT_L1: -3,
@@ -87,6 +88,7 @@ _field_scaling = {
 
 
 def normalize_parsed_frame(frame: construct.Struct) -> dict:
+    """Convert data from meters construct structure to a dictionary with common key names."""
     list_items = frame.information.notification_body.list_items
 
     current_list_names: List[str] = next(
@@ -115,5 +117,6 @@ def normalize_parsed_frame(frame: construct.Struct) -> dict:
 
 
 def decode_frame(frame: bytes) -> dict:
+    """Decode meter LLC PDU frame as a dictionary."""
     parsed = LlcPdu.parse(frame)
     return normalize_parsed_frame(parsed)

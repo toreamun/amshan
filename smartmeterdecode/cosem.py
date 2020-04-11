@@ -1,5 +1,6 @@
+"""Contruct declarations for some COSEM types and structures."""
 import datetime
-from decimal import *
+from decimal import Decimal
 
 import construct
 
@@ -52,7 +53,7 @@ ObisCode = construct.ExprAdapter(
 )
 
 
-def type_code_to_type(type_code: construct.Enum):
+def _type_code_to_type(type_code: construct.Enum):
     return construct.Switch(
         type_code,
         {
@@ -127,7 +128,7 @@ DateTime = construct.Struct(
 Field = construct.FocusedSeq(
     "value",
     "content_type" / CommonDataTypes,
-    "value" / type_code_to_type(construct.this.content_type),
+    "value" / _type_code_to_type(construct.this.content_type),
 )
 
 ObisCodeOctedStringField = construct.FocusedSeq(
@@ -186,17 +187,6 @@ ScalerUnitField = construct.Struct(
     "unit" / UnitField,
 )
 
-
-def scaled_simple_value(unit, scale_exponent):
-    return construct.Struct(
-        "unscaled_value" / Field,
-        "scale" / construct.Computed(lambda ctx: Decimal(10) ** scale_exponent),
-        "scaled_value"
-        / construct.Computed(construct.this.unscaled_value * construct.this.scale),
-        "unit" / construct.Computed(unit),
-    )
-
-
 DateTimeField = construct.FocusedSeq(
     "value",
     construct.Const(CommonDataTypes.octet_string, CommonDataTypes),
@@ -227,7 +217,7 @@ LongInvokeIdAndPriority = construct.BitStruct(
 )
 
 
-def get_apdpu_struct(notification_body: construct.Struct) -> construct.Struct:
+def _get_apdpu_struct(notification_body: construct.Struct) -> construct.Struct:
     return construct.Struct(
         "Tag" / construct.Int8ub,
         "LongInvokeIdAndPriority" / LongInvokeIdAndPriority,
@@ -246,9 +236,10 @@ def get_apdpu_struct(notification_body: construct.Struct) -> construct.Struct:
 
 
 def get_llc_pdu_struct(notification_body: construct.Struct) -> construct.Struct:
+    """Get a LLC PDU struct wrapping supplied notification body."""
     return construct.Struct(
         "dsap" / construct.Int8ub,
         "ssap" / construct.Int8ub,
         "control" / construct.Int8ub,
-        "information" / get_apdpu_struct(notification_body),
+        "information" / _get_apdpu_struct(notification_body),
     )
