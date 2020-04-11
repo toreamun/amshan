@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='smartmeterdecode-toreamun',
-    version='0.1.2',
+    version='0.1.3',
     author="Tore Amundsen",
     author_email="tore@amundsen.org",
     description="Decode smart meter data",
@@ -13,7 +13,8 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     platforms = ["POSIX", "Windows"],
     url="https://github.com/pypa/sampleproject",
-    packages=setuptools.find_packages(),
+    packages=["smartmeterdecode"],
+    package_data={"smartmeterdecode": ["py.typed"]},
     keywords=[
         "meter",
         "han",
