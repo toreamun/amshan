@@ -1,5 +1,6 @@
 """Use this module to easily decode any supported meter frame format."""
-from typing import Optional
+from datetime import datetime
+from typing import Dict, Optional, Union
 
 import construct
 
@@ -32,7 +33,7 @@ class AutoDecoder:
             return decoder_name
         return None
 
-    def decode_frame(self, frame: bytes) -> Optional[dict]:
+    def decode_frame(self, frame: bytes) -> Optional[Dict[str, Union[str, int, float, datetime]]]:
         """
         Decode meter LLC PDU frame as a dictionary.
 

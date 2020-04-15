@@ -1,19 +1,20 @@
 import argparse
 import asyncio
-import concurrent
 import datetime
 import json
 import logging
-import socket
+import signal
 import sys
-from asyncio import AbstractEventLoop, BaseProtocol, BaseTransport
-from typing import Optional, Tuple
+import typing
+from asyncio import BaseProtocol, Queue
+from typing import Any, Optional, Tuple
 
 import serial_asyncio
-from serial import PARITY_NONE
 
-from smartmeterdecode import autodecoder, hdlc, meter_connection, obis_map
-from smartmeterdecode.meter_connection import SmartMeterProtocol
+from smartmeterdecode import autodecoder, hdlc, meter_connection
+from smartmeterdecode.meter_connection import (AsyncConnectionFactory,
+                                               MeterTransportProtocol,
+                                               SmartMeterProtocol)
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(levelname)7s: %(message)s", stream=sys.stderr,
@@ -21,15 +22,30 @@ logging.basicConfig(
 LOG = logging.getLogger("")
 
 
-def get_arg_parser():
+def get_arg_parser() -> argparse.ArgumentParser:
+    def valid_host_port(s: str) -> Tuple[str, str]:
+        host_and_port = s.split(":")
+        if len(host_and_port) == 2:
+            return host_and_port[0], host_and_port[1]
+        else:
+            msg = f"Not a valid host and port: '{s}'."
+            raise argparse.ArgumentTypeError(msg)
+
     parser = argparse.ArgumentParser("read HAN port")
-    parser.add_argument("-v", dest="verbose", default=False)
-    parser.add_argument(
-        "-s", dest="serialport", required=True, help="input serial port"
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "-host",
+        dest="hostandport",
+        type=valid_host_port,
+        help="input host and port separated by :",
     )
+    group.add_argument("-serial", dest="serialdevice", help="input serial port")
+
     parser.add_argument(
         "-sp",
         dest="ser_parity",
+        default="N",
         required=False,
         choices=["N", "O", "E"],
         help="input serial port parity",
@@ -37,6 +53,7 @@ def get_arg_parser():
     parser.add_argument(
         "-sb",
         dest="ser_baudrate",
+        default=2400,
         type=int,
         required=False,
         help="input serial port baud rate",
@@ -51,161 +68,89 @@ def get_arg_parser():
     parser.add_argument(
         "-dumpfile", dest="dumpfile", help="dump received bytes to file"
     )
+    parser.add_argument(
+        "-r",
+        dest="reconnect",
+        type=bool,
+        default=True,
+        help="automatic retry/reconnect meter connection",
+    )
+    parser.add_argument("-v", dest="verbose", default=False)
     return parser
 
 
-def json_converter(o):
+def json_converter(o: Any) -> Optional[str]:
     if isinstance(o, datetime.datetime):
         return o.isoformat()
     return None
 
 
-def hdlc_frame_received(frame: hdlc.HdlcFrame):
-    decoder = autodecoder.AutoDecoder()
+_decoder = autodecoder.AutoDecoder()
+
+
+def hdlc_frame_received(frame: hdlc.HdlcFrame) -> None:
     if frame.is_good_ffc and frame.is_expected_length:
-        LOG.debug("Got frame info content: %s", frame.information.hex())
-        decoded_frame = decoder.decode_frame(frame.information)
-        if decoded_frame:
-            json_frame = json.dumps(decoded_frame, default=json_converter)
-            LOG.debug("Decoded frame: %s", json_frame)
+        if frame.information:
+            LOG.debug("Got frame info content: %s", frame.information.hex())
+            decoded_frame = _decoder.decode_frame(frame.information)
+            if decoded_frame:
+                json_frame = json.dumps(decoded_frame, default=json_converter)
+                LOG.debug("Decoded frame: %s", json_frame)
+            else:
+                LOG.error("Could not decode frame: %s", frame.frame_data.hex())
         else:
-            LOG.error("Could not decode frame: %s", frame.frame_data.hex())
+            LOG.debug("Got empty frame")
     else:
         LOG.warning("Got invalid frame: %s", frame.frame_data.hex())
 
 
-async def process_frames(queue):
+async def process_frames(queue: 'Queue[hdlc.HdlcFrame]') -> None:
     while True:
-        try:
-            frame = await queue.get()
-            hdlc_frame_received(frame)
-        except Exception as ex:
-            LOG.error(ex)
-            raise
+        frame = await queue.get()
+        hdlc_frame_received(frame)
 
 
-async def read(args, queue):
-    frame_reader = hdlc.HdlcFrameReader(False)
-
-    try:
-        reader, writer = await serial_asyncio.open_serial_connection(
-            url=args.serialport
-        )
-
-        while True:
-            data = await reader.read(1024)
-            frames = frame_reader.read(data)
-            if len(frames):
-                for f in frames:
-                    await queue.put(f)
-
-        reader.close()
-        writer.close()
-    except Exception as ex:
-        LOG.error(ex)
-        raise
-
-
-async def get_meter_info(queue):
-    decoder = autodecoder.AutoDecoder()
-    for _ in range(10):
-        frame = await asyncio.wait_for(queue.get(), 12)
-        if frame.is_good_ffc and frame.is_expected_length:
-            decoded_frame = decoder.decode_frame(frame.information)
-            if decoded_frame:
-                if (
-                    obis_map.NEK_HAN_FIELD_METER_ID in decoded_frame
-                    and obis_map.NEK_HAN_FIELD_METER_MANUFACTURER
-                ):
-                    return (
-                        decoded_frame[obis_map.NEK_HAN_FIELD_METER_MANUFACTURER],
-                        decoded_frame[obis_map.NEK_HAN_FIELD_METER_ID]
-                    )
-    raise TimeoutError()
-
-
-async def create_meter_serial_connection(
-        queue: asyncio.Queue, loop: Optional[AbstractEventLoop] = None, *args, **kwargs
-) -> Tuple[BaseTransport, BaseProtocol]:
-    """
-    Create serial connection using :class:`SmartMeterProtocol`
-
-    :param queue: Queue for received frames
-    :param loop: The event handler
-    :param args: Passed to the :class:`serial.Serial` init function
-    :param kwargs: Passed to the :class:`serial.Serial` init function
-    :return: Tuple of transport and protocol
-    """
-    loop = loop if loop else asyncio.get_event_loop()
-    return await serial_asyncio.create_serial_connection(
-        loop, lambda: SmartMeterProtocol(queue), *args, **kwargs
-    )
-
-
-async def main():
+async def main() -> None:
     args = get_arg_parser().parse_args()
-
-    queue = asyncio.Queue()
-
-
     loop = asyncio.get_event_loop()
 
-    host = "ustaoset.amundsen.org"
-    port = 3001
-
-    #    await asyncio.wait_for(loop.sock_connect(sock, address),timeout=1)
-
-    # try:
-    #     transport, protocol = await loop.create_connection(
-    #         lambda: meter_connection.SmartMeterProtocol(queue),
-    #         host=host,
-    #         port=port,
-    #     )
-    # except TimeoutError as ex:
-    #     LOG.exception("con")
-    #     pass
-    #
-    # async def read_queue():
-    #     while True:
-    #         await queue.get()
-    #         LOG.debug("Got frame from queue")
-    #
-    # read_queue_task = asyncio.create_task(read_queue())
-    #
-    # await asyncio.sleep(15)
-    #
-    # transport.close()
-    #
-    # await asyncio.sleep(2)
-    #
-    # await read_queue_task
-
-
-#    meter_info = await get_meter_info(queue)
-#    LOG.debug(meter_info)
-
-    #    c = await serial_asyncio.open_serial_connection(url = "/dev/tty01", baudrate=2400, parity="E", bytesize=8)
-
-    def tcp_connection_factory():
-        return meter_connection.create_meter_tcp_connection(
-            queue, host="ustaoset.amundsen.org", port="3001"
-        )
-
-    def serial_connection_factory():
-        return meter_connection.create_meter_serial_connection(
-            loop, queue, url=args.serialport)
-
-    connection = meter_connection.ConnectionManager(tcp_connection_factory)
+    queue: Queue[hdlc.HdlcFrame] = Queue()
 
     asyncio.create_task(process_frames(queue))
 
-    connect_task = asyncio.create_task(connection.connect_loop())
-#    await connect_task
+    async def tcp_connection_factory() -> MeterTransportProtocol:
+        host, port = args.hostandport
+        connection = await loop.create_connection(
+            lambda: typing.cast(BaseProtocol, SmartMeterProtocol(queue)),
+            host=host,
+            port=port,
+        )
+        return typing.cast(MeterTransportProtocol, connection)
 
-    await asyncio.sleep(8)
-    connection.close()
-    await asyncio.sleep(2000)
+    async def serial_connection_factory() -> MeterTransportProtocol:
+        connection = await serial_asyncio.create_serial_connection(
+            loop,
+            lambda: SmartMeterProtocol(queue),
+            url=args.serialdevice,
+            baudrate=args.ser_baudrate,
+            parity=args.ser_parity,
+        )
+        return typing.cast(MeterTransportProtocol, connection)
 
+    connection_factory: AsyncConnectionFactory = (
+        serial_connection_factory if args.serialdevice else tcp_connection_factory
+    )
+
+    if args.reconnect:
+        # use high-level ConnectionManager
+        connection_manager = meter_connection.ConnectionManager(connection_factory)
+        loop.add_signal_handler(signal.SIGINT, connection_manager.close)
+        await connection_manager.connect_loop()
+    else:
+        # use low-level transport and protocol
+        transport, protocol = await connection_factory()
+        loop.add_signal_handler(signal.SIGINT, transport.close)
+        await protocol.done
 
     LOG.info("Done...")
 

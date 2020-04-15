@@ -1,4 +1,7 @@
 """Decoding support for Kamstrup meters."""
+from datetime import datetime
+from typing import Dict, Union
+
 import construct
 
 from smartmeterdecode import cosem, obis_map
@@ -36,7 +39,9 @@ _field_scaling = {
 }
 
 
-def normalize_parsed_frame(frame: construct.Struct) -> dict:
+def normalize_parsed_frame(
+    frame: construct.Struct,
+) -> Dict[str, Union[str, int, float, datetime]]:
     """Convert data from meters construct structure to a dictionary with common key names."""
     dictionary = {
         obis_map.NEK_HAN_FIELD_METER_MANUFACTURER: "Kamstrup",
@@ -67,7 +72,7 @@ def normalize_parsed_frame(frame: construct.Struct) -> dict:
     return dictionary
 
 
-def decode_frame(frame: bytes) -> dict:
+def decode_frame(frame: bytes) -> Dict[str, Union[str, int, float, datetime]]:
     """Decode meter LLC PDU frame as a dictionary."""
     parsed = LlcPdu.parse(frame)
     return normalize_parsed_frame(parsed)

@@ -1,6 +1,7 @@
 """Contruct declarations for some COSEM types and structures."""
 import datetime
 from decimal import Decimal
+from typing import Any
 
 import construct
 
@@ -53,7 +54,7 @@ ObisCode = construct.ExprAdapter(
 )
 
 
-def _type_code_to_type(type_code: construct.Enum):
+def _type_code_to_type(type_code: construct.Enum,) -> Any:
     return construct.Switch(
         type_code,
         {
@@ -93,7 +94,7 @@ DateTime = construct.Struct(
     "clock_status_byte" / construct.Peek(OptionalDateTimeByte),
     "clock_status"
     / construct.If(
-        0xFF != construct.this.clock_status_byte,
+        construct.this.clock_status_byte != 0xFF,
         construct.BitStruct(
             "invalid_value" / construct.BitsInteger(1),
             "doubtful_value" / construct.BitsInteger(1),
@@ -103,7 +104,7 @@ DateTime = construct.Struct(
             "daylight_saving_active" / construct.BitsInteger(1),
         ),
     ),
-    construct.If(0xFF == construct.this.clock_status_byte, construct.Int8ub),
+    construct.If(construct.this.clock_status_byte == 0xFF, construct.Int8ub),
     "datetime"
     / construct.Computed(
         lambda ctx: datetime.datetime(

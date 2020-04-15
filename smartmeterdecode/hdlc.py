@@ -17,11 +17,11 @@ class HdlcFrameHeader:
 
         Used by parent frame.
         """
-        self._frame = frame
-        self._control_position = None
-        self._is_header_good = None
+        self._frame: HdlcFrame = frame
+        self._control_position: Optional[int] = None
+        self._is_header_good: Optional[bool] = None
 
-    def update(self):
+    def update(self) -> None:
         """Update fields when more frame data has been read. Used by parent HdlcFrame."""
         if self._control_position is None and len(self._frame) > 3:
             self._control_position = self._get_control_field_position()
@@ -143,7 +143,7 @@ class HdlcFrameHeader:
             return self._control_position + 3
         return None
 
-    def _get_address(self, position) -> Optional[bytearray]:
+    def _get_address(self, position: int) -> Optional[bytearray]:
         """Get variable length address from position."""
         # As specified in ISO/IEC 13239:2002, 4.7.1, The address field range can be extended by reserving the first
         # transmitted bit (low-order) of each address octet which would then be set to binary zero to indicate that
@@ -304,7 +304,7 @@ class HdlcFrameReader:
 
         self._buffer.extend(data_chunk)
 
-        if self.is_in_hunt_mode:
+        if self._frame is None:  # in hunt mode
             self._buffer.trim_buffer_to_flag_or_end()
 
         while self._buffer.is_available:
@@ -333,9 +333,9 @@ class HdlcFrameReader:
         is_flag = current == self.FLAG_SEQUENCE
         if is_flag:
             frame_complete = self._handle_flag_sequence()
-        elif not self.is_in_hunt_mode:
+        elif self._frame is not None:  # not in hunt mode
             self._append_to_frame(current)
-            if len(typing.cast(HdlcFrame, self._frame)) > HdlcFrame.MAX_FRAME_LENGTH:
+            if len(self._frame) > HdlcFrame.MAX_FRAME_LENGTH:
                 _LOGGER.warning(
                     "Max frame length reached. Discard frame: %s",
                     self._raw_frame_data.hex(),
@@ -345,10 +345,10 @@ class HdlcFrameReader:
 
         return frame_complete
 
-    def _handle_flag_sequence(self):
+    def _handle_flag_sequence(self) -> bool:
         frame_complete = False
 
-        if self.is_in_hunt_mode:
+        if self._frame is None:
             _LOGGER.debug("Found flag sequence in frame hunt mode")
             self._start_frame()
 
@@ -391,7 +391,8 @@ class HdlcFrameReader:
 
         return frame_complete
 
-    def _append_to_frame(self, current):
+    def _append_to_frame(self, current: int) -> None:
+        assert self._frame is not None
         self._raw_frame_data.append(current)
         if self._use_octet_stuffing:
             if self._unescape_next:
@@ -406,11 +407,11 @@ class HdlcFrameReader:
         else:
             self._frame.append(current)
 
-    def _start_frame(self):
+    def _start_frame(self) -> None:
         self._frame = HdlcFrame()
         self._raw_frame_data.clear()
 
-    def _goto_hunt_mode(self):
+    def _goto_hunt_mode(self) -> None:
         self._frame = None
         self._buffer.trim_buffer_to_flag_or_end()
 
@@ -426,12 +427,10 @@ class _ReaderBuffer:
     def is_available(self) -> bool:
         return len(self._buffer) > self._buffer_pos
 
-    def pop(self) -> Optional[int]:
-        if self.is_available:
-            byte = self._buffer[self._buffer_pos]
-            self._buffer_pos += 1
-            return byte
-        return None
+    def pop(self) -> int:
+        byte = self._buffer[self._buffer_pos]
+        self._buffer_pos += 1
+        return byte
 
     def extend(self, data_chunk: bytes) -> None:
         self._buffer.extend(data_chunk)

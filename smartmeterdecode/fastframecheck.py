@@ -1,14 +1,14 @@
 """Compute or check checksum using a 16-bit Fast Frame Check Sequence (FCS) derived from RFC1662."""
-from array import array
+from typing import List
 
 
-def _compute_fcs_16_crc_table():
+def _compute_fcs_16_crc_table() -> List[int]:
     """Generate a FCS-16 table."""
     polynomial = 0x8408  # The FCS-16 generator polynomial: x**0 + x**5 + x**12 + x**16.
-    crc_table = array("H")
+    crc_table = [] * 256
     for byte in range(256):
         crc = 0
-        for bit in range(8):
+        for _ in range(8):
             if (byte ^ crc) & 1:
                 crc = (crc >> 1) ^ polynomial
             else:
@@ -31,7 +31,7 @@ class FastFrameCheckSequence16:
         self._crc_value = self.INIT_FCS_16
 
     @staticmethod
-    def _next(crc, byte):
+    def _next(crc: int, byte: int) -> int:
         """Calculate a new fcs CRC given the current CRC value and the new data."""
         crc_index = (crc ^ byte) & 0xFF
         return (crc >> 8) ^ FastFrameCheckSequence16.fast_frame_check_crc_table[

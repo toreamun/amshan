@@ -10,20 +10,20 @@ def test_decode_frame():
 
     decoded = decoder.decode_frame(tests.test_kamstrup.list_1_three_phase)
     assert isinstance(decoded, dict)
-    assert decoder.previous_success_decoder is "Kamstrup"
+    assert decoder.previous_success_decoder == "Kamstrup"
 
     decoded = decoder.decode_frame(tests.test_kamstrup.list_2_three_phase)
     assert isinstance(decoded, dict)
-    assert decoder.previous_success_decoder is "Kamstrup"
+    assert decoder.previous_success_decoder == "Kamstrup"
 
     decoded = decoder.decode_frame(tests.test_aidon.list_1)
     assert isinstance(decoded, dict)
-    assert decoder.previous_success_decoder is "Aidon"
+    assert decoder.previous_success_decoder == "Aidon"
 
     decoded = decoder.decode_frame(tests.test_kaifa.list_1)
     assert isinstance(decoded, dict)
-    assert decoder.previous_success_decoder is "Kaifa"
+    assert decoder.previous_success_decoder == "Kaifa"
 
     decoded = decoder.decode_frame(bytes([1, 2, 3, 4, 5]))
     assert decoded is None
-    assert decoder.previous_success_decoder is "Kaifa"
+    assert decoder.previous_success_decoder == "Kaifa"

@@ -2,22 +2,13 @@
 import asyncio
 import datetime
 import logging
-import typing
 from abc import ABCMeta, abstractmethod
-from asyncio import (
-    FIRST_COMPLETED,
-    AbstractEventLoop,
-    BaseProtocol,
-    BaseTransport,
-    CancelledError,
-    Event,
-    Future,
-    Queue,
-    Protocol,
-)
-from typing import Callable, ClassVar, Optional, Tuple
+from asyncio import (FIRST_COMPLETED, BaseTransport, CancelledError, Event,
+                     Future, Protocol, Queue)
+from typing import Awaitable, Callable, ClassVar, Optional, Tuple
 
 from smartmeterdecode import hdlc
+from smartmeterdecode.hdlc import HdlcFrame
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,18 +25,15 @@ class BackOffStrategy(metaclass=ABCMeta):
     @abstractmethod
     def failure(self) -> None:
         """Call this after a failure."""
-        pass
 
     @abstractmethod
     def reset(self) -> None:
         """Call this after success to reset."""
-        pass
 
     @property
     @abstractmethod
     def current_delay_sec(self) -> int:
         """Return current back-off delay in seconds."""
-        pass
 
 
 class ExponentialBackOff(BackOffStrategy):
@@ -89,7 +77,9 @@ class SmartMeterProtocol(Protocol):
     total_instance_counter: ClassVar[int] = 0
 
     def __init__(
-        self, destination_queue: Queue, frame_reader: hdlc.HdlcFrameReader = None
+        self,
+        destination_queue: 'Queue[hdlc.HdlcFrame]',
+        frame_reader: Optional[hdlc.HdlcFrameReader] = None,
     ) -> None:
         """
         Initialize SmartMeterProtocol.
@@ -99,8 +89,8 @@ class SmartMeterProtocol(Protocol):
         A frame reader with both octet stuffing and abort sequence disabled is created if None.
         """
         super().__init__()
-        self.queue: Queue = destination_queue
-        self._done: Future = Future()
+        self.queue: Queue[HdlcFrame] = destination_queue
+        self._done: Future[None] = Future()
         self.id: int = SmartMeterProtocol.total_instance_counter
         self._frame_reader = (
             frame_reader
@@ -112,13 +102,13 @@ class SmartMeterProtocol(Protocol):
         SmartMeterProtocol.total_instance_counter += 1
 
     @property
-    def done(self) -> typing.Awaitable:
+    def done(self) -> Awaitable[None]:
         """Return Awaitable that can be used to wait for connection to be lost or closed."""
         return self._done
 
     def _set_transport_info(self) -> None:
         if self._transport:
-            if hasattr(self._transport, "serial"):  # type: ignore
+            if hasattr(self._transport, "serial"):
                 self._transport_info = str(self._transport.serial)  # type: ignore
             else:
                 peer_name = self._transport.get_extra_info("peername")
@@ -182,7 +172,7 @@ class SmartMeterProtocol(Protocol):
                     ex,
                 )
 
-        self._done.set_result(True)
+        self._done.set_result(None)
 
     def data_received(self, data: bytes) -> None:
         """Receive data from the transport and put frame(s) on the queue if frame(s) are complete."""
@@ -209,6 +199,11 @@ class SmartMeterProtocol(Protocol):
         return f"{self.__class__.__name__}[{self.id}]"
 
 
+MeterTransportProtocol = Tuple[BaseTransport, SmartMeterProtocol]
+
+AsyncConnectionFactory = Callable[[], Awaitable[MeterTransportProtocol]]
+
+
 class ConnectionManager:
     """
     Maintain connection and reconnect if connection is lost.
@@ -219,18 +214,17 @@ class ConnectionManager:
     DEFAULT_CONNECTION_LOST_BACK_OFF_THRESHOLD: int = 5
     DEFAULT_CONNECTION_LOST_BACK_OFF_SLEEP_SEC: int = 5
 
-    def __init__(
-        self, connection_factory: Callable[[], Tuple[BaseTransport, BaseProtocol]],
-    ) -> None:
+    def __init__(self, connection_factory: AsyncConnectionFactory,) -> None:
         """
         Initialize class.
 
         :param connection_factory: A factory function that returns a Transport and SmartMeterProtocol tuple.
         """
-        self._connection_factory: Callable[
-            [], Tuple[BaseTransport, BaseProtocol]
-        ] = connection_factory
-        self._connection: Optional[Tuple[BaseTransport, BaseProtocol]] = None
+        if not asyncio.iscoroutinefunction(connection_factory):
+            raise ValueError("Factory must be awaitable.")
+
+        self._connection_factory: AsyncConnectionFactory = connection_factory
+        self._connection: Optional[MeterTransportProtocol] = None
         self._is_closing: Event = Event()
 
         self.back_off_connect_error: BackOffStrategy = ExponentialBackOff()
@@ -244,7 +238,7 @@ class ConnectionManager:
         self._connection_lost_last_time: Optional[datetime.datetime] = None
         self._connection_lost_sleep_before_reconnect: bool = False
 
-    def close(self):
+    def close(self) -> None:
         """Close current connection, if any, and stop reconnecting."""
         self._is_closing.set()
         if self._connection:
@@ -253,7 +247,7 @@ class ConnectionManager:
             transport.close()
             self._connection = None
 
-    async def connect_loop(self):
+    async def connect_loop(self) -> None:
         """
         Connect to meter using connection factory, and keep reconnecting if connection is lost.
 
@@ -261,14 +255,14 @@ class ConnectionManager:
         """
         while not self._is_closing.is_set():
             await asyncio.wait(
-                [self._try_connect(), self._is_closing.wait()],
+                (self._try_connect(), self._is_closing.wait()),
                 return_when=FIRST_COMPLETED,
             )
 
             if self._connection:
                 _, protocol = self._connection
                 await asyncio.wait(
-                    [protocol.done, self._is_closing.wait()],
+                    (protocol.done, self._is_closing.wait()),
                     return_when=FIRST_COMPLETED,
                 )
 
@@ -283,7 +277,7 @@ class ConnectionManager:
 
         _LOGGER.info("Connect loop done")
 
-    def _update_connection_lost_circuit_breaker(self):
+    def _update_connection_lost_circuit_breaker(self) -> None:
         now = datetime.datetime.utcnow()
         if self._connection_lost_last_time:
             delta = now - self._connection_lost_last_time
@@ -292,7 +286,8 @@ class ConnectionManager:
             )
         self._connection_lost_last_time = now
 
-    async def _try_connect(self):
+    def _get_back_off_time(self) -> int:
+        sleep_time = 0
         current_connect_error_delay = self.back_off_connect_error.current_delay_sec
         if (
             current_connect_error_delay > 0
@@ -308,12 +303,18 @@ class ConnectionManager:
             _LOGGER.info(
                 "Back-off for %d sec before reconnecting", sleep_time,
             )
+        return sleep_time
+
+    async def _try_connect(self) -> None:
+        sleep_time = self._get_back_off_time()
+        if sleep_time > 0:
             await asyncio.sleep(sleep_time)
 
         if not self._is_closing.is_set():
             try:
                 _LOGGER.debug("Try to connect")
                 self._connection = await self._connection_factory()
+
                 self.back_off_connect_error.reset()
             except CancelledError:
                 raise
@@ -321,21 +322,3 @@ class ConnectionManager:
                 self._connection = None
                 self.back_off_connect_error.failure()
                 _LOGGER.warning("Error connecting: %s", ex)
-
-
-async def create_meter_tcp_connection(
-    queue: Queue, loop: Optional[AbstractEventLoop] = None, *args, **kwargs
-) -> Tuple[BaseTransport, BaseProtocol]:
-    """
-    Create TCP connection using :class:`SmartMeterProtocol`.
-
-    :param queue: Queue for received frames
-    :param loop: The event handler
-    :param args: Passed to the :class:`loop.create_connection`
-    :param kwargs: Passed to the :class:`loop.create_connection`
-    :return: Tuple of transport and protocol
-    """
-    loop = loop if loop else asyncio.get_event_loop()
-    return await loop.create_connection(
-        lambda: typing.cast(BaseProtocol, SmartMeterProtocol(queue)), *args, **kwargs
-    )

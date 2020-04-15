@@ -1,5 +1,6 @@
 """Decoding support for Kaifa meters."""
-from typing import List
+from datetime import datetime
+from typing import Dict, List, Union
 
 import construct
 
@@ -77,7 +78,7 @@ def _get_field_lists() -> List[List[str]]:
 
 _field_order_lists: List[List[str]] = _get_field_lists()
 
-_field_scaling = {
+_FIELD_SCALING = {
     obis_map.NEK_HAN_FIELD_CURRENT_L1: -3,
     obis_map.NEK_HAN_FIELD_CURRENT_L2: -3,
     obis_map.NEK_HAN_FIELD_CURRENT_L3: -3,
@@ -87,7 +88,7 @@ _field_scaling = {
 }
 
 
-def normalize_parsed_frame(frame: construct.Struct) -> dict:
+def normalize_parsed_frame(frame: construct.Struct) -> Dict[str, Union[str, int, float, datetime]]:
     """Convert data from meters construct structure to a dictionary with common key names."""
     list_items = frame.information.notification_body.list_items
 
@@ -106,7 +107,7 @@ def normalize_parsed_frame(frame: construct.Struct) -> dict:
         if element_name == obis_map.NEK_HAN_FIELD_METER_DATETIME:
             dictionary[element_name] = measure.value.datetime
         else:
-            scale = _field_scaling.get(element_name, None)
+            scale = _FIELD_SCALING.get(element_name, None)
             if scale:
                 scaled_value = measure.value * (10 ** scale)
                 dictionary[element_name] = scaled_value
@@ -116,7 +117,7 @@ def normalize_parsed_frame(frame: construct.Struct) -> dict:
     return dictionary
 
 
-def decode_frame(frame: bytes) -> dict:
+def decode_frame(frame: bytes) -> Dict[str, Union[str, int, float, datetime]]:
     """Decode meter LLC PDU frame as a dictionary."""
     parsed = LlcPdu.parse(frame)
     return normalize_parsed_frame(parsed)
