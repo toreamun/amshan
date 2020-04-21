@@ -11,10 +11,11 @@ from typing import Any, Optional, Tuple
 
 import serial_asyncio
 
-from smartmeterdecode import autodecoder, hdlc, meter_connection
+from smartmeterdecode import autodecoder
 from smartmeterdecode.meter_connection import (AsyncConnectionFactory,
+                                               ConnectionManager,
                                                MeterTransportProtocol,
-                                               SmartMeterProtocol)
+                                               SmartMeterFrameContentProtocol)
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(levelname)7s: %(message)s", stream=sys.stderr,
@@ -88,40 +89,33 @@ def json_converter(o: Any) -> Optional[str]:
 _decoder = autodecoder.AutoDecoder()
 
 
-def hdlc_frame_received(frame: hdlc.HdlcFrame) -> None:
-    if frame.is_good_ffc and frame.is_expected_length:
-        if frame.information:
-            LOG.debug("Got frame info content: %s", frame.information.hex())
-            decoded_frame = _decoder.decode_frame(frame.information)
-            if decoded_frame:
-                json_frame = json.dumps(decoded_frame, default=json_converter)
-                LOG.debug("Decoded frame: %s", json_frame)
-            else:
-                LOG.error("Could not decode frame: %s", frame.frame_data.hex())
-        else:
-            LOG.debug("Got empty frame")
+def measure_received(frame: bytearray) -> None:
+    decoded_frame = _decoder.decode_frame(frame)
+    if decoded_frame:
+        json_frame = json.dumps(decoded_frame, default=json_converter)
+        LOG.debug("Decoded frame: %s", json_frame)
     else:
-        LOG.warning("Got invalid frame: %s", frame.frame_data.hex())
+        LOG.error("Could not decode frame content: %s", frame.hex())
 
 
-async def process_frames(queue: 'Queue[hdlc.HdlcFrame]') -> None:
+async def process_frames(queue: "Queue[bytearray]") -> None:
     while True:
         frame = await queue.get()
-        hdlc_frame_received(frame)
+        measure_received(frame)
 
 
 async def main() -> None:
     args = get_arg_parser().parse_args()
     loop = asyncio.get_event_loop()
 
-    queue: Queue[hdlc.HdlcFrame] = Queue()
+    queue: Queue[bytearray] = Queue()
 
     asyncio.create_task(process_frames(queue))
 
     async def tcp_connection_factory() -> MeterTransportProtocol:
         host, port = args.hostandport
         connection = await loop.create_connection(
-            lambda: typing.cast(BaseProtocol, SmartMeterProtocol(queue)),
+            lambda: typing.cast(BaseProtocol, SmartMeterFrameContentProtocol(queue)),
             host=host,
             port=port,
         )
@@ -130,7 +124,7 @@ async def main() -> None:
     async def serial_connection_factory() -> MeterTransportProtocol:
         connection = await serial_asyncio.create_serial_connection(
             loop,
-            lambda: SmartMeterProtocol(queue),
+            lambda: SmartMeterFrameContentProtocol(queue),
             url=args.serialdevice,
             baudrate=args.ser_baudrate,
             parity=args.ser_parity,
@@ -143,7 +137,7 @@ async def main() -> None:
 
     if args.reconnect:
         # use high-level ConnectionManager
-        connection_manager = meter_connection.ConnectionManager(connection_factory)
+        connection_manager = ConnectionManager(connection_factory)
         loop.add_signal_handler(signal.SIGINT, connection_manager.close)
         await connection_manager.connect_loop()
     else:

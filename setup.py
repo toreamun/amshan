@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="smartmeterdecode-toreamun",
-    version="0.1.5",
+    version="0.1.6",
     author="Tore Amundsen",
     author_email="tore@amundsen.org",
     description="Decode smart meter data",
