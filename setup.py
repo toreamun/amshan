@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="smartmeterdecode-toreamun",
-    version="0.1.6",
+    version="0.2.0",
     author="Tore Amundsen",
     author_email="tore@amundsen.org",
     description="Decode smart meter data",
@@ -33,4 +33,5 @@ setuptools.setup(
     ],
     python_requires=">=3.6",
     install_requires=["construct"],
+    extras_require={"serial": ["pyserial-asyncio>=0.4"],},
 )

@@ -5,17 +5,19 @@ import json
 import logging
 import signal
 import sys
-import typing
-from asyncio import BaseProtocol, Queue
+from asyncio import Queue
 from typing import Any, Optional, Tuple
 
-import serial_asyncio
-
 from smartmeterdecode import autodecoder
-from smartmeterdecode.meter_connection import (AsyncConnectionFactory,
-                                               ConnectionManager,
-                                               MeterTransportProtocol,
-                                               SmartMeterFrameContentProtocol)
+from smartmeterdecode.meter_connection import (
+    AsyncConnectionFactory,
+    ConnectionManager,
+    MeterTransportProtocol,
+)
+from smartmeterdecode.serial_connection_factory import (
+    create_serial_frame_content_connection,
+)
+from smartmeterdecode.tcp_connection_factory import create_tcp_frame_content_connection
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(levelname)7s: %(message)s", stream=sys.stderr,
@@ -114,22 +116,16 @@ async def main() -> None:
 
     async def tcp_connection_factory() -> MeterTransportProtocol:
         host, port = args.hostandport
-        connection = await loop.create_connection(
-            lambda: typing.cast(BaseProtocol, SmartMeterFrameContentProtocol(queue)),
-            host=host,
-            port=port,
-        )
-        return typing.cast(MeterTransportProtocol, connection)
+        return await create_tcp_frame_content_connection(queue, loop, host, port)
 
     async def serial_connection_factory() -> MeterTransportProtocol:
-        connection = await serial_asyncio.create_serial_connection(
-            loop,
-            lambda: SmartMeterFrameContentProtocol(queue),
+        return await create_serial_frame_content_connection(
+            queue,
+            loop=loop,
             url=args.serialdevice,
             baudrate=args.ser_baudrate,
             parity=args.ser_parity,
         )
-        return typing.cast(MeterTransportProtocol, connection)
 
     connection_factory: AsyncConnectionFactory = (
         serial_connection_factory if args.serialdevice else tcp_connection_factory

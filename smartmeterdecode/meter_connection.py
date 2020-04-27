@@ -3,8 +3,15 @@ import asyncio
 import datetime
 import logging
 from abc import ABCMeta, abstractmethod
-from asyncio import (FIRST_COMPLETED, BaseTransport, CancelledError, Event,
-                     Future, Protocol, Queue)
+from asyncio import (
+    FIRST_COMPLETED,
+    BaseTransport,
+    CancelledError,
+    Event,
+    Future,
+    Protocol,
+    Queue,
+)
 from typing import Awaitable, Callable, ClassVar, Optional, Tuple
 
 from smartmeterdecode import hdlc
@@ -71,10 +78,7 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
     # The number is used when initializing trace id for new instances.
     total_instance_counter: ClassVar[int] = 0
 
-    def __init__(
-        self,
-        frame_reader: Optional[hdlc.HdlcFrameReader] = None,
-    ) -> None:
+    def __init__(self, frame_reader: Optional[hdlc.HdlcFrameReader] = None,) -> None:
         """
         Initialize SmartMeterProtocol.
 
@@ -209,7 +213,7 @@ class SmartMeterFrameProtocol(SmartMeterBaseProtocol):
 
     def __init__(
         self,
-        destination_queue: 'Queue[hdlc.HdlcFrame]',
+        destination_queue: "Queue[hdlc.HdlcFrame]",
         frame_reader: Optional[hdlc.HdlcFrameReader] = None,
     ) -> None:
         """
@@ -241,7 +245,7 @@ class SmartMeterFrameContentProtocol(SmartMeterBaseProtocol):
 
     def __init__(
         self,
-        destination_queue: 'Queue[bytearray]',
+        destination_queue: "Queue[bytearray]",
         frame_reader: Optional[hdlc.HdlcFrameReader] = None,
     ) -> None:
         """
