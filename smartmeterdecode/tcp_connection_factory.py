@@ -32,7 +32,7 @@ async def create_tcp_frame_connection(
 
 
 async def create_tcp_frame_content_connection(
-    queue: "Queue[bytearray]", loop: Optional[AbstractEventLoop], *args, **kwargs,
+    queue: "Queue[bytes]", loop: Optional[AbstractEventLoop], *args, **kwargs,
 ) -> MeterTransportProtocol:
     """
     Create TCP connection using SmartMeterFrameContentProtocol.

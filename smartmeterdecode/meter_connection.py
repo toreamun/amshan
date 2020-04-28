@@ -245,7 +245,7 @@ class SmartMeterFrameContentProtocol(SmartMeterBaseProtocol):
 
     def __init__(
         self,
-        destination_queue: "Queue[bytearray]",
+        destination_queue: "Queue[bytes]",
         frame_reader: Optional[hdlc.HdlcFrameReader] = None,
     ) -> None:
         """
@@ -256,7 +256,7 @@ class SmartMeterFrameContentProtocol(SmartMeterBaseProtocol):
         A frame reader with both octet stuffing and abort sequence disabled is created if None.
         """
         super().__init__(frame_reader)
-        self.queue: Queue[bytearray] = destination_queue
+        self.queue: Queue[bytes] = destination_queue
 
     def frame_received(self, frame: HdlcFrame) -> None:
         """
