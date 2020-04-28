@@ -89,7 +89,7 @@ def dump_to_file(dump_data: bytes):
 def hdlc_frame_received(frame: hdlc.HdlcFrame):
     if frame.is_good_ffc and frame.is_expected_length:
         LOG.debug("Got frame info content: %s", frame.information.hex())
-        decoded_frame = decoder.decode_frame(frame.information)
+        decoded_frame = decoder.decode_frame_content(frame.information)
         if decoded_frame:
             json_frame = json.dumps(decoded_frame, default=json_converter)
             LOG.debug("Decoded frame: %s", json_frame)

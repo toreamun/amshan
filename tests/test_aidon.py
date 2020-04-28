@@ -73,16 +73,16 @@ class TestParseAidon:
 
 class TestDecodeAidon:
     def test_decode_frame_list_1(self):
-        decoded = aidon.decode_frame(list_1)
+        decoded = aidon.decode_frame_content(list_1)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_2(self):
-        decoded = aidon.decode_frame(list_2)
+        decoded = aidon.decode_frame_content(list_2)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_3(self):
-        decoded = aidon.decode_frame(list_3)
+        decoded = aidon.decode_frame_content(list_3)
         assert isinstance(decoded, dict)
         pprint(decoded)

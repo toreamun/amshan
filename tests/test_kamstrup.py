@@ -89,16 +89,16 @@ class TestParseKamstrup:
 
 class TestDecodeKamstrup:
     def test_decode_frame_list_1_three_phase(self):
-        decoded = kamstrup.decode_frame(list_1_three_phase)
+        decoded = kamstrup.decode_frame_content(list_1_three_phase)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_2_three_phase(self):
-        decoded = kamstrup.decode_frame(list_2_three_phase)
+        decoded = kamstrup.decode_frame_content(list_2_three_phase)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_2_single_phase(self):
-        decoded = kamstrup.decode_frame(list_2_single_phase)
+        decoded = kamstrup.decode_frame_content(list_2_single_phase)
         assert isinstance(decoded, dict)
         pprint(decoded)

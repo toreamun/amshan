@@ -16,9 +16,9 @@ class AutoDecoder:
     """
 
     decoder_functions = [
-        ("Aidon", aidon.decode_frame),
-        ("Kaifa", kaifa.decode_frame),
-        ("Kamstrup", kamstrup.decode_frame),
+        ("Aidon", aidon.decode_frame_content),
+        ("Kaifa", kaifa.decode_frame_content),
+        ("Kamstrup", kamstrup.decode_frame_content),
     ]
 
     def __init__(self) -> None:
@@ -33,9 +33,9 @@ class AutoDecoder:
             return decoder_name
         return None
 
-    def decode_frame(self, frame: bytes) -> Optional[Dict[str, Union[str, int, float, datetime]]]:
+    def decode_frame_content(self, frame_content: bytes) -> Optional[Dict[str, Union[str, int, float, datetime]]]:
         """
-        Decode meter LLC PDU frame as a dictionary.
+        Decode meter LLC PDU frame content as a dictionary.
 
         The previous meter decoder used with success is used first. Then other meter decoders are tried.
         :rtype: dictionary or None if none of the decoders worked.
@@ -48,7 +48,7 @@ class AutoDecoder:
             index = (i + previous_success_index) % len(AutoDecoder.decoder_functions)
             _, decoder = AutoDecoder.decoder_functions[index]
             try:
-                decoded_frame = decoder(frame)
+                decoded_frame = decoder(frame_content)
                 self.__previous_success = index
                 return decoded_frame
             except construct.ConstructError:

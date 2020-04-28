@@ -75,16 +75,16 @@ class TestParseKaifa:
 
 class TestDecodeKaifa:
     def test_decode_frame_list_1(self):
-        decoded = kaifa.decode_frame(list_1)
+        decoded = kaifa.decode_frame_content(list_1)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_2(self):
-        decoded = kaifa.decode_frame(list_2)
+        decoded = kaifa.decode_frame_content(list_2)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_3(self):
-        decoded = kaifa.decode_frame(list_3)
+        decoded = kaifa.decode_frame_content(list_3)
         assert isinstance(decoded, dict)
         pprint(decoded)

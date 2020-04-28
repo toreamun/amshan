@@ -92,7 +92,7 @@ _decoder = autodecoder.AutoDecoder()
 
 
 def measure_received(frame: bytearray) -> None:
-    decoded_frame = _decoder.decode_frame(frame)
+    decoded_frame = _decoder.decode_frame_content(frame)
     if decoded_frame:
         json_frame = json.dumps(decoded_frame, default=json_converter)
         LOG.debug("Decoded frame: %s", json_frame)
