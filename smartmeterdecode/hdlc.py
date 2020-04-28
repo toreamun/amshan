@@ -28,7 +28,7 @@ class HdlcFrameHeader:
 
         if self._control_position is not None:
             if self._is_header_good is None:
-                if len(self._frame.frame_data) == self._control_position + 3:
+                if len(self._frame) == self._control_position + 3:
                     self._is_header_good = self._frame.is_good_ffc
 
     @property
@@ -67,7 +67,7 @@ class HdlcFrameHeader:
         return None
 
     @property
-    def destination_address(self) -> Optional[bytearray]:
+    def destination_address(self) -> Optional[bytes]:
         """
         Return the value of destination address when the field has been read.
 
@@ -81,7 +81,7 @@ class HdlcFrameHeader:
         return None
 
     @property
-    def source_address(self) -> Optional[bytearray]:
+    def source_address(self) -> Optional[bytes]:
         """
         Return the value of source address when the field has been read.
 
@@ -143,7 +143,7 @@ class HdlcFrameHeader:
             return self._control_position + 3
         return None
 
-    def _get_address(self, position: int) -> Optional[bytearray]:
+    def _get_address(self, position: int) -> Optional[bytes]:
         """Get variable length address from position."""
         # As specified in ISO/IEC 13239:2002, 4.7.1, The address field range can be extended by reserving the first
         # transmitted bit (low-order) of each address octet which would then be set to binary zero to indicate that
@@ -155,15 +155,16 @@ class HdlcFrameHeader:
             adr = bytearray()
 
             i = position
+            frame_data = self._frame.frame_data
             while True:
                 if i >= len(self._frame):
                     return None
 
-                current = self._frame.frame_data[i]
+                current = frame_data[i]
                 adr.append(current)
 
                 if (current & 0x01) == 0x01:
-                    return adr
+                    return bytes(adr)
 
                 i += 1
 
@@ -211,13 +212,13 @@ class HdlcFrame:
         self._header.update()
 
     @property
-    def frame_data(self) -> bytearray:
+    def frame_data(self) -> bytes:
         """
         Return frame data bytes.
 
         Data has been unescaped when the reader uses octet frame stuffing (see constructor).
         """
-        return self._frame_data
+        return bytes(self._frame_data)
 
     @property
     def is_good_ffc(self) -> bool:
@@ -250,11 +251,11 @@ class HdlcFrame:
         return None
 
     @property
-    def information(self) -> Optional[bytearray]:
+    def information(self) -> Optional[bytes]:
         """Information field when the field has been read and is available."""
         info_position = self._header.information_position
         if info_position is not None and len(self._frame_data) > info_position:
-            return self._frame_data[info_position:-2]
+            return bytes(self._frame_data[info_position:-2])
         return None
 
 
