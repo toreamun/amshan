@@ -1,4 +1,4 @@
-# SmartMeterDecode
+# AMSHAN
 
 Package to help decode smart power meter data stream
 of Cosem HDLC frames.

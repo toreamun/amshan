@@ -8,3 +8,7 @@
 /*.egg-info
 
 /.idea/
+
+.mypy_cache
+
+.dmypy.json
