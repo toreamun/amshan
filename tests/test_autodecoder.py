@@ -1,7 +1,7 @@
 import tests.test_aidon
 import tests.test_kaifa
 import tests.test_kamstrup
-from smartmeterdecode import autodecoder
+from amshan import autodecoder
 
 
 def test_decode_frame():

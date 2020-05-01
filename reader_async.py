@@ -8,16 +8,16 @@ import sys
 from asyncio import Queue
 from typing import Any, Optional, Tuple
 
-from smartmeterdecode import autodecoder
-from smartmeterdecode.meter_connection import (
+from amshan import autodecoder
+from amshan.meter_connection import (
     AsyncConnectionFactory,
     ConnectionManager,
     MeterTransportProtocol,
 )
-from smartmeterdecode.serial_connection_factory import (
+from amshan.serial_connection_factory import (
     create_serial_frame_content_connection,
 )
-from smartmeterdecode.tcp_connection_factory import create_tcp_frame_content_connection
+from amshan.tcp_connection_factory import create_tcp_frame_content_connection
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(levelname)7s: %(message)s", stream=sys.stderr,

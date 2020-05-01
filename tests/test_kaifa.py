@@ -3,7 +3,7 @@ from pprint import pprint
 
 import construct
 
-from smartmeterdecode import kaifa
+from amshan import kaifa
 
 logging.basicConfig(level=logging.DEBUG)
 

@@ -2,7 +2,7 @@ from pprint import pprint
 
 import construct
 
-from smartmeterdecode import aidon
+from amshan import aidon
 
 list_1 = bytes.fromhex(
     "e6e700" "0f" "40000000" "00" "0101" "020309060100010700ff060000011802020f00161b"

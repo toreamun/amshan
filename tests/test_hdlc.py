@@ -1,6 +1,6 @@
 import pytest
 
-from smartmeterdecode import hdlc
+from amshan import hdlc
 
 FLAG_SEQUENCE = "7e"
 CONTROL_ESCAPE = "7d"

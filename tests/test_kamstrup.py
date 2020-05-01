@@ -2,7 +2,7 @@ from pprint import pprint
 
 import construct
 
-from smartmeterdecode import kamstrup
+from amshan import kamstrup
 
 list_1_three_phase = bytes.fromhex(
     "E6E700"

@@ -4,17 +4,17 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="smartmeterdecode-toreamun",
-    version="0.2.0",
+    name="amshan-toreamun",
+    version="0.3.0",
     author="Tore Amundsen",
     author_email="tore@amundsen.org",
-    description="Decode smart meter data",
+    description="Decode norwegian AMS-smart meter data stream from meter HAN port",
     long_description=long_description,
     long_description_content_type="text/markdown",
     platforms=["POSIX", "Windows"],
     url="https://github.com/pypa/sampleproject",
-    packages=["smartmeterdecode"],
-    package_data={"smartmeterdecode": ["py.typed"]},
+    packages=["amshan"],
+    package_data={"amshan": ["py.typed"]},
     keywords=[
         "meter",
         "han",
