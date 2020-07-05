@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="amshan-toreamun",
-    version="0.3.0",
+    name="amshan",
+    version="0.4.0",
     author="Tore Amundsen",
     author_email="tore@amundsen.org",
     description="Decode norwegian AMS-smart meter data stream from meter HAN port",
