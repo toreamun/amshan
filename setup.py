@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="amshan",
-    version="0.4.0",
+    version="0.4.1",
     author="Tore Amundsen",
     author_email="tore@amundsen.org",
     description="Decode norwegian AMS-smart meter data stream from meter HAN port",
