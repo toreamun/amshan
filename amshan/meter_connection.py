@@ -109,7 +109,7 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
             else:
                 peer_name = self._transport.get_extra_info("peername")
                 if peer_name:
-                    host, port = peer_name
+                    host, port, *_ = peer_name
                     self._transport_info = f"host {host} and port {port}"
 
             if not self._transport_info:
