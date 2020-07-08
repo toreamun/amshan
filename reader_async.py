@@ -14,9 +14,7 @@ from amshan.meter_connection import (
     ConnectionManager,
     MeterTransportProtocol,
 )
-from amshan.serial_connection_factory import (
-    create_serial_frame_content_connection,
-)
+from amshan.serial_connection_factory import create_serial_frame_content_connection
 from amshan.tcp_connection_factory import create_tcp_frame_content_connection
 
 logging.basicConfig(
@@ -91,7 +89,7 @@ def json_converter(o: Any) -> Optional[str]:
 _decoder = autodecoder.AutoDecoder()
 
 
-def measure_received(frame: bytearray) -> None:
+def measure_received(frame: bytes) -> None:
     decoded_frame = _decoder.decode_frame_content(frame)
     if decoded_frame:
         json_frame = json.dumps(decoded_frame, default=json_converter)
@@ -100,7 +98,7 @@ def measure_received(frame: bytearray) -> None:
         LOG.error("Could not decode frame content: %s", frame.hex())
 
 
-async def process_frames(queue: "Queue[bytearray]") -> None:
+async def process_frames(queue: "Queue[bytes]") -> None:
     while True:
         frame = await queue.get()
         measure_received(frame)
@@ -110,7 +108,7 @@ async def main() -> None:
     args = get_arg_parser().parse_args()
     loop = asyncio.get_event_loop()
 
-    queue: Queue[bytearray] = Queue()
+    queue: Queue[bytes] = Queue()
 
     asyncio.create_task(process_frames(queue))
 

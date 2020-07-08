@@ -1,18 +1,16 @@
 import asyncio
-
 import typing
+from asyncio import AbstractEventLoop, BaseProtocol, Queue
 from typing import Optional
-from asyncio import BaseProtocol, AbstractEventLoop
 
-from amshan.meter_connection import (
-    SmartMeterFrameContentProtocol,
-    MeterTransportProtocol,
-    SmartMeterFrameProtocol,
-)
+from amshan.hdlc import HdlcFrame
+from amshan.meter_connection import (MeterTransportProtocol,
+                                     SmartMeterFrameContentProtocol,
+                                     SmartMeterFrameProtocol)
 
 
 async def create_tcp_frame_connection(
-    queue: "Queue[hdlc.HdlcFrame]", loop: Optional[AbstractEventLoop], *args, **kwargs,
+    queue: "Queue[HdlcFrame]", loop: Optional[AbstractEventLoop], *args, **kwargs,
 ) -> MeterTransportProtocol:
     """
     Create TCP connection using SmartMeterFrameProtocol.
@@ -24,10 +22,13 @@ async def create_tcp_frame_connection(
     :return: Tuple of transport and protocol
     """
     loop = loop if loop else asyncio.get_event_loop()
-    return await loop.create_connection(
-        lambda: typing.cast(BaseProtocol, SmartMeterFrameProtocol(queue)),
-        *args,
-        **kwargs,
+    return typing.cast(
+        MeterTransportProtocol,
+        await loop.create_connection(
+            lambda: typing.cast(BaseProtocol, SmartMeterFrameProtocol(queue)),
+            *args,
+            **kwargs,
+        ),
     )
 
 
@@ -44,8 +45,11 @@ async def create_tcp_frame_content_connection(
     :return: Tuple of transport and protocol
     """
     loop = loop if loop else asyncio.get_event_loop()
-    return await loop.create_connection(
-        lambda: typing.cast(BaseProtocol, SmartMeterFrameContentProtocol(queue)),
-        *args,
-        **kwargs,
+    return typing.cast(
+        MeterTransportProtocol,
+        await loop.create_connection(
+            lambda: typing.cast(BaseProtocol, SmartMeterFrameContentProtocol(queue)),
+            *args,
+            **kwargs,
+        ),
     )
