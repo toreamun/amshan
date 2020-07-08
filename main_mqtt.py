@@ -17,7 +17,7 @@ logging.basicConfig(
 LOG = logging.getLogger("")
 
 
-def get_arg_parser():
+def get_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser("read HAN port")
     parser.add_argument("-v", dest="verbose", default=False)
     parser.add_argument(
@@ -64,7 +64,7 @@ def signal_handler(signal_number, stack_frame):
     exit(0)
 
 
-def close_resources():
+def close_resources() -> None:
     if ser is not None and ser.isOpen():
         LOG.debug("Close serial port %s", ser.name)
         ser.close()
@@ -76,7 +76,7 @@ def close_resources():
         mqtt_client.loop_stop()
 
 
-def dump_to_file(dump_data: bytes):
+def dump_to_file(dump_data: bytes) -> None:
     for b in dump_data:
         is_flag = b == b"\x7e"[0]
         if is_flag:
@@ -86,7 +86,7 @@ def dump_to_file(dump_data: bytes):
             logfile.write("\n")
 
 
-def hdlc_frame_received(frame: hdlc.HdlcFrame):
+def hdlc_frame_received(frame: hdlc.HdlcFrame) -> None:
     if frame.is_good_ffc and frame.is_expected_length:
         LOG.debug("Got frame info content: %s", frame.information.hex())
         decoded_frame = decoder.decode_frame_content(frame.information)
