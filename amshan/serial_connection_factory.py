@@ -6,9 +6,11 @@ from typing import Optional
 import serial_asyncio
 
 from amshan.hdlc import HdlcFrame
-from amshan.meter_connection import (MeterTransportProtocol,
-                                     SmartMeterFrameContentProtocol,
-                                     SmartMeterFrameProtocol)
+from amshan.meter_connection import (
+    MeterTransportProtocol,
+    SmartMeterFrameContentProtocol,
+    SmartMeterFrameProtocol,
+)
 
 
 async def create_serial_frame_connection(

@@ -33,7 +33,9 @@ class AutoDecoder:
             return decoder_name
         return None
 
-    def decode_frame_content(self, frame_content: bytes) -> Optional[Dict[str, Union[str, int, float, datetime]]]:
+    def decode_frame_content(
+        self, frame_content: bytes
+    ) -> Optional[Dict[str, Union[str, int, float, datetime]]]:
         """
         Decode meter LLC PDU frame content as a dictionary.
 

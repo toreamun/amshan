@@ -4,9 +4,11 @@ from asyncio import AbstractEventLoop, BaseProtocol, Queue
 from typing import Optional
 
 from amshan.hdlc import HdlcFrame
-from amshan.meter_connection import (MeterTransportProtocol,
-                                     SmartMeterFrameContentProtocol,
-                                     SmartMeterFrameProtocol)
+from amshan.meter_connection import (
+    MeterTransportProtocol,
+    SmartMeterFrameContentProtocol,
+    SmartMeterFrameProtocol,
+)
 
 
 async def create_tcp_frame_connection(

@@ -75,7 +75,9 @@ def normalize_parsed_frame(
     return dictionary
 
 
-def decode_frame_content(frame_content: bytes) -> Dict[str, Union[str, int, float, datetime]]:
+def decode_frame_content(
+    frame_content: bytes,
+) -> Dict[str, Union[str, int, float, datetime]]:
     """Decode meter LLC PDU frame content as a dictionary."""
     parsed = LlcPdu.parse(frame_content)
     return normalize_parsed_frame(parsed)
