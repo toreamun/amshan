@@ -69,7 +69,7 @@ class ExponentialBackOff(BackOffStrategy):
 
 class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
     """
-    Network protocol basae class that reads smart meter frames from a stream.
+    Network protocol base class that reads smart meter frames from a stream.
 
     Sub classes must implement frame_received().
     """
