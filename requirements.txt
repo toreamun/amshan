@@ -1,0 +1,4 @@
+amshan==0.4.2
+construct==2.10.56
+paho-mqtt
+serial
