@@ -1,3 +1,4 @@
+"""Util for reading from HAN port."""
 import argparse
 import asyncio
 import datetime
@@ -18,18 +19,20 @@ from amshan.serial_connection_factory import create_serial_frame_content_connect
 from amshan.tcp_connection_factory import create_tcp_frame_content_connection
 
 logging.basicConfig(
-    level=logging.DEBUG, format="%(levelname)7s: %(message)s", stream=sys.stderr,
+    level=logging.DEBUG,
+    format="%(levelname)7s: %(message)s",
+    stream=sys.stderr,
 )
 LOG = logging.getLogger("")
 
 
-def get_arg_parser() -> argparse.ArgumentParser:
-    def valid_host_port(s: str) -> Tuple[str, str]:
-        host_and_port = s.split(":")
+def _get_arg_parser() -> argparse.ArgumentParser:
+    def valid_host_port(host_port: str) -> Tuple[str, str]:
+        host_and_port = host_port.split(":")
         if len(host_and_port) == 2:
             return host_and_port[0], host_and_port[1]
         else:
-            msg = f"Not a valid host and port: '{s}'."
+            msg = f"Not a valid host and port: '{host_port}'."
             raise argparse.ArgumentTypeError(msg)
 
     parser = argparse.ArgumentParser("read HAN port")
@@ -80,37 +83,38 @@ def get_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def json_converter(o: Any) -> Optional[str]:
-    if isinstance(o, datetime.datetime):
-        return o.isoformat()
+def _json_converter(source: Any) -> Optional[str]:
+    if isinstance(source, datetime.datetime):
+        return source.isoformat()
     return None
 
 
 _decoder = autodecoder.AutoDecoder()
 
 
-def measure_received(frame: bytes) -> None:
+def _measure_received(frame: bytes) -> None:
     decoded_frame = _decoder.decode_frame_content(frame)
     if decoded_frame:
-        json_frame = json.dumps(decoded_frame, default=json_converter)
+        json_frame = json.dumps(decoded_frame, default=_json_converter)
         LOG.debug("Decoded frame: %s", json_frame)
     else:
         LOG.error("Could not decode frame content: %s", frame.hex())
 
 
-async def process_frames(queue: "Queue[bytes]") -> None:
+async def _process_frames(queue: "Queue[bytes]") -> None:
     while True:
         frame = await queue.get()
-        measure_received(frame)
+        _measure_received(frame)
 
 
 async def main() -> None:
-    args = get_arg_parser().parse_args()
+    """Start reading."""
+    args = _get_arg_parser().parse_args()
     loop = asyncio.get_event_loop()
 
     queue: Queue[bytes] = Queue()
 
-    asyncio.create_task(process_frames(queue))
+    asyncio.create_task(_process_frames(queue))
 
     async def tcp_connection_factory() -> MeterTransportProtocol:
         host, port = args.hostandport

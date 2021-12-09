@@ -1,11 +1,13 @@
+"""Serial connection factory."""
 import asyncio
 import typing
-from asyncio import AbstractEventLoop, Queue
+from asyncio import AbstractEventLoop
+from asyncio import Queue  # pylint: disable=unused-import
 from typing import Optional
 
 import serial_asyncio
 
-from amshan.hdlc import HdlcFrame
+from amshan.hdlc import HdlcFrame  # pylint: disable=unused-import
 from amshan.meter_connection import (
     MeterTransportProtocol,
     SmartMeterFrameContentProtocol,
@@ -14,10 +16,13 @@ from amshan.meter_connection import (
 
 
 async def create_serial_frame_connection(
-    queue: "Queue[HdlcFrame]", loop: Optional[AbstractEventLoop], *args, **kwargs,
+    queue: "Queue[HdlcFrame]",
+    loop: Optional[AbstractEventLoop],
+    *args,
+    **kwargs,
 ) -> MeterTransportProtocol:
     """
-    Create serial connection using SmartMeterFrameProtocol
+    Create serial connection using SmartMeterFrameProtocol.
 
     :param queue: Queue for received frames
     :param loop: The event handler
@@ -37,10 +42,12 @@ async def create_serial_frame_connection(
 
 
 async def create_serial_frame_content_connection(
-    queue: "Queue[bytes]", loop: Optional[AbstractEventLoop], *args, **kwargs,
+    queue: "Queue[bytes]",
+    loop: Optional[AbstractEventLoop],
+    *args,
+    **kwargs,
 ) -> MeterTransportProtocol:
-    """
-    Create serial connection using SmartMeterFrameContentProtocol
+    """Create serial connection using SmartMeterFrameContentProtocol.
 
     :param queue: Queue for received frames
     :param loop: The event handler

@@ -78,7 +78,10 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
     # The number is used when initializing trace id for new instances.
     total_instance_counter: ClassVar[int] = 0
 
-    def __init__(self, frame_reader: Optional[hdlc.HdlcFrameReader] = None,) -> None:
+    def __init__(
+        self,
+        frame_reader: Optional[hdlc.HdlcFrameReader] = None,
+    ) -> None:
         """
         Initialize SmartMeterProtocol.
 
@@ -159,7 +162,7 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
             try:
                 self._transport.close()
                 self._transport = None
-            except Exception as ex:
+            except Exception as ex:  # pylint: disable=broad-except
                 _LOGGER.warning(
                     "%s: Error when closing transport %s for %s connection: %s",
                     self._instance_id(),
@@ -289,7 +292,10 @@ class ConnectionManager:
     DEFAULT_CONNECTION_LOST_BACK_OFF_THRESHOLD: int = 5
     DEFAULT_CONNECTION_LOST_BACK_OFF_SLEEP_SEC: int = 5
 
-    def __init__(self, connection_factory: AsyncConnectionFactory,) -> None:
+    def __init__(
+        self,
+        connection_factory: AsyncConnectionFactory,
+    ) -> None:
         """
         Initialize class.
 
@@ -376,7 +382,8 @@ class ConnectionManager:
             sleep_time = max(current_connect_error_delay, reconnect_sleep)
 
             _LOGGER.info(
-                "Back-off for %d sec before reconnecting", sleep_time,
+                "Back-off for %d sec before reconnecting",
+                sleep_time,
             )
         return sleep_time
 
@@ -392,8 +399,9 @@ class ConnectionManager:
 
                 self.back_off_connect_error.reset()
             except CancelledError:
+                _LOGGER.debug("The operation was cencelled")
                 raise
-            except Exception as ex:
+            except Exception as ex:  # pylint: disable=broad-except
                 self._connection = None
                 self.back_off_connect_error.failure()
                 _LOGGER.warning("Error connecting: %s", ex)
