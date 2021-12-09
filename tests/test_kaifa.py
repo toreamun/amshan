@@ -1,3 +1,5 @@
+"""Kaifa tests."""
+# pylint: disable = no-self-use
 import logging
 from pprint import pprint
 
@@ -57,34 +59,44 @@ list_3 = bytes.fromhex(
 
 
 class TestParseKaifa:
+    """Test parse Kaifa frames."""
+
     def test_parse_list_1(self):
+        """Parse list number 1."""
         parsed = kaifa.LlcPdu.parse(list_1)
         assert isinstance(parsed, construct.Container)
         print(parsed)
 
     def test_parse_list_2(self):
+        """Parse list number 2."""
         parsed = kaifa.LlcPdu.parse(list_2)
         assert isinstance(parsed, construct.Container)
         print(parsed)
 
     def test_parse_list_3(self):
+        """Parse list number 3."""
         parsed = kaifa.LlcPdu.parse(list_3)
         assert isinstance(parsed, construct.Container)
         print(parsed)
 
 
 class TestDecodeKaifa:
+    """Test decode Kaifa frames."""
+
     def test_decode_frame_list_1(self):
+        """Decode list number 1."""
         decoded = kaifa.decode_frame_content(list_1)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_2(self):
+        """Decode list number 2."""
         decoded = kaifa.decode_frame_content(list_2)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_3(self):
+        """Decode list number 3."""
         decoded = kaifa.decode_frame_content(list_3)
         assert isinstance(decoded, dict)
         pprint(decoded)

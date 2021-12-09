@@ -1,3 +1,4 @@
+"""Autodecoder tests."""
 import tests.test_aidon
 import tests.test_kaifa
 import tests.test_kamstrup
@@ -5,6 +6,7 @@ from amshan import autodecoder
 
 
 def test_decode_frame():
+    """Test AutoDecoder."""
     decoder = autodecoder.AutoDecoder()
     assert decoder.previous_success_decoder is None
 

@@ -1,3 +1,5 @@
+"""HDLC tests."""
+# pylint: disable = no-self-use
 import pytest
 
 from amshan import hdlc
@@ -15,7 +17,10 @@ STUFFED_FRAME_SHORT_INFO = "a00d0102011063ab7d5e7d5d7d23932D"
 
 
 class TestHdlcFrameReader:
+    """Test HdlcFrameReader."""
+
     def test_frame_with_escape_character(self):
+        """Test fram with escape character."""
         data_feed = bytes.fromhex(
             FLAG_SEQUENCE + FRAME_WITH_ESCAPE_CHARACTER_IN_INFO + FLAG_SEQUENCE
         )
@@ -33,6 +38,7 @@ class TestHdlcFrameReader:
         )
 
     def test_frame_with_control_character_in_content(self):
+        """Test frame with control character in content."""
         data_feed = bytes.fromhex(
             FLAG_SEQUENCE + FRAME_WITH_FLAG_SEQUENCE_CHARACTER_IN_INFO + FLAG_SEQUENCE
         )
@@ -59,6 +65,7 @@ class TestHdlcFrameReader:
         ],
     )
     def test_start_read_in_frame(self, data_feed):
+        """Test start reading in middle of frame."""
         frame_reader = hdlc.HdlcFrameReader(False)
         frames = frame_reader.read(data_feed)
 
@@ -69,6 +76,7 @@ class TestHdlcFrameReader:
         assert frames[0].information == bytes.fromhex(FRAME_SHORT_INFO)[8:-2]
 
     def test_empty_info_frame(self):
+        """Test read empty frame."""
         data_feed = bytes.fromhex(FLAG_SEQUENCE + FRAME_EMPTY_INFO + FLAG_SEQUENCE)
 
         frame_reader = hdlc.HdlcFrameReader()
@@ -82,6 +90,7 @@ class TestHdlcFrameReader:
         assert frames[0].information is None
 
     def test_too_short_frame_is_discarded(self):
+        """Test that too short frame is discarded."""
         data_feed = bytes.fromhex(FLAG_SEQUENCE + "a0080102011037" + FLAG_SEQUENCE)
 
         frame_reader = hdlc.HdlcFrameReader()
@@ -91,6 +100,7 @@ class TestHdlcFrameReader:
         assert len(frames) == 0
 
     def test_abort_sequence(self):
+        """Test abort sequence."""
         data_feed = bytes.fromhex(
             FLAG_SEQUENCE + FRAME_SHORT_INFO + CONTROL_ESCAPE + FLAG_SEQUENCE
         )
@@ -102,6 +112,7 @@ class TestHdlcFrameReader:
         assert len(frames) == 0
 
     def test_single_flag_sequences_between_frames(self):
+        """Test single flag seqeunce between frames."""
         data_feed = bytes.fromhex(
             FLAG_SEQUENCE
             + FRAME_SHORT_INFO
@@ -123,6 +134,7 @@ class TestHdlcFrameReader:
         assert frames[1].information is None
 
     def test_two_flag_sequences_between_frames(self):
+        """Test double flag seqeuncene between frames."""
         data_feed = bytes.fromhex(
             FLAG_SEQUENCE
             + FRAME_SHORT_INFO
@@ -145,6 +157,7 @@ class TestHdlcFrameReader:
         assert frames[1].information is None
 
     def test_many_flag_sequences_between_frames(self):
+        """Test many flag seqeunces between frames."""
         data_feed = bytes.fromhex(
             FLAG_SEQUENCE
             + FRAME_SHORT_INFO
@@ -171,6 +184,7 @@ class TestHdlcFrameReader:
         assert frames[1].information is None
 
     def test_stuffed_frame_short_info(self):
+        """Test stuffed frame."""
         data_feed = bytes.fromhex(
             FLAG_SEQUENCE + STUFFED_FRAME_SHORT_INFO + FLAG_SEQUENCE
         )
@@ -186,6 +200,7 @@ class TestHdlcFrameReader:
         assert frames[0].information == bytes.fromhex("7e7d03")
 
     def test_too_long_frame_is_discarded(self):
+        """Test too long frame is discarded."""
         data_feed = bytes.fromhex(FLAG_SEQUENCE + FRAME_SHORT_INFO) + bytearray(
             hdlc.HdlcFrame.MAX_FRAME_LENGTH
         )
@@ -198,7 +213,10 @@ class TestHdlcFrameReader:
 
 
 class TestHdlcFrameHeader:
+    """Test HdlcFrameHeader."""
+
     def test_empty_frame(self):
+        """Test empty frame."""
         frame = hdlc.HdlcFrame()
 
         assert frame.header is not None
@@ -214,11 +232,12 @@ class TestHdlcFrameHeader:
         assert frame.header.header_check_sequence is None
 
     def test_read_byte(self):
+        """Test read byte."""
         frame = hdlc.HdlcFrame()
 
         fragment = bytes.fromhex(FRAME_SHORT_INFO)[:1]
-        for b in fragment:
-            frame.append(b)
+        for byte in fragment:
+            frame.append(byte)
 
         assert frame.header is not None
 
@@ -233,11 +252,12 @@ class TestHdlcFrameHeader:
         assert frame.header.header_check_sequence is None
 
     def test_read_including_frame_format(self):
+        """Test read past frame format."""
         frame = hdlc.HdlcFrame()
 
         fragment = bytes.fromhex(FRAME_SHORT_INFO)[:2]
-        for b in fragment:
-            frame.append(b)
+        for byte in fragment:
+            frame.append(byte)
 
         assert frame.header is not None
 
@@ -262,11 +282,12 @@ class TestHdlcFrameHeader:
         assert frame.header.header_check_sequence is None
 
     def test_read_including_destination_address(self):
+        """Test read past destination address."""
         frame = hdlc.HdlcFrame()
 
         fragment = bytes.fromhex(FRAME_SHORT_INFO)[:3]
-        for b in fragment:
-            frame.append(b)
+        for byte in fragment:
+            frame.append(byte)
 
         assert frame.header is not None
 
@@ -293,11 +314,12 @@ class TestHdlcFrameHeader:
         assert frame.header.header_check_sequence is None
 
     def test_read_including_halve_source_address(self):
+        """Test read past halve source address."""
         frame = hdlc.HdlcFrame()
 
         fragment = bytes.fromhex(FRAME_SHORT_INFO)[:4]
-        for b in fragment:
-            frame.append(b)
+        for byte in fragment:
+            frame.append(byte)
 
         assert frame.header is not None
 
@@ -324,11 +346,12 @@ class TestHdlcFrameHeader:
         assert frame.header.header_check_sequence is None
 
     def test_read_including_source_address(self):
+        """Test read past source address."""
         frame = hdlc.HdlcFrame()
 
         fragment = bytes.fromhex(FRAME_SHORT_INFO)[:5]
-        for b in fragment:
-            frame.append(b)
+        for byte in fragment:
+            frame.append(byte)
 
         assert frame.header is not None
 
@@ -357,11 +380,12 @@ class TestHdlcFrameHeader:
         assert frame.header.header_check_sequence is None
 
     def test_read_including_control(self):
+        """Test read past control."""
         frame = hdlc.HdlcFrame()
 
         fragment = bytes.fromhex(FRAME_SHORT_INFO)[:6]
-        for b in fragment:
-            frame.append(b)
+        for byte in fragment:
+            frame.append(byte)
 
         assert frame.header is not None
 
@@ -390,11 +414,12 @@ class TestHdlcFrameHeader:
         assert frame.header.header_check_sequence is None
 
     def test_read_halve_header_check_sequence(self):
+        """Test read past halve header check sequence."""
         frame = hdlc.HdlcFrame()
 
         fragment = bytes.fromhex(FRAME_SHORT_INFO)[:7]
-        for b in fragment:
-            frame.append(b)
+        for byte in fragment:
+            frame.append(byte)
 
         assert frame.header is not None
 
@@ -423,11 +448,12 @@ class TestHdlcFrameHeader:
         assert frame.header.header_check_sequence is None
 
     def test_read_header_check_sequence(self):
+        """Test read past check sequence."""
         frame = hdlc.HdlcFrame()
 
         fragment = bytes.fromhex(FRAME_SHORT_INFO)[:8]
-        for b in fragment:
-            frame.append(b)
+        for byte in fragment:
+            frame.append(byte)
 
         assert frame.header is not None
 
@@ -459,7 +485,10 @@ class TestHdlcFrameHeader:
 
 
 class TestHdlcFrame:
+    """Test HdlcFrame."""
+
     def test_empty_frame(self):
+        """Test empty frame."""
         frame = hdlc.HdlcFrame()
 
         assert frame.header is not None
@@ -472,11 +501,12 @@ class TestHdlcFrame:
         assert frame.is_expected_length is False
 
     def test_empty_info_frame(self):
+        """Test empty info frame."""
         frame = hdlc.HdlcFrame()
 
         frame_data = bytes.fromhex(FRAME_EMPTY_INFO)
-        for b in frame_data:
-            frame.append(b)
+        for byte in frame_data:
+            frame.append(byte)
 
         assert frame.header is not None
         assert frame.frame_data is not None
@@ -488,11 +518,12 @@ class TestHdlcFrame:
         assert frame.is_expected_length
 
     def test_short_info_frame(self):
+        """Test short info frame."""
         frame = hdlc.HdlcFrame()
 
         frame_data = bytes.fromhex(FRAME_SHORT_INFO)
-        for b in frame_data:
-            frame.append(b)
+        for byte in frame_data:
+            frame.append(byte)
 
         assert frame.header is not None
         assert frame.frame_data is not None

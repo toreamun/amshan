@@ -49,12 +49,14 @@ OctedStringText = construct.FocusedSeq(
 
 ObisCode = construct.ExprAdapter(
     construct.Int8ub[6],
-    decoder=lambda obj, ctx: ".".join("%d" % b for b in obj),
+    decoder=lambda obj, ctx: ".".join(f"{b}" for b in obj),
     encoder=lambda obj, ctx: [int(part) for part in obj.split(".")],
 )
 
 
-def _type_code_to_type(type_code: construct.Enum,) -> Any:
+def _type_code_to_type(
+    type_code: construct.Enum,
+) -> Any:
     return construct.Switch(
         type_code,
         {
@@ -225,7 +227,7 @@ def _get_apdpu_struct(notification_body: construct.Struct) -> construct.Struct:
         "_datetimestartbyte" / construct.Peek(CommonDataTypes),
         "DateTime"
         / construct.Switch(
-            construct.this._datetimestartbyte,
+            construct.this._datetimestartbyte,  # pylint: disable=protected-access
             {
                 CommonDataTypes.null_data: construct.Byte,
                 CommonDataTypes.octet_string: DateTimeField,

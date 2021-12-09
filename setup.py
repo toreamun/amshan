@@ -1,6 +1,7 @@
+"""Python package setup."""
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding="UTF-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
@@ -33,5 +34,5 @@ setuptools.setup(
     ],
     python_requires=">=3.6",
     install_requires=["construct"],
-    extras_require={"serial": ["pyserial-asyncio>=0.4"],},
+    extras_require={"serial": ["pyserial-asyncio>=0.4"]},
 )

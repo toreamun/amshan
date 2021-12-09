@@ -1,3 +1,5 @@
+"""Kamstrup tests."""
+# pylint: disable = no-self-use
 from pprint import pprint
 
 import construct
@@ -71,34 +73,44 @@ list_2_three_phase = bytes.fromhex(
 
 
 class TestParseKamstrup:
-    def test_decode_list_1_three_phase(self):
+    """Test parse Kamstrup frames."""
+
+    def test_parse_list_1_three_phase(self):
+        """Parse three phase list number 1."""
         parsed = kamstrup.LlcPdu.parse(list_1_three_phase)
         assert isinstance(parsed, construct.Container)
         print(parsed)
 
-    def test_decode_list_2_single_phase(self):
+    def test_parse_list_2_single_phase(self):
+        """Parse single phase list number 2."""
         parsed = kamstrup.LlcPdu.parse(list_2_single_phase)
         assert isinstance(parsed, construct.Container)
         print(parsed)
 
-    def test_decode_list_2_three_phase(self):
+    def test_parse_list_2_three_phase(self):
+        """Parse three phase list number 2."""
         parsed = kamstrup.LlcPdu.parse(list_2_three_phase)
         assert isinstance(parsed, construct.Container)
         print(parsed)
 
 
 class TestDecodeKamstrup:
+    """Test decode Kamstrup frames."""
+
     def test_decode_frame_list_1_three_phase(self):
+        """Decode three phase list number 1."""
         decoded = kamstrup.decode_frame_content(list_1_three_phase)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_2_three_phase(self):
+        """Decode three phase list number 2."""
         decoded = kamstrup.decode_frame_content(list_2_three_phase)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_2_single_phase(self):
+        """Decode single phase list number 2."""
         decoded = kamstrup.decode_frame_content(list_2_single_phase)
         assert isinstance(decoded, dict)
         pprint(decoded)

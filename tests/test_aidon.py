@@ -1,3 +1,5 @@
+"""Aidon tests."""
+# pylint: disable = no-self-use
 from pprint import pprint
 
 import construct
@@ -55,34 +57,44 @@ list_3 = bytes.fromhex(
 
 
 class TestParseAidon:
-    def test_decode_list_1(self):
+    """Test parse Aidon frames."""
+
+    def test_parse_list_1(self):
+        """Parse list number 1."""
         parsed = aidon.LlcPdu.parse(list_1)
         assert isinstance(parsed, construct.Container)
         print(parsed)
 
-    def test_decode_list_2(self):
+    def test_parse_list_2(self):
+        """Parse list number 2."""
         parsed = aidon.LlcPdu.parse(list_2)
         assert isinstance(parsed, construct.Container)
         print(parsed)
 
-    def test_decode_list_3(self):
+    def test_parse_list_3(self):
+        """Parse list number 2."""
         parsed = aidon.LlcPdu.parse(list_3)
         assert isinstance(parsed, construct.Container)
         print(parsed)
 
 
 class TestDecodeAidon:
+    """Test decode Aidon frames."""
+
     def test_decode_frame_list_1(self):
+        """Decode list number 1."""
         decoded = aidon.decode_frame_content(list_1)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_2(self):
+        """Decode list number 2."""
         decoded = aidon.decode_frame_content(list_2)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_3(self):
+        """Decode list number 3."""
         decoded = aidon.decode_frame_content(list_3)
         assert isinstance(decoded, dict)
         pprint(decoded)
