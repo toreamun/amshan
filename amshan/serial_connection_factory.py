@@ -5,7 +5,7 @@ from asyncio import AbstractEventLoop
 from asyncio import Queue  # pylint: disable=unused-import
 from typing import Optional
 
-import serial_asyncio
+import serial_asyncio  # type: ignore
 
 from amshan.hdlc import HdlcFrame  # pylint: disable=unused-import
 from amshan.meter_connection import (

@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Dict, Optional, Union
 
-import construct
+import construct  # type: ignore
 
 from amshan import aidon, kaifa, kamstrup
 

@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Dict, Union
 
-import construct
+import construct  # type: ignore
 
 from amshan import cosem, obis_map
 

@@ -3,7 +3,7 @@ import datetime
 from decimal import Decimal
 from typing import Any
 
-import construct
+import construct  # type: ignore
 
 # See COSEM blue Book table 2 (Common data types) in section 4.1.5 Common data types
 # NOTE: Not all types are defined here
