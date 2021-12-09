@@ -1,0 +1,5 @@
+{
+    "python.linting.pylintEnabled": true,
+    "python.pythonPath": "./.venv/bin/python3",
+    "python.testing.pytestEnabled": true
+}
