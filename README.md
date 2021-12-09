@@ -1,7 +1,5 @@
 # AMSHAN
 
-Package to help decode smart power meter data stream
-of Cosem HDLC frames.
+Package to help decode smart power meter data stream of Cosem HDLC frames used by MBUS (Meter Bus).
 
-The package supports formats of Aidon, Kaifa and Kamstrum
-meters used in Norway (see https://www.nek.no/info-ams-han-utviklere/).
+The package has special support for formats used by Aidon, Kaifa and Kamstrum smart meteres (HAN) in Norway. See https://www.nek.no/info-ams-han-utviklere/
