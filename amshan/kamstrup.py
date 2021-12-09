@@ -1,4 +1,5 @@
 """Decoding support for Kamstrup meters."""
+# pylint: disable=protected-access
 from datetime import datetime
 from typing import Dict, Union
 

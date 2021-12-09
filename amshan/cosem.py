@@ -200,8 +200,8 @@ OptionalDateTimeField = construct.FocusedSeq(
     "value",
     "content_type" / CommonDataTypes,
     construct.Check(
-        lambda ctx: ctx.content_type == CommonDataTypes.null_data
-        or ctx.content_type == CommonDataTypes.octet_string
+        lambda ctx: ctx.content_type
+        in (CommonDataTypes.null_data, CommonDataTypes.octet_string)
     ),
     "value"
     / construct.If(construct.this.content_type != CommonDataTypes.null_data, DateTime),

@@ -426,21 +426,26 @@ class _ReaderBuffer:
 
     @property
     def is_available(self) -> bool:
+        """Byte(s) are available."""
         return len(self._buffer) > self._buffer_pos
 
     def pop(self) -> int:
+        """Pop one byte from buffer."""
         byte = self._buffer[self._buffer_pos]
         self._buffer_pos += 1
         return byte
 
     def extend(self, data_chunk: bytes) -> None:
+        """Add bytes to buffer."""
         self._buffer.extend(data_chunk)
 
     def trim_buffer_to_current_position(self) -> None:
+        """Trim buffer to current position."""
         self._buffer = self._buffer[self._buffer_pos :]
         self._buffer_pos = 0
 
     def trim_buffer_to_flag_or_end(self) -> None:
+        """Trim buffer to flag sequence or end of buffer."""
         self.trim_buffer_to_current_position()
         flag_pos = self._buffer.find(HdlcFrameReader.FLAG_SEQUENCE)
         if flag_pos == -1:
