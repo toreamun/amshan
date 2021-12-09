@@ -3,3 +3,6 @@
 # format - handled by black
 disable=
     format
+
+[SIMILARITIES]
+min-similarity-lines=8

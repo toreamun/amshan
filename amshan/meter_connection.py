@@ -202,6 +202,9 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
         return f"{self.__class__.__name__}[{self.instance_id}]"
 
 
+# pylint: disable=too-many-instance-attributes
+
+
 class SmartMeterFrameProtocol(SmartMeterBaseProtocol):
     """
     Network protocol that reads smart meter frames from a stream and forwards them to a queue.
