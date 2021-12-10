@@ -309,7 +309,7 @@ class HdlcFrameReader:
         while self._buffer.is_available:
             frame_complete = self._read_next()
             if frame_complete:
-                _LOGGER.info(
+                _LOGGER.debug(
                     "Frame of %s length %d received with %s checksum.",
                     "expected"
                     if cast(HdlcFrame, self._frame).is_expected_length
@@ -333,7 +333,7 @@ class HdlcFrameReader:
         elif self._frame is not None:  # not in hunt mode
             self._append_to_frame(current)
             if len(self._frame) > HdlcFrame.MAX_FRAME_LENGTH:
-                _LOGGER.warning(
+                _LOGGER.debug(
                     "Max frame length reached. Discard frame: %s",
                     self._raw_frame_data.hex(),
                 )
@@ -355,7 +355,7 @@ class HdlcFrameReader:
 
         elif self._frame.header.header_check_sequence is None:
             # Frames which are too short are silently discarded, and not counted as a FCS error.
-            _LOGGER.info(
+            _LOGGER.debug(
                 "Found flag sequence. Too short frame (%d bytes). Discard frame: %s",
                 len(self._frame),
                 self._raw_frame_data.hex(),
@@ -371,7 +371,7 @@ class HdlcFrameReader:
             # Frames which end with a Control Escape octet
             # followed immediately by a closing Flag Sequence,
             # are silently discarded, and not counted as a FCS error.
-            _LOGGER.info(
+            _LOGGER.debug(
                 "Abort sequence. Discard frame: %s", self._raw_frame_data.hex()
             )
             self._goto_hunt_mode()
