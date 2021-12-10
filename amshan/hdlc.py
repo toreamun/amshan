@@ -315,9 +315,7 @@ class HdlcFrameReader:
                     if cast(HdlcFrame, self._frame).is_expected_length
                     else "unexpected",
                     len(cast(HdlcFrame, self._frame)),
-                    "good"
-                    if cast(HdlcFrame, self._frame).is_good_ffc
-                    else "bad",
+                    "good" if cast(HdlcFrame, self._frame).is_good_ffc else "bad",
                 )
                 frames_received.append(cast(HdlcFrame, self._frame))
                 self._start_frame()
