@@ -1,5 +1,4 @@
 """Async meter connection module."""
-import asyncio
 import datetime
 import logging
 from abc import ABCMeta, abstractmethod
@@ -11,6 +10,9 @@ from asyncio import (
     Future,
     Protocol,
     Queue,
+    iscoroutinefunction,
+    wait,
+    sleep,
 )
 from typing import Awaitable, Callable, ClassVar, Optional, Tuple
 
@@ -304,7 +306,7 @@ class ConnectionManager:
 
         :param connection_factory: A factory function that returns a Transport and SmartMeterProtocol tuple.
         """
-        if not asyncio.iscoroutinefunction(connection_factory):
+        if not iscoroutinefunction(connection_factory):
             raise ValueError("Factory must be awaitable.")
 
         self._connection_factory: AsyncConnectionFactory = connection_factory
@@ -338,14 +340,14 @@ class ConnectionManager:
         The connection is not reconnected on connection loss if close() was called on this instance.
         """
         while not self._is_closing.is_set():
-            await asyncio.wait(
+            await wait(
                 (self._try_connect(), self._is_closing.wait()),
                 return_when=FIRST_COMPLETED,
             )
 
             if self._connection:
                 _, protocol = self._connection
-                await asyncio.wait(
+                await wait(
                     (protocol.done, self._is_closing.wait()),
                     return_when=FIRST_COMPLETED,
                 )
@@ -393,7 +395,7 @@ class ConnectionManager:
     async def _try_connect(self) -> None:
         sleep_time = self._get_back_off_time()
         if sleep_time > 0:
-            await asyncio.sleep(sleep_time)
+            await sleep(sleep_time)
 
         if not self._is_closing.is_set():
             try:

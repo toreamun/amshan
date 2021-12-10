@@ -1,9 +1,7 @@
 """Serial connection factory."""
-import asyncio
-import typing
-from asyncio import AbstractEventLoop
+from asyncio import AbstractEventLoop, get_event_loop
 from asyncio import Queue  # pylint: disable=unused-import
-from typing import Optional
+from typing import Optional, cast
 
 import serial_asyncio  # type: ignore
 
@@ -30,10 +28,10 @@ async def create_serial_frame_connection(
     :param kwargs: Passed to serial_asyncio.create_serial_connection and further the serial.Serial init function
     :return: Tuple of transport and protocol
     """
-    return typing.cast(
+    return cast(
         MeterTransportProtocol,
         await serial_asyncio.create_serial_connection(
-            loop if loop else asyncio.get_event_loop(),
+            loop if loop else get_event_loop(),
             lambda: SmartMeterFrameProtocol(queue),
             *args,
             **kwargs,
@@ -55,10 +53,10 @@ async def create_serial_frame_content_connection(
     :param kwargs: Passed to serial_asyncio.create_serial_connection and further the serial.Serial init function
     :return: Tuple of transport and protocol
     """
-    return typing.cast(
+    return cast(
         MeterTransportProtocol,
         await serial_asyncio.create_serial_connection(
-            loop if loop else asyncio.get_event_loop(),
+            loop if loop else get_event_loop(),
             lambda: SmartMeterFrameContentProtocol(queue),
             *args,
             **kwargs,

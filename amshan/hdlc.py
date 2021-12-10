@@ -1,7 +1,6 @@
 """Use this module to read HDLC frames."""
 import logging
-import typing
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from amshan import fastframecheck
 
@@ -108,7 +107,7 @@ class HdlcFrameHeader:
             and len(self._frame) > self._control_position
         )
         if is_available:
-            return self._frame.frame_data[typing.cast(int, self._control_position)]
+            return self._frame.frame_data[cast(int, self._control_position)]
         return None
 
     @property
@@ -125,9 +124,8 @@ class HdlcFrameHeader:
         )
         if is_available:
             return (
-                self._frame.frame_data[typing.cast(int, self._control_position) + 1]
-                << 8
-                | self._frame.frame_data[typing.cast(int, self._control_position) + 2]
+                self._frame.frame_data[cast(int, self._control_position) + 1] << 8
+                | self._frame.frame_data[cast(int, self._control_position) + 2]
             )
         return None
 
@@ -314,14 +312,14 @@ class HdlcFrameReader:
                 _LOGGER.info(
                     "Frame of %s length %d received with %s checksum.",
                     "expected"
-                    if typing.cast(HdlcFrame, self._frame).is_expected_length
+                    if cast(HdlcFrame, self._frame).is_expected_length
                     else "unexpected",
-                    len(typing.cast(HdlcFrame, self._frame)),
+                    len(cast(HdlcFrame, self._frame)),
                     "good"
-                    if typing.cast(HdlcFrame, self._frame).is_good_ffc
+                    if cast(HdlcFrame, self._frame).is_good_ffc
                     else "bad",
                 )
-                frames_received.append(typing.cast(HdlcFrame, self._frame))
+                frames_received.append(cast(HdlcFrame, self._frame))
                 self._start_frame()
                 self._buffer.trim_buffer_to_current_position()
 

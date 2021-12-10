@@ -1,9 +1,7 @@
 """TCP/IP connection factory."""
-import asyncio
-import typing
-from asyncio import AbstractEventLoop, BaseProtocol
+from asyncio import AbstractEventLoop, BaseProtocol, get_event_loop
 from asyncio import Queue  # pylint: disable=unused-import
-from typing import Optional
+from typing import Optional, cast
 
 from amshan.hdlc import HdlcFrame  # pylint: disable=unused-import
 from amshan.meter_connection import (
@@ -28,11 +26,11 @@ async def create_tcp_frame_connection(
     :param kwargs: Passed to the loop.create_connection
     :return: Tuple of transport and protocol
     """
-    loop = loop if loop else asyncio.get_event_loop()
-    return typing.cast(
+    loop = loop if loop else get_event_loop()
+    return cast(
         MeterTransportProtocol,
         await loop.create_connection(
-            lambda: typing.cast(BaseProtocol, SmartMeterFrameProtocol(queue)),
+            lambda: cast(BaseProtocol, SmartMeterFrameProtocol(queue)),
             *args,
             **kwargs,
         ),
@@ -54,11 +52,11 @@ async def create_tcp_frame_content_connection(
     :param kwargs: Passed to the loop.create_connection
     :return: Tuple of transport and protocol
     """
-    loop = loop if loop else asyncio.get_event_loop()
-    return typing.cast(
+    loop = loop if loop else get_event_loop()
+    return cast(
         MeterTransportProtocol,
         await loop.create_connection(
-            lambda: typing.cast(BaseProtocol, SmartMeterFrameContentProtocol(queue)),
+            lambda: cast(BaseProtocol, SmartMeterFrameContentProtocol(queue)),
             *args,
             **kwargs,
         ),

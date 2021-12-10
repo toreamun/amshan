@@ -1,12 +1,11 @@
 """Util for reading from HAN port."""
 import argparse
-import asyncio
 import datetime
 import json
 import logging
 import signal
 import sys
-from asyncio import Queue
+from asyncio import Queue, get_event_loop, create_task, run
 from typing import Any, Optional, Tuple
 
 from amshan import autodecoder
@@ -110,11 +109,11 @@ async def _process_frames(queue: "Queue[bytes]") -> None:
 async def main() -> None:
     """Start reading."""
     args = _get_arg_parser().parse_args()
-    loop = asyncio.get_event_loop()
+    loop = get_event_loop()
 
     queue: Queue[bytes] = Queue()
 
-    asyncio.create_task(_process_frames(queue))
+    create_task(_process_frames(queue))
 
     async def tcp_connection_factory() -> MeterTransportProtocol:
         host, port = args.hostandport
@@ -148,4 +147,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    run(main())
