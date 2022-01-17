@@ -1,4 +1,5 @@
 """Contruct declarations for some COSEM types and structures."""
+# pylint: disable=protected-access
 import datetime
 from decimal import Decimal
 from typing import Any
@@ -207,6 +208,17 @@ OptionalDateTimeField = construct.FocusedSeq(
     / construct.If(construct.this.content_type != CommonDataTypes.null_data, DateTime),
 )
 
+OptionalNullData: construct.Struct = construct.Struct(
+    "_null_peek" / construct.Peek(CommonDataTypes),
+    "value"
+    / construct.If(
+        CommonDataTypes.null_data == construct.this._null_peek,
+        construct.GreedyRange(
+            construct.Const(CommonDataTypes.null_data, CommonDataTypes)
+        ),
+    ),
+)
+
 LongInvokeIdAndPriority = construct.BitStruct(
     "invoke-id" / construct.BitsInteger(24),
     construct.Padding(4),
@@ -227,7 +239,7 @@ def _get_apdpu_struct(notification_body: construct.Struct) -> construct.Struct:
         "_datetimestartbyte" / construct.Peek(CommonDataTypes),
         "DateTime"
         / construct.Switch(
-            construct.this._datetimestartbyte,  # pylint: disable=protected-access
+            construct.this._datetimestartbyte,
             {
                 CommonDataTypes.null_data: construct.Byte,
                 CommonDataTypes.octet_string: DateTimeField,

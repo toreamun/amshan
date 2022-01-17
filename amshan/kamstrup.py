@@ -7,6 +7,7 @@ import construct  # type: ignore
 
 from amshan import cosem, obis_map
 
+
 Element: construct.Struct = construct.Struct(
     "_element_type" / construct.Peek(cosem.CommonDataTypes),
     "obis"
@@ -21,6 +22,7 @@ Element: construct.Struct = construct.Struct(
         cosem.DateTimeField,
         cosem.Field,
     ),
+    "_NullData" / cosem.OptionalNullData,
 )
 
 NotificationBody: construct.Struct = construct.Struct(
