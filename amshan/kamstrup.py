@@ -35,10 +35,16 @@ NotificationBody: construct.Struct = construct.Struct(
 
 LlcPdu: construct.Struct = cosem.get_llc_pdu_struct(NotificationBody)
 
-_field_scaling = {
+_field_scaling_standard = {
     "1.1.31.7.0.255": -2,
     "1.1.51.7.0.255": -2,
     "1.1.71.7.0.255": -2,
+}
+
+_field_scaling_ct_meter = {
+    "1.1.31.7.0.255": -3,
+    "1.1.51.7.0.255": -3,
+    "1.1.71.7.0.255": -3,
 }
 
 
@@ -52,6 +58,11 @@ def normalize_parsed_frame(
     }
 
     list_items = frame.information.notification_body.list_items
+
+    meter_type = next((x for x in list_items if x.obis == "1.1.96.1.1.256"), None)
+    is_ct_meter = meter_type is not None and meter_type.startswith("685")
+    field_scaling = _field_scaling_ct_meter if is_ct_meter else _field_scaling_standard
+
     for measure in list_items:
         # list version is the only element without obis code
         element_name = (
@@ -64,7 +75,7 @@ def normalize_parsed_frame(
             dictionary[element_name] = measure.value.datetime
         else:
             if isinstance(measure.value, int):
-                scale = _field_scaling.get(measure.obis, None)
+                scale = field_scaling.get(measure.obis, None)
                 if scale:
                     dictionary[element_name] = measure.value * (10 ** scale)
                 else:
