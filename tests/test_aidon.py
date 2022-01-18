@@ -6,11 +6,11 @@ import construct
 
 from amshan import aidon
 
-list_1 = bytes.fromhex(
+no_list_1 = bytes.fromhex(
     "e6e700" "0f" "40000000" "00" "0101" "020309060100010700ff060000011802020f00161b"
 )
 
-list_2 = bytes.fromhex(
+no_list_2 = bytes.fromhex(
     "e6e700"
     "0f"
     "40000000"
@@ -30,7 +30,7 @@ list_2 = bytes.fromhex(
     "020309060100480700ff12090402020fff1623"
 )
 
-list_3 = bytes.fromhex(
+no_list_3 = bytes.fromhex(
     "e6e700"
     "0f"
     "40000000"
@@ -55,25 +55,67 @@ list_3 = bytes.fromhex(
     "02020f011620"
 )
 
+# From https://www.tekniskaverken.se/siteassets/tekniska-verken/elnat/aidonfd-rj12-han-interface-sv-v15d.pdf
+se_list = bytes.fromhex(
+    (
+        "e6e700"
+        "0f 40000000 00"
+        "011b"
+        "0202 0906 0000010000ff 090c 07e30c1001073b28ff8000ff"
+        "0203 0906 0100010700ff 06 00000462 0202 0f00 161b"
+        "0203 0906 0100020700ff 06 00000000 0202 0f00 161b"
+        "0203 0906 0100030700ff 06 000005e3 0202 0f00 161d"
+        "0203 0906 0100040700ff 06 00000000 0202 0f00 161d"
+        "0203 0906 01001f0700ff 10 00000202 0fff 1621"
+        "0203 0906 0100330700ff 10 004b0202 0fff 1621"
+        "0203 0906 0100470700ff 10 00000202 0fff 1621"
+        "0203 0906 0100200700ff 12 09030202 0fff 1623"
+        "0203 0906 0100340700ff 12 09c30202 0fff 1623"
+        "0203 0906 0100480700ff 12 09040202 0fff 1623"
+        "0203 0906 0100150700ff 06 00000000 0202 0f00 161b"
+        "0203 0906 0100160700ff 06 00000000 0202 0f00 161b"
+        "0203 0906 0100170700ff 06 00000000 0202 0f00 161d"
+        "0203 0906 0100180700ff 06 00000000 0202 0f00 161d"
+        "0203 0906 0100290700ff 06 00000462 0202 0f00 161b"
+        "0203 0906 01002a0700ff 06 00000000 0202 0f00 161b"
+        "0203 0906 01002b0700ff 06 000005e2 0202 0f00 161d"
+        "0203 0906 01002c0700ff 06 00000000 0202 0f00 161d"
+        "0203 0906 01003d0700ff 06 00000000 0202 0f00 161b"
+        "0203 0906 01003e0700ff 06 00000000 0202 0f00 161b"
+        "0203 0906 01003f0700ff 06 00000000 0202 0f00 161d"
+        "0203 0906 0100400700ff 06 00000000 0202 0f00 161d"
+        "0203 0906 0100010800ff 06 00995986 0202 0f00 161e"
+        "0203 0906 0100020800ff 06 00000008 0202 0f00 161e"
+        "0203 0906 0100030800ff 06 0064ed4b 0202 0f00 1620"
+        "0203 0906 0100040800ff 06 00000005 0202 0f00 1620"
+    ).replace(" ", "")
+)
+
 
 class TestParseAidon:
     """Test parse Aidon frames."""
 
-    def test_parse_list_1(self):
+    def test_parse_se_list(self):
+        """Parse swedish list number 1."""
+        parsed = aidon.LlcPdu.parse(se_list)
+        assert isinstance(parsed, construct.Container)
+        print(parsed)
+
+    def test_parse_no_list_1(self):
         """Parse list number 1."""
-        parsed = aidon.LlcPdu.parse(list_1)
+        parsed = aidon.LlcPdu.parse(no_list_1)
         assert isinstance(parsed, construct.Container)
         print(parsed)
 
-    def test_parse_list_2(self):
+    def test_parse_no_list_2(self):
         """Parse list number 2."""
-        parsed = aidon.LlcPdu.parse(list_2)
+        parsed = aidon.LlcPdu.parse(no_list_2)
         assert isinstance(parsed, construct.Container)
         print(parsed)
 
-    def test_parse_list_3(self):
+    def test_parse_no_list_3(self):
         """Parse list number 2."""
-        parsed = aidon.LlcPdu.parse(list_3)
+        parsed = aidon.LlcPdu.parse(no_list_3)
         assert isinstance(parsed, construct.Container)
         print(parsed)
 
@@ -81,20 +123,20 @@ class TestParseAidon:
 class TestDecodeAidon:
     """Test decode Aidon frames."""
 
-    def test_decode_frame_list_1(self):
+    def test_decode_frame_no_list_1(self):
         """Decode list number 1."""
-        decoded = aidon.decode_frame_content(list_1)
+        decoded = aidon.decode_frame_content(no_list_1)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
-    def test_decode_frame_list_2(self):
+    def test_decode_frame_no_list_2(self):
         """Decode list number 2."""
-        decoded = aidon.decode_frame_content(list_2)
+        decoded = aidon.decode_frame_content(no_list_2)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
-    def test_decode_frame_list_3(self):
+    def test_decode_frame_no_list_3(self):
         """Decode list number 3."""
-        decoded = aidon.decode_frame_content(list_3)
+        decoded = aidon.decode_frame_content(no_list_3)
         assert isinstance(decoded, dict)
         pprint(decoded)

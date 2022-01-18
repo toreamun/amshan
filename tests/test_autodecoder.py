@@ -18,7 +18,7 @@ def test_decode_frame():
     assert isinstance(decoded, dict)
     assert decoder.previous_success_decoder == "Kamstrup"
 
-    decoded = decoder.decode_frame_content(tests.test_aidon.list_1)
+    decoded = decoder.decode_frame_content(tests.test_aidon.no_list_1)
     assert isinstance(decoded, dict)
     assert decoder.previous_success_decoder == "Aidon"
 
