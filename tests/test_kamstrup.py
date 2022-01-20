@@ -6,6 +6,11 @@ from pprint import pprint
 import construct
 
 from amshan import kamstrup
+from tests.assert_utils import (
+    assert_llc_pdu,
+    assert_long_invokeid_and_priority,
+    assert_obis_element,
+)
 
 # Kamstrup example 1: 10 seconds list, three-phases, four-quadrants
 list_1_three_phase = bytes.fromhex(
@@ -128,37 +133,6 @@ list_2_single_phase_real_sample = bytes.fromhex(
 )
 
 
-def _assert_llc_pdu(container, expected_dsap, expected_ssap, expected_control):
-    assert container.dsap == expected_dsap
-    assert container.ssap == expected_ssap
-    assert container.control == expected_control
-
-
-def _assert_long_invokeid_and_priority(
-    container,
-    expected_invoke_id,
-    expected_self_descriptive,
-    expected_processing_option,
-    expected_service_class,
-    expected_priority,
-):
-    assert isinstance(container, construct.Container)
-    assert container["invoke-id"] == expected_invoke_id
-    assert container["self-descriptive"] == expected_self_descriptive
-    assert container["processing-option"] == expected_processing_option
-    assert container["service-class"] == expected_service_class
-    assert container["priority"] == expected_priority
-
-
-def _assert_obis_element(
-    container, expected_obis_code, expected_value_type, expected_value
-):
-    assert isinstance(container, construct.Container)
-    assert container.obis == expected_obis_code
-    assert container.value_type == expected_value_type
-    assert container.value == expected_value
-
-
 class TestParseKamstrup:
     """Test parse Kamstrup frames."""
 
@@ -169,12 +143,12 @@ class TestParseKamstrup:
         print(parsed)
 
         assert isinstance(parsed, construct.Container)
-        _assert_llc_pdu(parsed, 0xE6, 0xE7, 0x00)
+        assert_llc_pdu(parsed, 0xE6, 0xE7, 0x00)
 
         assert isinstance(parsed.information, construct.Container)
         assert parsed.information.Tag == 0x0F
 
-        _assert_long_invokeid_and_priority(
+        assert_long_invokeid_and_priority(
             parsed.information.LongInvokeIdAndPriority,
             0,
             "NotSelfDescriptive",
@@ -193,55 +167,55 @@ class TestParseKamstrup:
             parsed.information.notification_body.list_items, construct.ListContainer
         )
 
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[0],
             None,
             "visible_string",
             "Kamstrup_V0001",
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[1],
             "1.1.0.0.5.255",  # GS1 number
             "visible_string",
             "5705705705705702",
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[2],
             "1.1.96.1.1.255",  # Meter type
             "visible_string",
             "6861111BN242101040",
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[3],
             "1.1.1.7.0.255",  # P14
             "double_long_unsigned",
             1896,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[4],
             "1.1.2.7.0.255",  # P23
             "double_long_unsigned",
             0,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[5],
             "1.1.3.7.0.255",  # Q12
             "double_long_unsigned",
             0,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[6],
             "1.1.4.7.0.255",  # Q34
             "double_long_unsigned",
             493,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[7],
             "1.1.31.7.0.255",  # IL1
             "double_long_unsigned",
             896,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[8],
             "1.1.32.7.0.255",  # UL1
             "long_unsigned",
@@ -255,12 +229,12 @@ class TestParseKamstrup:
         print(parsed)
 
         assert isinstance(parsed, construct.Container)
-        _assert_llc_pdu(parsed, 0xE6, 0xE7, 0x00)
+        assert_llc_pdu(parsed, 0xE6, 0xE7, 0x00)
 
         assert isinstance(parsed.information, construct.Container)
         assert parsed.information.Tag == 0x0F
 
-        _assert_long_invokeid_and_priority(
+        assert_long_invokeid_and_priority(
             parsed.information.LongInvokeIdAndPriority,
             0,
             "NotSelfDescriptive",
@@ -279,55 +253,55 @@ class TestParseKamstrup:
             parsed.information.notification_body.list_items, construct.ListContainer
         )
 
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[0],
             None,
             "visible_string",
             "Kamstrup_V0001",
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[1],
             "1.1.0.0.5.255",  # GS1 number
             "visible_string",
             "5705705705705702",
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[2],
             "1.1.96.1.1.255",  # Meter type
             "visible_string",
             "6861111BN242101040",
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[3],
             "1.1.1.7.0.255",  # P14
             "double_long_unsigned",
             10050,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[4],
             "1.1.2.7.0.255",  # P23
             "double_long_unsigned",
             0,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[5],
             "1.1.3.7.0.255",  # Q12
             "double_long_unsigned",
             0,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[6],
             "1.1.4.7.0.255",  # Q34
             "double_long_unsigned",
             279,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[7],
             "1.1.31.7.0.255",  # IL1
             "double_long_unsigned",
             4512,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[8],
             "1.1.32.7.0.255",  # UL1
             "long_unsigned",
@@ -340,25 +314,25 @@ class TestParseKamstrup:
         assert rtc.value_type == "octet_string"
         assert rtc.value.datetime == datetime(2021, 11, 24, 0, 0, 25)
 
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[10],
             "1.1.1.8.0.255",  # A14
             "double_long_unsigned",
             7745250,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[11],
             "1.1.2.8.0.255",  # A23
             "double_long_unsigned",
             0,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[12],
             "1.1.3.8.0.255",  # R12
             "double_long_unsigned",
             13731,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[13],
             "1.1.4.8.0.255",  # R12
             "double_long_unsigned",
@@ -372,12 +346,12 @@ class TestParseKamstrup:
         print(parsed)
 
         assert isinstance(parsed, construct.Container)
-        _assert_llc_pdu(parsed, 0xE6, 0xE7, 0x00)
+        assert_llc_pdu(parsed, 0xE6, 0xE7, 0x00)
 
         assert isinstance(parsed.information, construct.Container)
         assert parsed.information.Tag == 0x0F
 
-        _assert_long_invokeid_and_priority(
+        assert_long_invokeid_and_priority(
             parsed.information.LongInvokeIdAndPriority,
             0,
             "NotSelfDescriptive",
@@ -396,79 +370,79 @@ class TestParseKamstrup:
             parsed.information.notification_body.list_items, construct.ListContainer
         )
 
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[0],
             None,
             "visible_string",
             "Kamstrup_V0001",
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[1],
             "1.1.0.0.5.255",  # GS1 number
             "visible_string",
             "5706567000000000",
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[2],
             "1.1.96.1.1.255",  # Meter type
             "visible_string",
             "000000000000000000",
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[3],
             "1.1.1.7.0.255",  # P14
             "double_long_unsigned",
             0,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[4],
             "1.1.2.7.0.255",  # P23
             "double_long_unsigned",
             0,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[5],
             "1.1.3.7.0.255",  # Q12
             "double_long_unsigned",
             0,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[6],
             "1.1.4.7.0.255",  # Q34
             "double_long_unsigned",
             0,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[7],
             "1.1.31.7.0.255",  # IL1
             "double_long_unsigned",
             0,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[8],
             "1.1.51.7.0.255",  # IL2
             "double_long_unsigned",
             0,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[9],
             "1.1.71.7.0.255",  # IL3
             "double_long_unsigned",
             0,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[10],
             "1.1.32.7.0.255",  # UL1
             "long_unsigned",
             0,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[11],
             "1.1.52.7.0.255",  # UL2
             "long_unsigned",
             0,
         )
-        _assert_obis_element(
+        assert_obis_element(
             parsed.information.notification_body.list_items[12],
             "1.1.72.7.0.255",  # UL3
             "long_unsigned",
