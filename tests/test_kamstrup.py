@@ -7,6 +7,7 @@ import construct
 
 from amshan import kamstrup
 from tests.assert_utils import (
+    assert_apdu,
     assert_llc_pdu,
     assert_long_invokeid_and_priority,
     assert_obis_element,
@@ -139,26 +140,9 @@ class TestParseKamstrup:
     def test_parse_list_1_single_phase_real_sample(self):
         """Parse single phase list number 1."""
         parsed = kamstrup.LlcPdu.parse(list_1_single_phase_real_sample)
-
         print(parsed)
 
-        assert isinstance(parsed, construct.Container)
-        assert_llc_pdu(parsed, 0xE6, 0xE7, 0x00)
-
-        assert isinstance(parsed.information, construct.Container)
-        assert parsed.information.Tag == 0x0F
-
-        assert_long_invokeid_and_priority(
-            parsed.information.LongInvokeIdAndPriority,
-            0,
-            "NotSelfDescriptive",
-            "ContinueOnError",
-            "Unconfirmed",
-            "Normal",
-        )
-
-        assert isinstance(parsed.information.DateTime, construct.Container)
-        assert parsed.information.DateTime.datetime == datetime(2022, 1, 17, 12, 44, 40)
+        assert_apdu(parsed, 0, datetime(2022, 1, 17, 12, 44, 40))
 
         assert isinstance(parsed.information.notification_body, construct.Container)
         assert parsed.information.notification_body.length == 0x19
@@ -228,23 +212,7 @@ class TestParseKamstrup:
 
         print(parsed)
 
-        assert isinstance(parsed, construct.Container)
-        assert_llc_pdu(parsed, 0xE6, 0xE7, 0x00)
-
-        assert isinstance(parsed.information, construct.Container)
-        assert parsed.information.Tag == 0x0F
-
-        assert_long_invokeid_and_priority(
-            parsed.information.LongInvokeIdAndPriority,
-            0,
-            "NotSelfDescriptive",
-            "ContinueOnError",
-            "Unconfirmed",
-            "Normal",
-        )
-
-        assert isinstance(parsed.information.DateTime, construct.Container)
-        assert parsed.information.DateTime.datetime == datetime(2021, 11, 24, 0, 0, 25)
+        assert_apdu(parsed, 0, datetime(2021, 11, 24, 0, 0, 25))
 
         assert isinstance(parsed.information.notification_body, construct.Container)
         assert parsed.information.notification_body.length == 0x23

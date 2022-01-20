@@ -65,6 +65,7 @@ def _type_code_to_type(
             CommonDataTypes.long: Long,
             CommonDataTypes.long_unsigned: LongUnsigned,
             CommonDataTypes.double_long_unsigned: DoubleLongUnsigned,
+            CommonDataTypes.octet_string: construct.Select(DateTime, OctedStringText),
             CommonDataTypes.visible_string: VisibleString,
         },
         default=construct.Error,
