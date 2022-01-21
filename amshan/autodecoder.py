@@ -53,7 +53,7 @@ class AutoDecoder:
                 decoded_frame = decoder(frame_content)
                 self.__previous_success = index
                 return decoded_frame
-            except construct.ConstructError:
+            except (construct.ConstructError, ValueError):
                 pass
 
         return None
