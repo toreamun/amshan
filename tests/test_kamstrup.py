@@ -8,13 +8,11 @@ import construct
 from amshan import kamstrup
 from tests.assert_utils import (
     assert_apdu,
-    assert_llc_pdu,
-    assert_long_invokeid_and_priority,
     assert_obis_element,
 )
 
 # Kamstrup example 1: 10 seconds list, three-phases, four-quadrants
-list_1_three_phase = bytes.fromhex(
+no_list_1_three_phase = bytes.fromhex(
     (
         "E6 E7 00"  # LLC: dsap, ssap, control
         "0F"  # APDU: tag
@@ -38,7 +36,7 @@ list_1_three_phase = bytes.fromhex(
 )
 
 # Kamstrup example 3: 1 hour list, single-phase, one-quadrant
-list_2_single_phase = bytes.fromhex(
+no_list_2_single_phase = bytes.fromhex(
     (
         "E6 E7 00"  # LLC: dsap, ssap, control
         "0F"  # APDU: tag
@@ -51,14 +49,13 @@ list_2_single_phase = bytes.fromhex(
         "0906 0101010700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
         "0906 01011F0700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
         "0906 0101200700FF  12 0000"  # octet_string (obis) + long_unsigned
-        "0906 0001010000FF"  # octet_string (obis)
-        "090C 07E1081003100005FF800000"  # octet_string
-        "0906 0101010800FF0600000000"  # octet_string
+        "0906 0001010000FF  090C 07E1081003100005FF800000"  # octet_string (obis) + octet_string
+        "0906 0101010800FF  0600000000"  # octet_string + double_long_unsigned
     ).replace(" ", "")
 )
 
 # Kamstrup example 2: 1 hour list, three-phases, four-quadrants
-list_2_three_phase = bytes.fromhex(
+no_list_2_three_phase = bytes.fromhex(
     (
         "E6 E 700"  # LLC: dsap, ssap, control
         "0F"  # APDU: tag
@@ -78,8 +75,7 @@ list_2_three_phase = bytes.fromhex(
         "0906 0101200700FF  12 0000"  # octet_string (obis) + long_unsigned
         "0906 0101340700FF  12 0000"  # octet_string (obis) + long_unsigned
         "0906 0101480700FF  12 0000"  # octet_string (obis) + long_unsigned
-        "0906 0001010000FF"  # octet_string
-        "090C 07E1081003100005FF800000"
+        "0906 0001010000FF  090C 07E1081003100005FF800000"  # octet_string (obis) + octet_string
         "0906 0101010800FF  06 00000000"  # octet_string (obis) + double_long_unsigned
         "0906 0101020800FF  06 00000000"  # octet_string (obis) + double_long_unsigned
         "0906 0101030800FF  06 00000000"  # octet_string (obis) + double_long_unsigned
@@ -87,7 +83,7 @@ list_2_three_phase = bytes.fromhex(
     ).replace(" ", "")
 )
 
-list_1_single_phase_real_sample = bytes.fromhex(
+no_list_1_single_phase_real_sample = bytes.fromhex(
     (
         "e6 e7 00"
         "0f"
@@ -108,7 +104,7 @@ list_1_single_phase_real_sample = bytes.fromhex(
     ).replace(" ", "")
 )
 
-list_2_single_phase_real_sample = bytes.fromhex(
+no_list_2_single_phase_real_sample = bytes.fromhex(
     (
         "e6e700"
         "0f"
@@ -124,8 +120,7 @@ list_2_single_phase_real_sample = bytes.fromhex(
         "0906 0101040700ff  06 00000117"
         "0906 01011f0700ff  06 000011a000000000"
         "0906 0101200700ff  12 00df00000000"
-        "0906 0001010000ff"
-        "090c 07e50b1803000019ff800000"
+        "0906 0001010000ff  090c 07e50b1803000019ff800000"
         "0906 0101010800ff  06 00762ee2"
         "0906 0101020800ff  06 00000000"
         "0906 0101030800ff  06 000035a3"
@@ -137,20 +132,18 @@ list_2_single_phase_real_sample = bytes.fromhex(
 class TestParseKamstrup:
     """Test parse Kamstrup frames."""
 
-    def test_parse_list_1_single_phase_real_sample(self):
-        """Parse single phase list number 1."""
-        parsed = kamstrup.LlcPdu.parse(list_1_single_phase_real_sample)
+    def test_parse_no_list_1_single_phase_real_sample(self):
+        """Parse single phase NO list number 1."""
+        parsed = kamstrup.LlcPdu.parse(no_list_1_single_phase_real_sample)
+
         print(parsed)
 
         assert_apdu(parsed, 0, datetime(2022, 1, 17, 12, 44, 40))
-
         assert isinstance(parsed.information.notification_body, construct.Container)
         assert parsed.information.notification_body.length == 0x19
-
         assert isinstance(
             parsed.information.notification_body.list_items, construct.ListContainer
         )
-
         assert_obis_element(
             parsed.information.notification_body.list_items[0],
             None,
@@ -206,21 +199,18 @@ class TestParseKamstrup:
             225,
         )
 
-    def test_parse_list_2_single_phase_real_sample(self):
-        """Parse single phase list number 1."""
-        parsed = kamstrup.LlcPdu.parse(list_2_single_phase_real_sample)
+    def test_parse_no_list_2_single_phase_real_sample(self):
+        """Parse single phase NO list number 1."""
+        parsed = kamstrup.LlcPdu.parse(no_list_2_single_phase_real_sample)
 
         print(parsed)
 
         assert_apdu(parsed, 0, datetime(2021, 11, 24, 0, 0, 25))
-
         assert isinstance(parsed.information.notification_body, construct.Container)
-        assert parsed.information.notification_body.length == 0x23
-
+        assert parsed.information.notification_body.length == 35
         assert isinstance(
             parsed.information.notification_body.list_items, construct.ListContainer
         )
-
         assert_obis_element(
             parsed.information.notification_body.list_items[0],
             None,
@@ -307,37 +297,16 @@ class TestParseKamstrup:
             1141587,
         )
 
-    def test_parse_list_1_three_phase(self):
-        """Parse three phase list number 1."""
-        parsed = kamstrup.LlcPdu.parse(list_1_three_phase)
-
+    def test_parse_no_list_1_three_phase(self):
+        """Parse three phase NO list number 1."""
+        parsed = kamstrup.LlcPdu.parse(no_list_1_three_phase)
         print(parsed)
 
-        assert isinstance(parsed, construct.Container)
-        assert_llc_pdu(parsed, 0xE6, 0xE7, 0x00)
-
-        assert isinstance(parsed.information, construct.Container)
-        assert parsed.information.Tag == 0x0F
-
-        assert_long_invokeid_and_priority(
-            parsed.information.LongInvokeIdAndPriority,
-            0,
-            "NotSelfDescriptive",
-            "ContinueOnError",
-            "Unconfirmed",
-            "Normal",
-        )
-
-        assert isinstance(parsed.information.DateTime, construct.Container)
-        assert parsed.information.DateTime.datetime == datetime(2000, 1, 1, 22, 33, 0)
-
-        assert isinstance(parsed.information.notification_body, construct.Container)
+        assert_apdu(parsed, 0, datetime(2000, 1, 1, 22, 33, 0))
         assert parsed.information.notification_body.length == 0x19
-
         assert isinstance(
             parsed.information.notification_body.list_items, construct.ListContainer
         )
-
         assert_obis_element(
             parsed.information.notification_body.list_items[0],
             None,
@@ -417,17 +386,29 @@ class TestParseKamstrup:
             0,
         )
 
-    def test_parse_list_2_single_phase(self):
-        """Parse single phase list number 2."""
-        parsed = kamstrup.LlcPdu.parse(list_2_single_phase)
-        assert isinstance(parsed, construct.Container)
+    def test_parse_no_list_2_single_phase(self):
+        """Parse single phase NO list number 2."""
+        parsed = kamstrup.LlcPdu.parse(no_list_2_single_phase)
+
         print(parsed)
 
-    def test_parse_list_2_three_phase(self):
-        """Parse three phase list number 2."""
-        parsed = kamstrup.LlcPdu.parse(list_2_three_phase)
-        assert isinstance(parsed, construct.Container)
+        assert_apdu(parsed, 0, datetime(2017, 8, 16, 16, 0, 5))
+        assert parsed.information.notification_body.length == 15
+        assert isinstance(
+            parsed.information.notification_body.list_items, construct.ListContainer
+        )
+
+    def test_parse_no_list_2_three_phase(self):
+        """Parse three phase NO list number 2."""
+        parsed = kamstrup.LlcPdu.parse(no_list_2_three_phase)
+
         print(parsed)
+
+        assert_apdu(parsed, 0, datetime(2017, 8, 16, 16, 0, 5))
+        assert parsed.information.notification_body.length == 35
+        assert isinstance(
+            parsed.information.notification_body.list_items, construct.ListContainer
+        )
 
 
 class TestDecodeKamstrup:
@@ -435,30 +416,30 @@ class TestDecodeKamstrup:
 
     def test_decode_frame_list_1_single_phase_real_sample(self):
         """Decode three phase list number 1."""
-        decoded = kamstrup.decode_frame_content(list_1_single_phase_real_sample)
+        decoded = kamstrup.decode_frame_content(no_list_1_single_phase_real_sample)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_2_single_phase_real_sample(self):
         """Decode three phase list number 1."""
-        decoded = kamstrup.decode_frame_content(list_2_single_phase_real_sample)
+        decoded = kamstrup.decode_frame_content(no_list_2_single_phase_real_sample)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_1_three_phase(self):
         """Decode three phase list number 1."""
-        decoded = kamstrup.decode_frame_content(list_1_three_phase)
+        decoded = kamstrup.decode_frame_content(no_list_1_three_phase)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_2_three_phase(self):
         """Decode three phase list number 2."""
-        decoded = kamstrup.decode_frame_content(list_2_three_phase)
+        decoded = kamstrup.decode_frame_content(no_list_2_three_phase)
         assert isinstance(decoded, dict)
         pprint(decoded)
 
     def test_decode_frame_list_2_single_phase(self):
         """Decode single phase list number 2."""
-        decoded = kamstrup.decode_frame_content(list_2_single_phase)
+        decoded = kamstrup.decode_frame_content(no_list_2_single_phase)
         assert isinstance(decoded, dict)
         pprint(decoded)

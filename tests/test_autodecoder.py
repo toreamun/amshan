@@ -10,11 +10,11 @@ def test_decode_frame():
     decoder = autodecoder.AutoDecoder()
     assert decoder.previous_success_decoder is None
 
-    decoded = decoder.decode_frame_content(tests.test_kamstrup.list_1_three_phase)
+    decoded = decoder.decode_frame_content(tests.test_kamstrup.no_list_1_three_phase)
     assert isinstance(decoded, dict)
     assert decoder.previous_success_decoder == "Kamstrup"
 
-    decoded = decoder.decode_frame_content(tests.test_kamstrup.list_2_three_phase)
+    decoded = decoder.decode_frame_content(tests.test_kamstrup.no_list_2_three_phase)
     assert isinstance(decoded, dict)
     assert decoder.previous_success_decoder == "Kamstrup"
 
