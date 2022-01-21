@@ -236,10 +236,12 @@ LongInvokeIdAndPriority = construct.BitStruct(
     "priority" / construct.Enum(construct.BitsInteger(1), Normal=0, High=1),
 )
 
+ApduTag = construct.Enum(construct.Int8ub, data_notification=0x0F)
+
 
 def _get_apdu_struct(notification_body: construct.Struct) -> construct.Struct:
     return construct.Struct(
-        "Tag" / construct.Int8ub,
+        "Tag" / ApduTag,
         "LongInvokeIdAndPriority" / LongInvokeIdAndPriority,
         "_datetimestartbyte" / construct.Peek(CommonDataTypes),
         "DateTime"

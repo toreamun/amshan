@@ -40,7 +40,7 @@ def assert_apdu(container, expected_invoke_id, expected_date_time):
     """Assert APDU is as expected."""
     assert_llc_pdu(container, 0xE6, 0xE7, 0x00)
     assert isinstance(container.information, construct.Container)
-    assert container.information.Tag == 0x0F
+    assert container.information.Tag == "data_notification"
     assert_long_invokeid_and_priority(
         container.information.LongInvokeIdAndPriority,
         expected_invoke_id,
