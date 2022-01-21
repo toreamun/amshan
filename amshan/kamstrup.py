@@ -22,7 +22,7 @@ Element: construct.Struct = construct.Struct(
         cosem.DateTimeField,
         cosem.Field,
     ),
-    "_NullData" / cosem.OptionalNullData,
+    "_NullData" / cosem.NullData,  # trim null-data between elements
 )
 
 NotificationBody: construct.Struct = construct.Struct(

@@ -54,24 +54,6 @@ ObisCode = construct.ExprAdapter(
     encoder=lambda obj, ctx: [int(part) for part in obj.split(".")],
 )
 
-
-def _type_code_to_type(
-    type_code: construct.Enum,
-) -> Any:
-    return construct.Switch(
-        type_code,
-        {
-            CommonDataTypes.integer: Integer,
-            CommonDataTypes.long: Long,
-            CommonDataTypes.long_unsigned: LongUnsigned,
-            CommonDataTypes.double_long_unsigned: DoubleLongUnsigned,
-            CommonDataTypes.octet_string: construct.Select(DateTime, OctedStringText),
-            CommonDataTypes.visible_string: VisibleString,
-        },
-        default=construct.Error,
-    )
-
-
 OptionalDateTimeByte = construct.ExprAdapter(
     construct.Int8ub,
     decoder=lambda obj, ctx: obj if obj != 0xFF else None,
@@ -128,7 +110,39 @@ DateTime = construct.Struct(
     ),
 )
 
+NullData: construct.Struct = construct.Struct(
+    "_null_peek" / construct.Peek(CommonDataTypes),
+    "value"
+    / construct.If(
+        CommonDataTypes.null_data == construct.this._null_peek,
+        construct.GreedyRange(
+            construct.Const(CommonDataTypes.null_data, CommonDataTypes)
+        ),
+    ),
+)
+
+
 # field types
+
+
+def _type_code_to_type(
+    type_code: construct.Enum,
+) -> Any:
+    """Map COSEM common data type codes to type."""
+    return construct.Switch(
+        type_code,
+        {
+            CommonDataTypes.null_data: NullData,
+            CommonDataTypes.integer: Integer,
+            CommonDataTypes.long: Long,
+            CommonDataTypes.long_unsigned: LongUnsigned,
+            CommonDataTypes.double_long_unsigned: DoubleLongUnsigned,
+            CommonDataTypes.octet_string: construct.Select(DateTime, OctedStringText),
+            CommonDataTypes.visible_string: VisibleString,
+        },
+        default=construct.Error,
+    )
+
 
 Field = construct.FocusedSeq(
     "value",
@@ -209,16 +223,6 @@ OptionalDateTimeField = construct.FocusedSeq(
     / construct.If(construct.this.content_type != CommonDataTypes.null_data, DateTime),
 )
 
-OptionalNullData: construct.Struct = construct.Struct(
-    "_null_peek" / construct.Peek(CommonDataTypes),
-    "value"
-    / construct.If(
-        CommonDataTypes.null_data == construct.this._null_peek,
-        construct.GreedyRange(
-            construct.Const(CommonDataTypes.null_data, CommonDataTypes)
-        ),
-    ),
-)
 
 LongInvokeIdAndPriority = construct.BitStruct(
     "invoke-id" / construct.BitsInteger(24),
