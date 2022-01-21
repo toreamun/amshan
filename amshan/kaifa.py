@@ -1,13 +1,30 @@
 """Decoding support for Kaifa meters."""
 # pylint: disable=protected-access
 from datetime import datetime
+from enum import Enum
 from typing import Dict, List, Union
 
 import construct  # type: ignore
 
 from amshan import cosem, obis_map
 
-NotificationBody: construct.Struct = construct.Struct(
+
+class KaifaBodyType(Enum):
+    """Kaifa body structure type."""
+
+    VALUE_ELEMENTS = "value_elements"
+    OBIS_ELEMENTS = "obis_elements"
+
+
+Element: construct.Struct = construct.Struct(
+    "_element_type" / construct.Peek(cosem.CommonDataTypes),
+    "obis" / cosem.ObisCodeOctedStringField,
+    "value_type" / construct.Peek(cosem.CommonDataTypes),
+    "value" / cosem.Field,
+)
+
+
+NotificationBodyValueElements: construct.Struct = construct.Struct(
     construct.Const(
         cosem.CommonDataTypes.structure, cosem.CommonDataTypes
     ),  # expect structure
@@ -17,23 +34,39 @@ NotificationBody: construct.Struct = construct.Struct(
         construct.this.length,
         construct.Struct(
             "index" / construct.Computed(construct.this._index),
-            "_value_type" / cosem.CommonDataTypes,
-            "value"
-            / construct.Switch(
-                construct.this._value_type,
-                {
-                    # octed string is used for both text and date time
-                    cosem.CommonDataTypes.octet_string: construct.IfThenElse(
-                        construct.this._index < 4, cosem.OctedStringText, cosem.DateTime
-                    ),
-                    cosem.CommonDataTypes.double_long_unsigned: cosem.DoubleLongUnsigned,
-                },
-            ),
+            "value" / cosem.Field,
         ),
     ),
+    "_length_check"
+    / construct.Check(
+        construct.this.length == construct.len_(construct.this.list_items)
+    ),
+    "type" / construct.Computed(lambda _: KaifaBodyType.VALUE_ELEMENTS),
 )
 
-LlcPdu: construct.Struct = cosem.get_llc_pdu_struct(NotificationBody)
+NotificationBodyObisElements: construct.Struct = construct.Struct(
+    construct.Const(
+        cosem.CommonDataTypes.structure, cosem.CommonDataTypes
+    ),  # expect structure
+    "_fields" / construct.Int8ub,
+    "length" / construct.Computed(lambda ctx: int(ctx._fields / 2)),
+    "list_items" / construct.GreedyRange(Element),
+    "_length_check"
+    / construct.Check(lambda ctx: (ctx._fields / 2) == len(ctx.list_items)),
+    "type" / construct.Computed(lambda _: KaifaBodyType.OBIS_ELEMENTS),
+)
+
+LlcPduNotificationBodyObisElements = cosem.get_llc_pdu_struct(
+    NotificationBodyObisElements
+)
+
+LlcPduNotificationBodyValueElements = cosem.get_llc_pdu_struct(
+    NotificationBodyValueElements
+)
+
+LlcPdu: construct.Struct = construct.Select(
+    LlcPduNotificationBodyObisElements, LlcPduNotificationBodyValueElements
+)
 
 
 def _get_field_lists() -> List[List[str]]:
