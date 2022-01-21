@@ -237,7 +237,7 @@ LongInvokeIdAndPriority = construct.BitStruct(
 )
 
 
-def _get_apdpu_struct(notification_body: construct.Struct) -> construct.Struct:
+def _get_apdu_struct(notification_body: construct.Struct) -> construct.Struct:
     return construct.Struct(
         "Tag" / construct.Int8ub,
         "LongInvokeIdAndPriority" / LongInvokeIdAndPriority,
@@ -261,5 +261,5 @@ def get_llc_pdu_struct(notification_body: construct.Struct) -> construct.Struct:
         "dsap" / construct.Int8ub,
         "ssap" / construct.Int8ub,
         "control" / construct.Int8ub,
-        "information" / _get_apdpu_struct(notification_body),
+        "information" / _get_apdu_struct(notification_body),
     )
