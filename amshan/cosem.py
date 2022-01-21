@@ -225,13 +225,13 @@ OptionalDateTimeField = construct.FocusedSeq(
 
 
 LongInvokeIdAndPriority = construct.BitStruct(
-    "invoke-id" / construct.BitsInteger(24),
+    "invoke_id" / construct.BitsInteger(24),
     construct.Padding(4),
-    "self-descriptive"
+    "self_descriptive"
     / construct.Enum(construct.BitsInteger(1), NotSelfDescriptive=0, SelfDescriptive=1),
-    "processing-option"
+    "processing_option"
     / construct.Enum(construct.BitsInteger(1), ContinueOnError=0, BreakOnError=1),
-    "service-class"
+    "service_class"
     / construct.Enum(construct.BitsInteger(1), Unconfirmed=0, Confirmed=1),
     "priority" / construct.Enum(construct.BitsInteger(1), Normal=0, High=1),
 )

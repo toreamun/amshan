@@ -19,11 +19,11 @@ def assert_long_invokeid_and_priority(
 ):
     """Assert long-invokid-and-priority is as expected."""
     assert isinstance(container, construct.Container)
-    assert container["invoke-id"] == expected_invoke_id
-    assert container["self-descriptive"] == expected_self_descriptive
-    assert container["processing-option"] == expected_processing_option
-    assert container["service-class"] == expected_service_class
-    assert container["priority"] == expected_priority
+    assert container.invoke_id == expected_invoke_id
+    assert container.self_descriptive == expected_self_descriptive
+    assert container.processing_option == expected_processing_option
+    assert container.service_class == expected_service_class
+    assert container.priority == expected_priority
 
 
 def assert_obis_element(
