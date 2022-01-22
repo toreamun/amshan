@@ -76,18 +76,44 @@ DateTime = construct.Struct(
         construct.Int16sb,
         decoder=lambda obj, ctx: obj if obj != -0x8000 else None,
         encoder=lambda obj, ctx: obj if obj is not None else -0x8000,
-    ),
+    )
+    * ("Range -720...+720 in minutes of local time to UTC. 0x8000 = not specified"),
     "clock_status_byte" / construct.Peek(OptionalDateTimeByte),
     "clock_status"
     / construct.If(
         construct.this.clock_status_byte != 0xFF,
         construct.BitStruct(
-            "invalid_value" / construct.BitsInteger(1),
-            "doubtful_value" / construct.BitsInteger(1),
-            "different_clock_base" / construct.BitsInteger(1),
-            "invalid_clock_status" / construct.BitsInteger(1),
+            "invalid_value"
+            / construct.BitsInteger(1)
+            * (
+                "Time could not be recovered after an incident. Detailed conditions are "
+                "manufacturer specific (for example after the power to the clock has been "
+                "interrupted). For a valid status, bit 0 shall not be set if bit 1 is set."
+            ),
+            "doubtful_value"
+            / construct.BitsInteger(1)
+            * (
+                "Time could be recovered after an incident but the value cannot be guaranteed. "
+                "Detailed conditions are manufacturer specific. For a valid status, bit 1 shall "
+                "not be set if bit 0 is set."
+            ),
+            "different_clock_base"
+            / construct.BitsInteger(1)
+            * (
+                "Bit is set if the basic timing information for the clock at the actual moment "
+                "is taken from a timing source different from the source specified in clock_base."
+            ),
+            "invalid_clock_status"
+            / construct.BitsInteger(1)
+            * (
+                "This bit indicates that at least one bit of the clock status is invalid. "
+                "Some bits may be correct. The exact meaning shall be explained in the "
+                "manufacturer's documentation."
+            ),
             construct.BitsInteger(3),
-            "daylight_saving_active" / construct.BitsInteger(1),
+            "daylight_saving_active"
+            / construct.BitsInteger(1)
+            * "Flag set to true: the transmitted time contains the daylight saving deviation (summer time).",
         ),
     ),
     construct.If(construct.this.clock_status_byte == 0xFF, construct.Int8ub),
@@ -103,7 +129,7 @@ DateTime = construct.Struct(
             ctx.hundredths_of_second * 10000
             if ctx.hundredths_of_second is not None
             else 0,
-            datetime.timezone(datetime.timedelta(minutes=ctx.deviation))
+            datetime.timezone(datetime.timedelta(minutes=ctx.deviation * -1))
             if ctx.deviation is not None
             else None,
         )
