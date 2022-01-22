@@ -414,32 +414,106 @@ class TestParseKamstrup:
 class TestDecodeKamstrup:
     """Test decode Kamstrup frames."""
 
-    def test_decode_frame_list_1_single_phase_real_sample(self):
-        """Decode three phase list number 1."""
+    def test_decode_frame_no_list_1_single_phase_real_sample(self):
+        """Decode three phase no list number 1."""
         decoded = kamstrup.decode_frame_content(no_list_1_single_phase_real_sample)
-        assert isinstance(decoded, dict)
         pprint(decoded)
+        assert isinstance(decoded, dict)
+        assert len(decoded) == 11
+        assert decoded["active_power_export"] == 0
+        assert decoded["active_power_import"] == 1896
+        assert decoded["current_l1"] == 8.96
+        assert decoded["list_ver_id"] == "Kamstrup_V0001"
+        assert decoded["meter_datetime"] == datetime(2022, 1, 17, 12, 44, 40)
+        assert decoded["meter_id"] == "5705705705705702"
+        assert decoded["meter_manufacturer"] == "Kamstrup"
+        assert decoded["meter_type"] == "6861111BN242101040"
+        assert decoded["reactive_power_export"] == 493
+        assert decoded["reactive_power_import"] == 0
+        assert decoded["voltage_l1"] == 225
 
-    def test_decode_frame_list_2_single_phase_real_sample(self):
-        """Decode three phase list number 1."""
+    def test_decode_frame_no_list_2_single_phase_real_sample(self):
+        """Decode three phase no list number 1."""
         decoded = kamstrup.decode_frame_content(no_list_2_single_phase_real_sample)
-        assert isinstance(decoded, dict)
         pprint(decoded)
+        assert isinstance(decoded, dict)
+        assert len(decoded) == 15
+        assert decoded["active_power_export"] == 0
+        assert decoded["active_power_export_total"] == 0
+        assert decoded["active_power_import"] == 10050
+        assert decoded["active_power_import_total"] == 77452500
+        assert decoded["current_l1"] == 45.12
+        assert decoded["list_ver_id"] == "Kamstrup_V0001"
+        assert decoded["meter_datetime"] == datetime(2021, 11, 24, 0, 0, 25)
+        assert decoded["meter_id"] == "5705705705705702"
+        assert decoded["meter_manufacturer"] == "Kamstrup"
+        assert decoded["meter_type"] == "6861111BN242101040"
+        assert decoded["reactive_power_export"] == 279
+        assert decoded["reactive_power_export_total"] == 11415870
+        assert decoded["reactive_power_import"] == 0
+        assert decoded["reactive_power_import_total"] == 137310
+        assert decoded["voltage_l1"] == 223
 
-    def test_decode_frame_list_1_three_phase(self):
-        """Decode three phase list number 1."""
+    def test_decode_frame_no_list_1_three_phase(self):
+        """Decode three phase no list number 1."""
         decoded = kamstrup.decode_frame_content(no_list_1_three_phase)
-        assert isinstance(decoded, dict)
         pprint(decoded)
+        assert isinstance(decoded, dict)
+        assert len(decoded) == 15
+        assert decoded["active_power_export"] == 0
+        assert decoded["active_power_import"] == 0
+        assert decoded["current_l1"] == 0.0
+        assert decoded["current_l2"] == 0.0
+        assert decoded["current_l3"] == 0.0
+        assert decoded["list_ver_id"] == "Kamstrup_V0001"
+        assert decoded["meter_datetime"] == datetime(2000, 1, 1, 22, 33)
+        assert decoded["meter_id"] == "5706567000000000"
+        assert decoded["meter_manufacturer"] == "Kamstrup"
+        assert decoded["meter_type"] == "000000000000000000"
+        assert decoded["reactive_power_export"] == 0
+        assert decoded["reactive_power_import"] == 0
+        assert decoded["voltage_l1"] == 0
+        assert decoded["voltage_l2"] == 0
+        assert decoded["voltage_l3"] == 0
 
-    def test_decode_frame_list_2_three_phase(self):
-        """Decode three phase list number 2."""
+    def test_decode_frame_no_list_2_three_phase(self):
+        """Decode three phase no list number 2."""
         decoded = kamstrup.decode_frame_content(no_list_2_three_phase)
-        assert isinstance(decoded, dict)
         pprint(decoded)
+        assert isinstance(decoded, dict)
+        assert len(decoded) == 19
+        assert decoded["active_power_export"] == 0
+        assert decoded["active_power_export_total"] == 0
+        assert decoded["active_power_import"] == 0
+        assert decoded["active_power_import_total"] == 0
+        assert decoded["current_l1"] == 0
+        assert decoded["current_l2"] == 0
+        assert decoded["current_l3"] == 0
+        assert decoded["list_ver_id"] == "Kamstrup_V0001"
+        assert decoded["meter_datetime"] == datetime(2017, 8, 16, 16, 0, 5)
+        assert decoded["meter_id"] == "5706567000000000"
+        assert decoded["meter_manufacturer"] == "Kamstrup"
+        assert decoded["meter_type"] == "000000000000000000"
+        assert decoded["reactive_power_export"] == 0
+        assert decoded["reactive_power_export_total"] == 0
+        assert decoded["reactive_power_import"] == 0
+        assert decoded["reactive_power_import_total"] == 0
+        assert decoded["voltage_l1"] == 0
+        assert decoded["voltage_l2"] == 0
+        assert decoded["voltage_l3"] == 0
 
-    def test_decode_frame_list_2_single_phase(self):
-        """Decode single phase list number 2."""
+    def test_decode_frame_no_list_2_single_phase(self):
+        """Decode single phase no list number 2."""
         decoded = kamstrup.decode_frame_content(no_list_2_single_phase)
-        assert isinstance(decoded, dict)
         pprint(decoded)
+        assert isinstance(decoded, dict)
+        assert len(decoded) == 9
+        assert decoded["active_power_import"] == 0
+        assert decoded["active_power_import_total"] == 0
+        assert decoded["current_l1"] == 0.0
+        assert decoded["list_ver_id"] == "Kamstrup_V0001"
+        assert decoded["meter_datetime"] == datetime(2017, 8, 16, 16, 0, 5)
+        assert decoded["meter_id"] == "5706567000000000"
+        assert decoded["meter_manufacturer"] == "Kamstrup"
+        assert decoded["meter_type"] == "000000000000000000"
+        assert decoded["voltage_l1"] == 0

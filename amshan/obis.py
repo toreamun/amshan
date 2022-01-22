@@ -225,7 +225,7 @@ class ObisInfo:
     code: Obis
     category: RegisterCategory
     name: str
-    unit: ObisUnit
+    unit: ObisUnit | None
     phase: int | None = None
 
 
@@ -304,9 +304,23 @@ OBIS_CODES = [
         1,
     ),
     ObisInfo(
+        Obis.from_string("24.7.0"),
+        RegisterCategory.INSTANTANEOUS_POWER,
+        "Negative reactive instantaneous power (Q-) in phase L2",
+        ObisUnit.KVAR,
+        1,
+    ),
+    ObisInfo(
         Obis.from_string("43.7.0"),
         RegisterCategory.INSTANTANEOUS_POWER,
         "Positive reactive instantaneous power (Q+) in phase L2",
+        ObisUnit.KVAR,
+        2,
+    ),
+    ObisInfo(
+        Obis.from_string("44.7.0"),
+        RegisterCategory.INSTANTANEOUS_POWER,
+        "Negative reactive instantaneous power (Q-) in phase L2",
         ObisUnit.KVAR,
         2,
     ),

@@ -7,6 +7,7 @@ from typing import Dict, List, Union
 import construct  # type: ignore
 
 from amshan import cosem, obis_map
+from amshan.obis import Obis
 
 
 class KaifaBodyType(Enum):
@@ -71,24 +72,24 @@ LlcPdu: construct.Struct = construct.Select(
 
 def _get_field_lists() -> List[List[str]]:
     item_order_list_3_three_phase = [
-        obis_map.NEK_HAN_FIELD_OBIS_LIST_VER_ID,
-        obis_map.NEK_HAN_FIELD_METER_ID,
-        obis_map.NEK_HAN_FIELD_METER_TYPE,
-        obis_map.NEK_HAN_FIELD_ACTIVE_POWER_IMPORT,
-        obis_map.NEK_HAN_FIELD_ACTIVE_POWER_EXPORT,
-        obis_map.NEK_HAN_FIELD_REACTIVE_POWER_IMPORT,
-        obis_map.NEK_HAN_FIELD_REACTIVE_POWER_EXPORT,
-        obis_map.NEK_HAN_FIELD_CURRENT_L1,
-        obis_map.NEK_HAN_FIELD_CURRENT_L2,
-        obis_map.NEK_HAN_FIELD_CURRENT_L3,
-        obis_map.NEK_HAN_FIELD_VOLTAGE_L1,
-        obis_map.NEK_HAN_FIELD_VOLTAGE_L2,
-        obis_map.NEK_HAN_FIELD_VOLTAGE_L3,
-        obis_map.NEK_HAN_FIELD_METER_DATETIME,
-        obis_map.NEK_HAN_FIELD_ACTIVE_POWER_IMPORT_HOUR,
-        obis_map.NEK_HAN_FIELD_ACTIVE_POWER_EXPORT_HOUR,
-        obis_map.NEK_HAN_FIELD_REACTIVE_POWER_IMPORT_HOUR,
-        obis_map.NEK_HAN_FIELD_REACTIVE_POWER_EXPORT_HOUR,
+        obis_map.FIELD_OBIS_LIST_VER_ID,
+        obis_map.FIELD_METER_ID,
+        obis_map.FIELD_METER_TYPE,
+        obis_map.FIELD_ACTIVE_POWER_IMPORT,
+        obis_map.FIELD_ACTIVE_POWER_EXPORT,
+        obis_map.FIELD_REACTIVE_POWER_IMPORT,
+        obis_map.FIELD_REACTIVE_POWER_EXPORT,
+        obis_map.FIELD_CURRENT_L1,
+        obis_map.FIELD_CURRENT_L2,
+        obis_map.FIELD_CURRENT_L3,
+        obis_map.FIELD_VOLTAGE_L1,
+        obis_map.FIELD_VOLTAGE_L2,
+        obis_map.FIELD_VOLTAGE_L3,
+        obis_map.FIELD_METER_DATETIME,
+        obis_map.FIELD_ACTIVE_POWER_IMPORT_TOTAL,
+        obis_map.FIELD_ACTIVE_POWER_EXPORT_TOTAL,
+        obis_map.FIELD_REACTIVE_POWER_IMPORT_TOTAL,
+        obis_map.FIELD_REACTIVE_POWER_EXPORT_TOTAL,
     ]
 
     item_order_list_3_single_phase = (
@@ -102,7 +103,7 @@ def _get_field_lists() -> List[List[str]]:
     item_order_list_2_three_phase = item_order_list_3_three_phase[:-5]
 
     return [
-        [obis_map.NEK_HAN_FIELD_ACTIVE_POWER_IMPORT],
+        [obis_map.FIELD_ACTIVE_POWER_IMPORT],
         item_order_list_2_single_phase,
         item_order_list_2_three_phase,
         item_order_list_3_single_phase,
@@ -113,44 +114,84 @@ def _get_field_lists() -> List[List[str]]:
 _field_order_lists: List[List[str]] = _get_field_lists()
 
 _FIELD_SCALING = {
-    obis_map.NEK_HAN_FIELD_CURRENT_L1: -3,
-    obis_map.NEK_HAN_FIELD_CURRENT_L2: -3,
-    obis_map.NEK_HAN_FIELD_CURRENT_L3: -3,
-    obis_map.NEK_HAN_FIELD_VOLTAGE_L1: -1,
-    obis_map.NEK_HAN_FIELD_VOLTAGE_L2: -1,
-    obis_map.NEK_HAN_FIELD_VOLTAGE_L3: -1,
+    obis_map.FIELD_CURRENT_L1: -3,
+    obis_map.FIELD_CURRENT_L2: -3,
+    obis_map.FIELD_CURRENT_L3: -3,
+    obis_map.FIELD_VOLTAGE_L1: -1,
+    obis_map.FIELD_VOLTAGE_L2: -1,
+    obis_map.FIELD_VOLTAGE_L3: -1,
 }
+
+
+def _normalize_parsed_value_elements_frame(
+    frame: construct.Struct,
+) -> Dict[str, Union[str, int, float, datetime]]:
+    list_items = frame.information.notification_body.list_items
+    current_list_names: List[str] = next(
+        (x for x in _field_order_lists if len(x) == len(list_items)), []
+    )
+
+    dictionary = {
+        obis_map.FIELD_METER_MANUFACTURER: "Kaifa",
+        obis_map.FIELD_METER_DATETIME: frame.information.DateTime.datetime,
+    }
+
+    for measure in list_items:
+        element_name = current_list_names[measure.index]
+
+        if element_name == obis_map.FIELD_METER_DATETIME:
+            dictionary[element_name] = measure.value.datetime
+        else:
+            scale = _FIELD_SCALING.get(element_name, None)
+            if scale:
+                scaled_value = round(measure.value * (10 ** scale), abs(scale))
+                dictionary[element_name] = scaled_value
+            else:
+                dictionary[element_name] = measure.value
+
+    return dictionary
+
+
+def _normalize_parsed_obis_elements_frame(
+    frame: construct.Struct,
+) -> Dict[str, Union[str, int, float, datetime]]:
+    dictionary = {
+        obis_map.FIELD_METER_MANUFACTURER: "Kaifa",
+    }
+
+    list_items = frame.information.notification_body.list_items
+    for measure in list_items:
+        obis_group_cdr = Obis.from_string(measure.obis).to_group_cdr_str()
+        if obis_group_cdr in obis_map.obis_name_map:
+            element_name = obis_map.obis_name_map[obis_group_cdr]
+        else:
+            element_name = obis_group_cdr
+
+        if hasattr(measure.value, "datetime"):
+            dictionary[element_name] = measure.value.datetime
+        else:
+            scale = _FIELD_SCALING.get(element_name, None)
+            if scale:
+                scaled_value = round(measure.value * (10 ** scale), abs(scale))
+                dictionary[element_name] = scaled_value
+            else:
+                dictionary[element_name] = measure.value
+
+    return dictionary
 
 
 def normalize_parsed_frame(
     frame: construct.Struct,
 ) -> Dict[str, Union[str, int, float, datetime]]:
     """Convert data from meters construct structure to a dictionary with common key names."""
-    list_items = frame.information.notification_body.list_items
+    list_type = frame.information.notification_body.type
+    if list_type == KaifaBodyType.VALUE_ELEMENTS:
+        return _normalize_parsed_value_elements_frame(frame)
 
-    current_list_names: List[str] = next(
-        (x for x in _field_order_lists if len(x) == len(list_items)), []
-    )
+    if list_type == KaifaBodyType.OBIS_ELEMENTS:
+        return _normalize_parsed_obis_elements_frame(frame)
 
-    dictionary = {
-        obis_map.NEK_HAN_FIELD_METER_MANUFACTURER: "Kaifa",
-        obis_map.NEK_HAN_FIELD_METER_DATETIME: frame.information.DateTime.datetime,
-    }
-
-    for measure in list_items:
-        element_name = current_list_names[measure.index]
-
-        if element_name == obis_map.NEK_HAN_FIELD_METER_DATETIME:
-            dictionary[element_name] = measure.value.datetime
-        else:
-            scale = _FIELD_SCALING.get(element_name, None)
-            if scale:
-                scaled_value = measure.value * (10 ** scale)
-                dictionary[element_name] = scaled_value
-            else:
-                dictionary[element_name] = measure.value
-
-    return dictionary
+    raise ValueError(f"Unexpected list type {list_type}")
 
 
 def decode_frame_content(

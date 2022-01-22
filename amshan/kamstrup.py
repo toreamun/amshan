@@ -6,6 +6,7 @@ from typing import Dict, Union
 import construct  # type: ignore
 
 from amshan import cosem, obis_map
+from amshan.obis import Obis
 
 
 Element: construct.Struct = construct.Struct(
@@ -61,8 +62,8 @@ def normalize_parsed_frame(
 ) -> Dict[str, Union[str, int, float, datetime]]:
     """Convert data from meters construct structure to a dictionary with common key names."""
     dictionary = {
-        obis_map.NEK_HAN_FIELD_METER_MANUFACTURER: "Kamstrup",
-        obis_map.NEK_HAN_FIELD_METER_DATETIME: frame.information.DateTime.datetime,
+        obis_map.FIELD_METER_MANUFACTURER: "Kamstrup",
+        obis_map.FIELD_METER_DATETIME: frame.information.DateTime.datetime,
     }
 
     list_items = frame.information.notification_body.list_items
@@ -74,12 +75,12 @@ def normalize_parsed_frame(
     for measure in list_items:
         # list version is the only element without obis code
         element_name = (
-            obis_map.obis_name_map[measure.obis]
+            obis_map.obis_name_map[Obis.from_string(measure.obis).to_group_cdr_str()]
             if measure.obis
-            else obis_map.NEK_HAN_FIELD_OBIS_LIST_VER_ID
+            else obis_map.FIELD_OBIS_LIST_VER_ID
         )
 
-        if element_name == obis_map.NEK_HAN_FIELD_METER_DATETIME:
+        if element_name == obis_map.FIELD_METER_DATETIME:
             dictionary[element_name] = measure.value.datetime
         else:
             if isinstance(measure.value, int):

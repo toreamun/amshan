@@ -5,6 +5,7 @@ from typing import Dict, Union
 import construct  # type: ignore
 
 from amshan import cosem, obis_map
+from amshan.obis import Obis
 
 Element: construct.Struct = construct.Struct(
     construct.Const(
@@ -55,10 +56,14 @@ def normalize_parsed_frame(
     list_items = frame.information.notification_body.list_items
 
     dictionary: Dict[str, Union[str, int, float, datetime]] = {
-        obis_map.NEK_HAN_FIELD_METER_MANUFACTURER: "Aidon"
+        obis_map.FIELD_METER_MANUFACTURER: "Aidon"
     }
     for measure in list_items:
-        element_name = obis_map.obis_name_map[measure.obis]
+        obis_group_cdr = Obis.from_string(measure.obis).to_group_cdr_str()
+        if obis_group_cdr in obis_map.obis_name_map:
+            element_name = obis_map.obis_name_map[obis_group_cdr]
+        else:
+            element_name = obis_group_cdr
 
         if isinstance(measure.content, str):
             dictionary[element_name] = measure.content

@@ -1,6 +1,6 @@
 """Kaifa tests."""
 # pylint: disable = no-self-use
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pprint import pprint
 
 import construct
@@ -190,10 +190,10 @@ class TestParseKaifa:
         assert isinstance(date_time, construct.Container)
         assert date_time.obis == "0.0.1.0.0.255"
         assert date_time.value_type == "octet_string"
-        # assert (
-        #     date_time.value.datetime.isoformat()
-        #     == datetime(2021, 9, 22, 3, 17, 35, 30).isoformat()
-        # )
+        assert date_time.value.datetime == datetime(
+            2021, 9, 22, 17, 35, 30, tzinfo=timezone(timedelta(hours=1))
+        )
+
         assert_obis_element(
             parsed.information.notification_body.list_items[14],
             "1.0.1.8.0.255",
@@ -325,20 +325,87 @@ class TestParseKaifa:
 class TestDecodeKaifa:
     """Test decode Kaifa frames."""
 
+    def test_decode_frame_se_list(self):
+        """Decode SE list."""
+        decoded = kaifa.decode_frame_content(se_list)
+        pprint(decoded)
+        assert isinstance(decoded, dict)
+        assert len(decoded) == 19
+        assert decoded["active_power_export"] == 0
+        assert decoded["active_power_export_total"] == 0
+        assert decoded["active_power_import"] == 2816
+        assert decoded["active_power_import_total"] == 4786979
+        assert decoded["current_l1"] == 6.781
+        assert decoded["current_l2"] == 0.79
+        assert decoded["current_l3"] == 6.125
+        assert decoded["list_ver_id"] == "KFM_001"
+        assert decoded["meter_datetime"] == datetime(
+            2021, 9, 22, 17, 35, 30, tzinfo=timezone(timedelta(hours=1))
+        )
+        assert decoded["meter_id"] == "7340734073407340"
+        assert decoded["meter_manufacturer"] == "Kaifa"
+        assert decoded["meter_type"] == "MA304H4"
+        assert decoded["reactive_power_export"] == 66
+        assert decoded["reactive_power_export_total"] == 578528
+        assert decoded["reactive_power_import"] == 0
+        assert decoded["reactive_power_import_total"] == 26228
+        assert decoded["voltage_l1"] == 232.2
+        assert decoded["voltage_l2"] == 230.0
+        assert decoded["voltage_l3"] == 228.9
+
     def test_decode_frame_no_list_1(self):
         """Decode NO list number 1."""
         decoded = kaifa.decode_frame_content(no_list_1)
-        assert isinstance(decoded, dict)
         pprint(decoded)
+        assert isinstance(decoded, dict)
+        assert len(decoded) == 3
+        assert decoded["active_power_import"] == 5852
+        assert decoded["meter_datetime"] == datetime(2019, 2, 4, 23, 52, 22)
+        assert decoded["meter_manufacturer"] == "Kaifa"
 
     def test_decode_frame_no_list_2(self):
         """Decode NO list number 2."""
         decoded = kaifa.decode_frame_content(no_list_2)
-        assert isinstance(decoded, dict)
         pprint(decoded)
+        assert isinstance(decoded, dict)
+        assert len(decoded) == 15
+        assert decoded["active_power_export"] == 0
+        assert decoded["active_power_import"] == 9745
+        assert decoded["current_l1"] == 33.813
+        assert decoded["current_l2"] == 28.103
+        assert decoded["current_l3"] == 18.178
+        assert decoded["list_ver_id"] == "KFM_001"
+        assert decoded["meter_datetime"] == datetime(2020, 1, 25, 13, 9, 30)
+        assert decoded["meter_manufacturer"] == "Kaifa"
+        assert decoded["meter_type"] == "MA304H3E"
+        assert decoded["reactive_power_export"] == 435
+        assert decoded["reactive_power_import"] == 0
+        assert decoded["voltage_l1"] == 216.8
+        assert decoded["voltage_l2"] == 0.0
+        assert decoded["voltage_l3"] == 218.8
 
     def test_decode_frame_no_list_3(self):
         """Decode NO list number 3."""
         decoded = kaifa.decode_frame_content(no_list_3)
-        assert isinstance(decoded, dict)
         pprint(decoded)
+        assert isinstance(decoded, dict)
+        assert len(decoded) == 19
+        assert decoded["active_power_export"] == 0
+        assert decoded["active_power_export_total"] == 0
+        assert decoded["active_power_import"] == 4904
+        assert decoded["active_power_import_total"] == 79591144
+        assert decoded["current_l1"] == 14.571
+        assert decoded["current_l2"] == 15.643
+        assert decoded["current_l3"] == 9.525
+        assert decoded["list_ver_id"] == "KFM_001"
+        assert decoded["meter_datetime"] == datetime(2020, 1, 25, 14, 0, 10)
+        assert decoded["meter_id"] == "6970631402614476"
+        assert decoded["meter_manufacturer"] == "Kaifa"
+        assert decoded["meter_type"] == "MA304H3E"
+        assert decoded["reactive_power_export"] == 377
+        assert decoded["reactive_power_export_total"] == 3210932
+        assert decoded["reactive_power_import"] == 0
+        assert decoded["reactive_power_import_total"] == 889389
+        assert decoded["voltage_l1"] == 219.3
+        assert decoded["voltage_l2"] == 0.0
+        assert decoded["voltage_l3"] == 220.5

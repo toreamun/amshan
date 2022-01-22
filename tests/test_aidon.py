@@ -506,20 +506,90 @@ class TestParseAidon:
 class TestDecodeAidon:
     """Test decode Aidon frames."""
 
-    def test_decode_frame_no_list_1(self):
-        """Decode list number 1."""
-        decoded = aidon.decode_frame_content(no_list_1)
-        assert isinstance(decoded, dict)
+    def test_decode_frame_se_list(self):
+        """Decode SE list."""
+        decoded = aidon.decode_frame_content(se_list)
         pprint(decoded)
+        assert isinstance(decoded, dict)
+        assert len(decoded) == 28
+        assert decoded["active_power_export"] == 0
+        assert decoded["active_power_export_total"] == 8
+        assert decoded["active_power_export_l1"] == 0
+        assert decoded["active_power_export_l2"] == 0
+        assert decoded["active_power_export_l3"] == 0
+        assert decoded["active_power_import"] == 1122
+        assert decoded["active_power_import_total"] == 10049926
+        assert decoded["active_power_import_l1"] == 0
+        assert decoded["active_power_import_l2"] == 1122
+        assert decoded["current_l1"] == 0
+        assert decoded["current_l2"] == 7.5
+        assert decoded["current_l3"] == 0
+        assert decoded["meter_datetime"] == datetime(2019, 12, 16, 7, 59, 40)
+        assert decoded["meter_manufacturer"] == "Aidon"
+        assert decoded["reactive_power_export"] == 0
+        assert decoded["reactive_power_export_total"] == 5
+        assert decoded["reactive_power_export_l1"] == 0
+        assert decoded["reactive_power_export_l2"] == 0
+        assert decoded["reactive_power_export_l3"] == 0
+        assert decoded["reactive_power_import"] == 1507
+        assert decoded["reactive_power_import_total"] == 6614347
+        assert decoded["reactive_power_import_l1"] == 0
+        assert decoded["reactive_power_import_l2"] == 1506
+        assert decoded["reactive_power_import_l3"] == 0
+        assert decoded["voltage_l1"] == 230.7
+        assert decoded["voltage_l2"] == 249.9
+        assert decoded["voltage_l3"] == 230.8
+
+    def test_decode_frame_no_list_1(self):
+        """Decode NO list number 1."""
+        decoded = aidon.decode_frame_content(no_list_1)
+        pprint(decoded)
+        assert isinstance(decoded, dict)
+        assert len(decoded) == 2
+        assert decoded["active_power_import"] == 280
+        assert decoded["meter_manufacturer"] == "Aidon"
 
     def test_decode_frame_no_list_2(self):
-        """Decode list number 2."""
+        """Decode NO list number 2."""
         decoded = aidon.decode_frame_content(no_list_2)
         assert isinstance(decoded, dict)
-        pprint(decoded)
+        assert len(decoded) == 13
+        assert decoded["active_power_export"] == 0
+        assert decoded["active_power_import"] == 280
+        assert decoded["current_l1"] == 1.3
+        assert decoded["current_l3"] == 0.9
+        assert decoded["list_ver_id"] == "AIDON_V0001"
+        assert decoded["meter_id"] == "7359992892587665"
+        assert decoded["meter_manufacturer"] == "Aidon"
+        assert decoded["meter_type"] == "6525"
+        assert decoded["reactive_power_export"] == 128
+        assert decoded["reactive_power_import"] == 0
+        assert decoded["voltage_l1"] == 227.4
+        assert decoded["voltage_l2"] == 230.1
+        assert decoded["voltage_l3"] == 230.8
 
     def test_decode_frame_no_list_3(self):
-        """Decode list number 3."""
+        """Decode NO list number 3."""
         decoded = aidon.decode_frame_content(no_list_3)
-        assert isinstance(decoded, dict)
         pprint(decoded)
+        assert isinstance(decoded, dict)
+        assert len(decoded) == 18
+        assert decoded["active_power_export"] == 0
+        assert decoded["active_power_import"] == 280
+        assert decoded["active_power_import_total"] == 22721380
+        assert decoded["current_l1"] == 1.3
+        assert decoded["current_l3"] == 0.9
+        assert decoded["list_ver_id"] == "AIDON_V0001"
+        assert decoded["meter_datetime"] == datetime(
+            2020, 1, 21, 16, 0, tzinfo=timezone.utc
+        )
+        assert decoded["meter_id"] == "7359992892587665"
+        assert decoded["meter_manufacturer"] == "Aidon"
+        assert decoded["meter_type"] == "6525"
+        assert decoded["reactive_power_export"] == 128
+        assert decoded["reactive_power_export_total"] == 1708430.0
+        assert decoded["reactive_power_import"] == 0
+        assert decoded["reactive_power_import_total"] == 582430.0
+        assert decoded["voltage_l1"] == 227.6
+        assert decoded["voltage_l2"] == 230.3
+        assert decoded["voltage_l3"] == 230.9
