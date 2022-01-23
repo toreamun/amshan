@@ -81,9 +81,9 @@ See [reader_async.py](amshan/reader_async.py) for a complete example.
 
 hdlc.HdlcFrameReader can be used to read frame by frame from bytes. Call read() to read frames as more bytes become available. The function takes bytes as an argument and returns a list of HdlcFrame (the list can be empty). The function can receive incomplete frames in the buffer input and add incomplete data to an internal buffer. The buffer is schrinked when complete frames are found and returned. You should check if returned frames are valid with frame.is_good_ffc and frame.is_expected_length before using them.
 
-# Decode norwegian HAN port frames
+# Decode norwegian and swedish DLMS HAN port frames
 
-MBUS frames using the norwegian AMS format can be parsed into meter specific objects or decoded into a common dictionary. Modules exists for Aidon, Kaifa and Kamstrup meters, but the easiest is to use [autodecoder.AutoDecode](amshan/autodecode.py) to automatically detect meter type and decode the frame into a dictionary. The dictionay content is as far as possible common between meters. Possible dictionary keys kan be found as constants in [obis_map.py](amshan/obis_map.py).
+MBUS frames using the norwegian or swedish DMLS AMS format can be parsed into meter specific objects or decoded into a common dictionary. Modules exists for Aidon, Kaifa and Kamstrup meters, but the easiest is to use [autodecoder.AutoDecode](amshan/autodecode.py) to automatically detect meter type and decode the frame into a dictionary. The dictionay content is as far as possible common between meters. Possible dictionary keys kan be found as constants in [obis_map.py](amshan/obis_map.py).
 
 Example:
 
