@@ -131,7 +131,7 @@ def _normalize_parsed_value_elements_frame(
         (x for x in _field_order_lists if len(x) == len(list_items)), []
     )
 
-    dictionary = {
+    dictionary: dict[str, str | int | float | datetime] = {
         obis_map.FIELD_METER_MANUFACTURER: "Kaifa",
         obis_map.FIELD_METER_DATETIME: frame.information.DateTime.datetime,
     }
@@ -155,7 +155,7 @@ def _normalize_parsed_value_elements_frame(
 def _normalize_parsed_obis_elements_frame(
     frame: construct.Struct,
 ) -> dict[str, str | int | float | datetime]:
-    dictionary = {
+    dictionary: dict[str, str | int | float | datetime] = {
         obis_map.FIELD_METER_MANUFACTURER: "Kaifa",
     }
 

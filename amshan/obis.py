@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from enum import Enum, auto
+from typing import cast
 
 
 class Obis:
@@ -159,7 +160,14 @@ class Obis:
             group_e = int(parts[4])
             group_f = int(parts[5])
 
-        return Obis(group_a, group_b, group_c, group_d, group_e, group_f)
+        return Obis(
+            group_a,
+            group_b,
+            cast(int, group_c),
+            cast(int, group_d),
+            cast(int, group_e),
+            group_f,
+        )
 
     def filter_group_cde(self):
         """Filter out group C, D and E."""
