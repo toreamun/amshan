@@ -9,5 +9,8 @@
   "editor.formatOnSave": true,
   "editor.formatOnType": true,
   "files.trimTrailingWhitespace": true,
-  "python.testing.pytestArgs": ["-s"]
+  "python.testing.pytestArgs": [
+    "-s"
+  ],
+  "python.linting.mypyEnabled": true
 }
