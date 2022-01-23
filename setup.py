@@ -9,7 +9,7 @@ setuptools.setup(
     version="1.0.2",
     author="Tore Amundsen",
     author_email="tore@amundsen.org",
-    description="Decode MBUS (Meter Bus) data with special support for norwegian AMS-smart meters (HAN port)",
+    description="Decode MBUS (Meter Bus) data with special support for norwegian and swedish AMS-smart meters (HAN port)",
     long_description=long_description,
     long_description_content_type="text/markdown",
     platforms=["POSIX", "Windows"],
