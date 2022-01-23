@@ -1,4 +1,5 @@
 """Async meter connection module."""
+from __future__ import annotations
 import datetime
 import logging
 from abc import ABCMeta, abstractmethod
@@ -14,7 +15,7 @@ from asyncio import (
     wait,
     sleep,
 )
-from typing import Awaitable, Callable, ClassVar, Optional, Tuple
+from typing import Awaitable, Callable, ClassVar, Tuple
 
 from amshan import hdlc
 from amshan.hdlc import HdlcFrame
@@ -82,7 +83,7 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
 
     def __init__(
         self,
-        frame_reader: Optional[hdlc.HdlcFrameReader] = None,
+        frame_reader: hdlc.HdlcFrameReader | None = None,
     ) -> None:
         """
         Initialize SmartMeterProtocol.
@@ -98,8 +99,8 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
             if frame_reader
             else hdlc.HdlcFrameReader(use_octet_stuffing=False, use_abort_sequence=True)
         )
-        self._transport: Optional[BaseTransport] = None
-        self._transport_info: Optional[str] = None
+        self._transport: BaseTransport | None = None
+        self._transport_info: str | None = None
         SmartMeterBaseProtocol.total_instance_counter += 1
 
     @property
@@ -135,7 +136,7 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
             "%s: Smart meter connected to %s", self._instance_id(), self._transport_info
         )
 
-    def connection_lost(self, exc: Optional[Exception]) -> None:
+    def connection_lost(self, exc: Exception | None) -> None:
         """
         Signal that the transport connected to this protocol instance has been lost or closed.
 
@@ -221,8 +222,8 @@ class SmartMeterFrameProtocol(SmartMeterBaseProtocol):
 
     def __init__(
         self,
-        destination_queue: "Queue[hdlc.HdlcFrame]",
-        frame_reader: Optional[hdlc.HdlcFrameReader] = None,
+        destination_queue: Queue[hdlc.HdlcFrame],
+        frame_reader: hdlc.HdlcFrameReader | None = None,
     ) -> None:
         """
         Initialize SmartMeterProtocol.
@@ -253,8 +254,8 @@ class SmartMeterFrameContentProtocol(SmartMeterBaseProtocol):
 
     def __init__(
         self,
-        destination_queue: "Queue[bytes]",
-        frame_reader: Optional[hdlc.HdlcFrameReader] = None,
+        destination_queue: Queue[bytes],
+        frame_reader: hdlc.HdlcFrameReader | None = None,
     ) -> None:
         """
         Initialize SmartMeterProtocol.
@@ -310,7 +311,7 @@ class ConnectionManager:
             raise ValueError("Factory must be awaitable.")
 
         self._connection_factory: AsyncConnectionFactory = connection_factory
-        self._connection: Optional[MeterTransportProtocol] = None
+        self._connection: MeterTransportProtocol | None = None
         self._is_closing: Event = Event()
 
         self.back_off_connect_error: BackOffStrategy = ExponentialBackOff()
@@ -321,7 +322,7 @@ class ConnectionManager:
         self.connection_lost_back_off_sleep_sec: int = (
             ConnectionManager.DEFAULT_CONNECTION_LOST_BACK_OFF_SLEEP_SEC
         )
-        self._connection_lost_last_time: Optional[datetime.datetime] = None
+        self._connection_lost_last_time: datetime.datetime | None = None
         self._connection_lost_sleep_before_reconnect: bool = False
 
     def close(self) -> None:

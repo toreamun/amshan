@@ -1,8 +1,8 @@
 """Compute or check checksum using a 16-bit Fast Frame Check Sequence (FCS) derived from RFC1662."""
-from typing import List
+from __future__ import annotations
 
 
-def _compute_fcs_16_crc_table() -> List[int]:
+def _compute_fcs_16_crc_table() -> list[int]:
     """Generate a FCS-16 table."""
     polynomial = 0x8408  # The FCS-16 generator polynomial: x**0 + x**5 + x**12 + x**16.
     crc_table = [] * 256

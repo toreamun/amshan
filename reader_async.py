@@ -1,4 +1,5 @@
 """Util for reading from HAN port."""
+from __future__ import annotations
 import argparse
 import datetime
 import json
@@ -6,7 +7,7 @@ import logging
 import signal
 import sys
 from asyncio import Queue, get_event_loop, create_task, run
-from typing import Any, Optional, Tuple
+from typing import Any
 
 from amshan import autodecoder
 from amshan.meter_connection import (
@@ -26,7 +27,7 @@ LOG = logging.getLogger("")
 
 
 def _get_arg_parser() -> argparse.ArgumentParser:
-    def valid_host_port(host_port: str) -> Tuple[str, str]:
+    def valid_host_port(host_port: str) -> tuple[str, str]:
         host_and_port = host_port.split(":")
         if len(host_and_port) == 2:
             return host_and_port[0], host_and_port[1]
@@ -82,7 +83,7 @@ def _get_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _json_converter(source: Any) -> Optional[str]:
+def _json_converter(source: Any) -> str | None:
     if isinstance(source, datetime.datetime):
         return source.isoformat()
     return None

@@ -1,4 +1,5 @@
 """Test obis module."""
+from __future__ import annotations
 from amshan.obis import OBIS_CODES, Obis
 from amshan.obis_map import (
     FIELD_METER_DATETIME,

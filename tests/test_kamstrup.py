@@ -1,5 +1,6 @@
 """Kamstrup tests."""
 # pylint: disable = no-self-use
+from __future__ import annotations
 from datetime import datetime
 from pprint import pprint
 

@@ -1,7 +1,7 @@
 """Decoding support for Kamstrup meters."""
 # pylint: disable=protected-access
+from __future__ import annotations
 from datetime import datetime
-from typing import Dict, Union
 
 import construct  # type: ignore
 
@@ -59,7 +59,7 @@ _field_scaling_ct_meter = {
 
 def normalize_parsed_frame(
     frame: construct.Struct,
-) -> Dict[str, Union[str, int, float, datetime]]:
+) -> dict[str, str | int | float | datetime]:
     """Convert data from meters construct structure to a dictionary with common key names."""
     dictionary = {
         obis_map.FIELD_METER_MANUFACTURER: "Kamstrup",
@@ -97,7 +97,7 @@ def normalize_parsed_frame(
 
 def decode_frame_content(
     frame_content: bytes,
-) -> Dict[str, Union[str, int, float, datetime]]:
+) -> dict[str, str | int | float | datetime]:
     """Decode meter LLC PDU frame content as a dictionary."""
     parsed = LlcPdu.parse(frame_content)
     return normalize_parsed_frame(parsed)

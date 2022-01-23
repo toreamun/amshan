@@ -1,5 +1,6 @@
 """Kaifa tests."""
 # pylint: disable = no-self-use
+from __future__ import annotations
 from datetime import datetime, timezone, timedelta
 from pprint import pprint
 

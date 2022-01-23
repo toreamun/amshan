@@ -132,7 +132,7 @@ class Obis:
         return str(self)
 
     @classmethod
-    def from_string(cls, obis_code: str) -> "Obis":
+    def from_string(cls, obis_code: str) -> Obis:
         """Create from obis-code string."""
         group_a = 0
         group_b = 0

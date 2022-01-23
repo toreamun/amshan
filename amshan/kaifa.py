@@ -1,8 +1,8 @@
 """Decoding support for Kaifa meters."""
 # pylint: disable=protected-access
+from __future__ import annotations
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Union
 
 import construct  # type: ignore
 
@@ -70,7 +70,7 @@ LlcPdu: construct.Struct = construct.Select(
 )
 
 
-def _get_field_lists() -> List[List[str]]:
+def _get_field_lists() -> list[list[str]]:
     item_order_list_3_three_phase = [
         obis_map.FIELD_OBIS_LIST_VER_ID,
         obis_map.FIELD_METER_ID,
@@ -111,7 +111,7 @@ def _get_field_lists() -> List[List[str]]:
     ]
 
 
-_field_order_lists: List[List[str]] = _get_field_lists()
+_field_order_lists: list[list[str]] = _get_field_lists()
 
 _FIELD_SCALING = {
     obis_map.FIELD_CURRENT_L1: -3,
@@ -125,9 +125,9 @@ _FIELD_SCALING = {
 
 def _normalize_parsed_value_elements_frame(
     frame: construct.Struct,
-) -> Dict[str, Union[str, int, float, datetime]]:
+) -> dict[str, str | int | float | datetime]:
     list_items = frame.information.notification_body.list_items
-    current_list_names: List[str] = next(
+    current_list_names: list[str] = next(
         (x for x in _field_order_lists if len(x) == len(list_items)), []
     )
 
@@ -154,7 +154,7 @@ def _normalize_parsed_value_elements_frame(
 
 def _normalize_parsed_obis_elements_frame(
     frame: construct.Struct,
-) -> Dict[str, Union[str, int, float, datetime]]:
+) -> dict[str, str | int | float | datetime]:
     dictionary = {
         obis_map.FIELD_METER_MANUFACTURER: "Kaifa",
     }
@@ -182,7 +182,7 @@ def _normalize_parsed_obis_elements_frame(
 
 def normalize_parsed_frame(
     frame: construct.Struct,
-) -> Dict[str, Union[str, int, float, datetime]]:
+) -> dict[str, str | int | float | datetime]:
     """Convert data from meters construct structure to a dictionary with common key names."""
     list_type = frame.information.notification_body.type
     if list_type == KaifaBodyType.VALUE_ELEMENTS:
@@ -196,7 +196,7 @@ def normalize_parsed_frame(
 
 def decode_frame_content(
     frame_content: bytes,
-) -> Dict[str, Union[str, int, float, datetime]]:
+) -> dict[str, str | int | float | datetime]:
     """Decode meter LLC PDU frame content as a dictionary."""
     parsed = LlcPdu.parse(frame_content)
     return normalize_parsed_frame(parsed)

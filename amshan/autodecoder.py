@@ -1,6 +1,6 @@
 """Use this module to easily decode any supported meter frame format."""
+from __future__ import annotations
 from datetime import datetime
-from typing import Dict, Optional, Union
 
 import construct  # type: ignore
 
@@ -23,10 +23,10 @@ class AutoDecoder:
 
     def __init__(self) -> None:
         """Initialize AutoDecoder."""
-        self.__previous_success: Optional[int] = None
+        self.__previous_success: int | None = None
 
     @property
-    def previous_success_decoder(self) -> Optional[str]:
+    def previous_success_decoder(self) -> str | None:
         """Return the name of the previous successful decoder function, or None if none previous success."""
         if self.__previous_success is not None:
             decoder_name, _ = AutoDecoder.decoder_functions[self.__previous_success]
@@ -35,7 +35,7 @@ class AutoDecoder:
 
     def decode_frame_content(
         self, frame_content: bytes
-    ) -> Optional[Dict[str, Union[str, int, float, datetime]]]:
+    ) -> dict[str, str | int | float | datetime] | None:
         """
         Decode meter LLC PDU frame content as a dictionary.
 

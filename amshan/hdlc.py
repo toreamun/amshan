@@ -1,6 +1,7 @@
 """Use this module to read HDLC frames."""
+from __future__ import annotations
 import logging
-from typing import List, Optional, cast
+from typing import cast
 
 from amshan import fastframecheck
 
@@ -10,15 +11,15 @@ _LOGGER = logging.getLogger(__name__)
 class HdlcFrameHeader:
     """The start (header) of an HdlcFrame."""
 
-    def __init__(self, frame: "HdlcFrame") -> None:
+    def __init__(self, frame: HdlcFrame) -> None:
         """
         Initialize header.
 
         Used by parent frame.
         """
         self._frame: HdlcFrame = frame
-        self._control_position: Optional[int] = None
-        self._is_header_good: Optional[bool] = None
+        self._control_position: int | None = None
+        self._is_header_good: bool | None = None
 
     def update(self) -> None:
         """Update fields when more frame data has been read. Used by parent HdlcFrame."""
@@ -31,7 +32,7 @@ class HdlcFrameHeader:
                     self._is_header_good = self._frame.is_good_ffc
 
     @property
-    def frame_format(self) -> Optional[int]:
+    def frame_format(self) -> int | None:
         """Return the value of frame format if the value has been read."""
         # The length of the frame format field is two bytes. It consists of three sub-fields referred to as the Format
         # type sub-field (4 bit), the Segmentation bit (S, 1 bit) and the frame length sub-field (11 bit).
@@ -40,21 +41,21 @@ class HdlcFrameHeader:
         return None
 
     @property
-    def frame_format_type(self) -> Optional[int]:
+    def frame_format_type(self) -> int | None:
         """Return the value of frame format type sub-field when frame format has been read."""
         if self.frame_format is not None:
             return (self.frame_format >> 12) & 0b1111
         return None
 
     @property
-    def segmentation(self) -> Optional[bool]:
+    def segmentation(self) -> bool | None:
         """Return the value of frame format Segmentation flag when frame format has been read."""
         if self.frame_format is not None:
             return ((self.frame_format >> 11) & 0x1) == 0x1
         return None
 
     @property
-    def frame_length(self) -> Optional[int]:
+    def frame_length(self) -> int | None:
         """
         Return the value of frame format length sub-field when frame format has been read.
 
@@ -66,7 +67,7 @@ class HdlcFrameHeader:
         return None
 
     @property
-    def destination_address(self) -> Optional[bytes]:
+    def destination_address(self) -> bytes | None:
         """
         Return the value of destination address when the field has been read.
 
@@ -80,7 +81,7 @@ class HdlcFrameHeader:
         return None
 
     @property
-    def source_address(self) -> Optional[bytes]:
+    def source_address(self) -> bytes | None:
         """
         Return the value of source address when the field has been read.
 
@@ -95,7 +96,7 @@ class HdlcFrameHeader:
         return None
 
     @property
-    def control(self) -> Optional[int]:
+    def control(self) -> int | None:
         """
         Return the value of control field when the field has been read.
 
@@ -111,7 +112,7 @@ class HdlcFrameHeader:
         return None
 
     @property
-    def header_check_sequence(self) -> Optional[int]:
+    def header_check_sequence(self) -> int | None:
         """
         Header check sequence (HCS) field when the field has been read.
 
@@ -130,7 +131,7 @@ class HdlcFrameHeader:
         return None
 
     @property
-    def information_position(self) -> Optional[int]:
+    def information_position(self) -> int | None:
         """
         Information field position when the field position is known and is available.
 
@@ -141,7 +142,7 @@ class HdlcFrameHeader:
             return self._control_position + 3
         return None
 
-    def _get_address(self, position: int) -> Optional[bytes]:
+    def _get_address(self, position: int) -> bytes | None:
         """Get variable length address from position."""
         # As specified in ISO/IEC 13239:2002, 4.7.1, The address field range can be extended by reserving the first
         # transmitted bit (low-order) of each address octet which would then be set to binary zero to indicate that
@@ -168,7 +169,7 @@ class HdlcFrameHeader:
 
         return None
 
-    def _get_control_field_position(self) -> Optional[int]:
+    def _get_control_field_position(self) -> int | None:
         destination_adr = self.destination_address
         if destination_adr is not None:
             source_adr = self.source_address
@@ -238,7 +239,7 @@ class HdlcFrame:
         return self._header
 
     @property
-    def frame_check_sequence(self) -> Optional[int]:
+    def frame_check_sequence(self) -> int | None:
         """Frame check sequence if complete frame has been read. None or invalid number if not."""
         if self._header.information_position is not None:
             if len(self._frame_data) >= self._header.information_position:
@@ -249,7 +250,7 @@ class HdlcFrame:
         return None
 
     @property
-    def information(self) -> Optional[bytes]:
+    def information(self) -> bytes | None:
         """Information field when the field has been read and is available."""
         info_position = self._header.information_position
         if info_position is not None and len(self._frame_data) > info_position:
@@ -280,7 +281,7 @@ class HdlcFrameReader:
         self._unescape_next = False
         self._buffer = _ReaderBuffer()
         self._raw_frame_data = bytearray()
-        self._frame: Optional[HdlcFrame] = None
+        self._frame: HdlcFrame | None = None
 
     @property
     def unescape_next(self) -> bool:
@@ -292,14 +293,14 @@ class HdlcFrameReader:
         """Return True when reader is hunting for start of frame."""
         return self._frame is None
 
-    def read(self, data_chunk: bytes) -> List[HdlcFrame]:
+    def read(self, data_chunk: bytes) -> list[HdlcFrame]:
         """
         Call this function to read chunks of bytes.
 
         :param data_chunk: next bytes to parsed.
         :return: frame when a frame is complete (both with correct and incorrect checksum).
         """
-        frames_received: List[HdlcFrame] = []
+        frames_received: list[HdlcFrame] = []
 
         self._buffer.extend(data_chunk)
 

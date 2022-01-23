@@ -1,5 +1,6 @@
 """Aidon tests."""
 # pylint: disable = no-self-use
+from __future__ import annotations
 from datetime import datetime, timezone
 from pprint import pprint
 from decimal import Decimal

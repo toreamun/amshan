@@ -1,5 +1,6 @@
 """Contruct declarations for some COSEM types and structures."""
 # pylint: disable=protected-access
+from __future__ import annotations
 import datetime
 from decimal import Decimal
 from typing import Any

@@ -1,5 +1,6 @@
 """HDLC tests."""
 # pylint: disable = no-self-use
+from __future__ import annotations
 import pytest
 
 from amshan import hdlc

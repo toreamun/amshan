@@ -1,5 +1,5 @@
 """Mappings between OBIS codes and keys used in decoded data."""
-from typing import Dict, List
+from __future__ import annotations
 
 FIELD_OBIS_LIST_VER_ID = "list_ver_id"
 FIELD_METER_ID = "meter_id"
@@ -37,7 +37,7 @@ FIELD_POWER_FACTOR_L1 = "power_factor_l1"
 FIELD_POWER_FACTOR_L2 = "power_factor_l2"
 FIELD_POWER_FACTOR_L3 = "power_factor_l3"
 
-name_obis_map: Dict[str, List[str]] = {
+name_obis_map: dict[str, list[str]] = {
     FIELD_OBIS_LIST_VER_ID: ["0.2.129"],
     FIELD_METER_ID: ["96.1.0", "0.0.5"],
     FIELD_METER_TYPE: ["96.1.7", "96.1.1"],
@@ -70,7 +70,7 @@ name_obis_map: Dict[str, List[str]] = {
     FIELD_REACTIVE_POWER_EXPORT_TOTAL: ["4.8.0"],
 }
 
-obis_name_map: Dict[str, str] = {}
+obis_name_map: dict[str, str] = {}
 for name, obis_values in name_obis_map.items():
     for obis in obis_values:
         obis_name_map[obis] = name

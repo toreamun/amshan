@@ -1,3 +1,4 @@
+from __future__ import annotations
 import argparse
 import datetime
 import json
@@ -12,7 +13,9 @@ import serial
 from amshan import autodecoder, hdlc
 
 logging.basicConfig(
-    level=logging.DEBUG, format="%(levelname)7s: %(message)s", stream=sys.stderr,
+    level=logging.DEBUG,
+    format="%(levelname)7s: %(message)s",
+    stream=sys.stderr,
 )
 LOG = logging.getLogger("")
 
@@ -81,7 +84,7 @@ def dump_to_file(dump_data: bytes) -> None:
         is_flag = b == b"\x7e"[0]
         if is_flag:
             logfile.write("\n")
-        logfile.write("{:02x}".format(b))
+        logfile.write(f"{b:02x}")
         if is_flag:
             logfile.write("\n")
 

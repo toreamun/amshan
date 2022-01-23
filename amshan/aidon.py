@@ -1,6 +1,6 @@
 """Decoding support for Aidon meters."""
+from __future__ import annotations
 from datetime import datetime
-from typing import Dict, Union
 
 import construct  # type: ignore
 
@@ -51,11 +51,11 @@ LlcPdu: construct.Struct = cosem.get_llc_pdu_struct(NotificationBody)
 
 def normalize_parsed_frame(
     frame: construct.Struct,
-) -> Dict[str, Union[str, int, float, datetime]]:
+) -> dict[str, str | int | float | datetime]:
     """Convert data from meters construct structure to a dictionary with common key names."""
     list_items = frame.information.notification_body.list_items
 
-    dictionary: Dict[str, Union[str, int, float, datetime]] = {
+    dictionary: dict[str, str | int | float | datetime] = {
         obis_map.FIELD_METER_MANUFACTURER: "Aidon"
     }
     for measure in list_items:
@@ -82,7 +82,7 @@ def normalize_parsed_frame(
 
 def decode_frame_content(
     frame_content: bytes,
-) -> Dict[str, Union[str, int, float, datetime]]:
+) -> dict[str, str | int | float | datetime]:
     """Decode meter LLC PDU frame content as a dictionary."""
     parsed = LlcPdu.parse(frame_content)
     return normalize_parsed_frame(parsed)
