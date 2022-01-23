@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="UTF-8") as fh:
 
 setuptools.setup(
     name="amshan",
-    version="1.0.2",
+    version="1.1.0",
     author="Tore Amundsen",
     author_email="tore@amundsen.org",
     description="Decode MBUS (Meter Bus) data with special support for norwegian and swedish AMS-smart meters (HAN port)",
