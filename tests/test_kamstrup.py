@@ -129,9 +129,127 @@ no_list_2_single_phase_real_sample = bytes.fromhex(
     ).replace(" ", "")
 )
 
+# 7E A0 E2 2B 21 13 23 9A E6 E7 00 0F 00 00 00 00 0C 07 E6 01 18 01 12 3A 32 FF 80 00 00 02 19 0A 0E 4B 61 6D 73 74 72 75 70 5F 56 30 30 30 31 09 06 01 01 00 00 05 FF 0A 10 35 37 30 36 35 36 37 33 32 36 35 39 30 34 30 37 09 06 01 01 60 01 01 FF 0A 12 36 38 34 31 31 33 38 42 4E 32 34 35 31 30 31 30 39 30 09 06 01 01 01 07 00 FF 06 00 00 03 3A 09 06 01 01 02 07 00 FF 06 00 00 00 00 09 06 01 01 03 07 00 FF 06 00 00 00 68 09 06 01 01 04 07 00 FF 06 00 00 00 B0 09 06 01 01 1F 07 00 FF 06 00 00 00 ED 09 06 01 01 33 07 00 FF 06 00 00 00 59 09 06 01 01 47 07 00 FF 06 00 00 00 4B 09 06 01 01 20 07 00 FF 12 00 E8 09 06 01 01 34 07 00 FF 12 00 E9 09 06 01 01 48 07 00 FF 12 00 EC 84 46 7E
+
+# 7EA0E22B2113239AE6E7000F000000000C07E6011801123A32FF80000002190A0E4B616D73747275705F563030303109060101000005FF0A103537303635363733323635393034303709060101600101FF0A1236383431313338424E32343531303130393009060101010700FF060000033A09060101020700FF060000000009060101030700FF060000006809060101040700FF06000000B0090601011F0700FF06000000ED09060101330700FF060000005909060101470700FF060000004B09060101200700FF1200E809060101340700FF1200E909060101480700FF1200EC84467E
+
+se_list_real_sample = bytes.fromhex(
+    (
+        "E6E700"
+        "0F"
+        "000000000"
+        "C07E6011801123A32FF800000"
+        "0219"
+        "0A0E 4B616D73747275705F5630303031"
+        "0906 0101000005FF"
+        "0A10 35373035373035373035373035373037  0906 0101600101FF"
+        "0A12 36383431313338424E323435313031303930  09060101010700FF060000033A"
+        "0906 0101020700FF  0600000000"
+        "0906 0101030700FF  0600000068"
+        "0906 0101040700FF  06000000B0"
+        "0906 01011F0700FF  06000000ED"
+        "0906 0101330700FF  0600000059"
+        "0906 0101470700FF  060000004B"
+        "0906 0101200700FF  1200E8"
+        "0906 0101340700FF  1200E9"
+        "0906 0101480700FF  1200EC"
+    ).replace(" ", "")
+)
+
 
 class TestParseKamstrup:
     """Test parse Kamstrup frames."""
+
+    def test_parse_se_list_three_phase_real_sample(self):
+        """Parse SE list."""
+        parsed = kamstrup.LlcPdu.parse(se_list_real_sample)
+
+        print(parsed)
+
+        assert_apdu(parsed, 0, datetime(2022, 1, 24, 18, 58, 50))
+        assert isinstance(parsed.information.notification_body, construct.Container)
+        assert parsed.information.notification_body.length == 0x19
+        assert isinstance(
+            parsed.information.notification_body.list_items, construct.ListContainer
+        )
+        assert_obis_element(
+            parsed.information.notification_body.list_items[0],
+            None,
+            "visible_string",
+            "Kamstrup_V0001",
+        )
+        assert_obis_element(
+            parsed.information.notification_body.list_items[1],
+            "1.1.0.0.5.255",  # GS1 number
+            "visible_string",
+            "5705705705705707",
+        )
+        assert_obis_element(
+            parsed.information.notification_body.list_items[2],
+            "1.1.96.1.1.255",  # Meter type
+            "visible_string",
+            "6841138BN245101090",
+        )
+        assert_obis_element(
+            parsed.information.notification_body.list_items[3],
+            "1.1.1.7.0.255",  # P14
+            "double_long_unsigned",
+            826,
+        )
+        assert_obis_element(
+            parsed.information.notification_body.list_items[4],
+            "1.1.2.7.0.255",  # P23
+            "double_long_unsigned",
+            0,
+        )
+        assert_obis_element(
+            parsed.information.notification_body.list_items[5],
+            "1.1.3.7.0.255",  # Q12
+            "double_long_unsigned",
+            104,
+        )
+        assert_obis_element(
+            parsed.information.notification_body.list_items[6],
+            "1.1.4.7.0.255",  # Q34
+            "double_long_unsigned",
+            176,
+        )
+        assert_obis_element(
+            parsed.information.notification_body.list_items[7],
+            "1.1.31.7.0.255",  # IL1
+            "double_long_unsigned",
+            237,
+        )
+        assert_obis_element(
+            parsed.information.notification_body.list_items[8],
+            "1.1.51.7.0.255",  # IL2
+            "double_long_unsigned",
+            89,
+        )
+        assert_obis_element(
+            parsed.information.notification_body.list_items[9],
+            "1.1.71.7.0.255",  # IL3
+            "double_long_unsigned",
+            75,
+        )
+        assert_obis_element(
+            parsed.information.notification_body.list_items[10],
+            "1.1.32.7.0.255",  # UL1
+            "long_unsigned",
+            232,
+        )
+        assert_obis_element(
+            parsed.information.notification_body.list_items[11],
+            "1.1.52.7.0.255",  # UL2
+            "long_unsigned",
+            233,
+        )
+        assert_obis_element(
+            parsed.information.notification_body.list_items[12],
+            "1.1.72.7.0.255",  # UL3
+            "long_unsigned",
+            236,
+        )
 
     def test_parse_no_list_1_single_phase_real_sample(self):
         """Parse single phase NO list number 1."""
@@ -414,6 +532,28 @@ class TestParseKamstrup:
 
 class TestDecodeKamstrup:
     """Test decode Kamstrup frames."""
+
+    def test_decode_se_list_three_phase_real_sample(self):
+        """Decode three phase SE list (real sample)."""
+        decoded = kamstrup.decode_frame_content(se_list_real_sample)
+        pprint(decoded)
+        assert isinstance(decoded, dict)
+        assert len(decoded) == 15
+        assert decoded["active_power_export"] == 0
+        assert decoded["active_power_import"] == 826
+        assert decoded["current_l1"] == 2.37
+        assert decoded["current_l2"] == 0.89
+        assert decoded["current_l3"] == 0.75
+        assert decoded["list_ver_id"] == "Kamstrup_V0001"
+        assert decoded["meter_datetime"] == datetime(2022, 1, 24, 18, 58, 50)
+        assert decoded["meter_id"] == "5705705705705707"
+        assert decoded["meter_manufacturer"] == "Kamstrup"
+        assert decoded["meter_type"] == "6841138BN245101090"
+        assert decoded["reactive_power_export"] == 176
+        assert decoded["reactive_power_import"] == 104
+        assert decoded["voltage_l1"] == 232
+        assert decoded["voltage_l2"] == 233
+        assert decoded["voltage_l3"] == 236
 
     def test_decode_frame_no_list_1_single_phase_real_sample(self):
         """Decode three phase no list number 1."""
