@@ -7,9 +7,11 @@ from typing import cast
 
 import serial_asyncio  # type: ignore
 from amshan.hdlc import HdlcFrame  # pylint: disable=unused-import
-from amshan.meter_connection import (MeterTransportProtocol,
-                                     SmartMeterFrameContentProtocol,
-                                     SmartMeterFrameProtocol)
+from amshan.meter_connection import (
+    MeterTransportProtocol,
+    SmartMeterFrameContentProtocol,
+    SmartMeterFrameProtocol,
+)
 
 
 async def create_serial_frame_connection(
