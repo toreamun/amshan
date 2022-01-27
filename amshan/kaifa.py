@@ -6,6 +6,7 @@ from datetime import datetime
 from enum import Enum
 
 import construct  # type: ignore
+
 from amshan import cosem, obis_map
 from amshan.obis import Obis
 
