@@ -12,5 +12,10 @@
   "python.testing.pytestArgs": [
     "-s"
   ],
-  "python.linting.mypyEnabled": true
+  "python.linting.mypyEnabled": true,
+  "[python]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    }
+  },
 }
