@@ -1,10 +1,11 @@
 """OBject Identification System (OBIS)."""
 from __future__ import annotations
-from dataclasses import dataclass
 
+from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Optional
-from re import compile as compile_regex, Pattern
+from re import Pattern
+from re import compile as compile_regex
+from typing import Optional, Tuple
 
 REDUCED_OBIS_PATTERN = r"((?P<AR>\d{0,3}){1}-)?((?P<BR>\d{0,3}){1}:)?((?P<CR>\d{0,3})\.)(?P<DR>\d{0,3})?(\.(?P<ER>\d{0,3}))?(\*(?P<FR>\d{0,3}))?"
 STANDARD_OBIS_PATTERN = r"(?P<AS>\d{0,3})\.(?P<BS>\d{0,3})\.(?P<CS>\d{0,3})\.(?P<DS>\d{0,3})\.(?P<ES>\d{0,3})\.(?P<FS>\d{0,3})?"
@@ -15,7 +16,7 @@ OBIS_PATTERN_BOTH = (
 # Compiled obis regex
 _obis_pattern: Pattern = compile_regex(OBIS_PATTERN_BOTH)
 
-ObisTupple = tuple[Optional[int], Optional[int], int, int, Optional[int], Optional[int]]
+ObisTupple = Tuple[Optional[int], Optional[int], int, int, Optional[int], Optional[int]]
 """6 part tupple value of all elements in oder A, B, C, D, E, and F."""
 
 
