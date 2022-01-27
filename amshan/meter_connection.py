@@ -15,9 +15,10 @@ from asyncio import (
     wait,
     sleep,
 )
-from typing import Awaitable, Callable, ClassVar, Tuple
+from typing import Any, Awaitable, Callable, ClassVar, Tuple
 
 from amshan import hdlc
+from amshan.common import MeterReaderBase
 from amshan.hdlc import HdlcFrame
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,9 +73,9 @@ class ExponentialBackOff(BackOffStrategy):
 
 class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
     """
-    Network protocol base class that reads smart meter frames from a stream.
+    Network protocol base class that reads smart meter messages from a stream.
 
-    Sub classes must implement frame_received().
+    Sub classes must implement message_received().
     """
 
     # Total number of this class that has been created.
@@ -83,20 +84,20 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
 
     def __init__(
         self,
-        frame_reader: hdlc.HdlcFrameReader | None = None,
+        reader: MeterReaderBase | None = None,
     ) -> None:
         """
         Initialize SmartMeterProtocol.
 
-        :param frame_reader: optional frame reader.
-        A frame reader with both octet stuffing and abort sequence disabled is created if None.
+        :param reader: optional reader.
+        A HDLC frame reader with both octet stuffing and abort sequence disabled is created if None.
         """
         super().__init__()
         self._done: Future[None] = Future()
         self.instance_id: int = SmartMeterBaseProtocol.total_instance_counter
-        self._frame_reader = (
-            frame_reader
-            if frame_reader
+        self._reader: MeterReaderBase = (
+            reader
+            if reader
             else hdlc.HdlcFrameReader(use_octet_stuffing=False, use_abort_sequence=True)
         )
         self._transport: BaseTransport | None = None
@@ -177,14 +178,14 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
         self._done.set_result(None)
 
     def data_received(self, data: bytes) -> None:
-        """Receive data from the transport and put frame(s) on the queue if frame(s) are complete."""
-        frames = self._frame_reader.read(data)
+        """Receive data from the transport and put messages(s) on the queue if messages(s) are complete."""
+        frames = self._reader.read(data)
         for frame in frames:
-            self.frame_received(frame)
+            self.message_received(frame)
 
     @abstractmethod
-    def frame_received(self, frame: HdlcFrame) -> None:
-        """Frame is received from the transport."""
+    def message_received(self, frame: Any) -> None:
+        """Message is received from the transport."""
 
     def eof_received(self) -> bool:
         """
@@ -235,7 +236,7 @@ class SmartMeterFrameProtocol(SmartMeterBaseProtocol):
         super().__init__(frame_reader)
         self.queue: Queue[HdlcFrame] = destination_queue
 
-    def frame_received(self, frame: HdlcFrame) -> None:
+    def message_received(self, frame: HdlcFrame) -> None:
         """Frame is passed on to the queue."""
         self.queue.put_nowait(frame)
 
@@ -267,7 +268,7 @@ class SmartMeterFrameContentProtocol(SmartMeterBaseProtocol):
         super().__init__(frame_reader)
         self.queue: Queue[bytes] = destination_queue
 
-    def frame_received(self, frame: HdlcFrame) -> None:
+    def message_received(self, frame: HdlcFrame) -> None:
         """
         Frame is received and its content is passed on to the queue.
 
