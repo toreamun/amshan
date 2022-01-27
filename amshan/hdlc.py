@@ -1,9 +1,12 @@
 """Use this module to read HDLC frames."""
 from __future__ import annotations
+
 import logging
 from typing import cast
 
 from amshan import fastframecheck
+from amshan.common import MeterReaderBase
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -258,7 +261,7 @@ class HdlcFrame:
         return None
 
 
-class HdlcFrameReader:
+class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
     """Use this class to HDLC-frames as stream of bytes."""
 
     # The Control Escape octet is defined as binary 01111101 (hexadecimal 0x7d)
