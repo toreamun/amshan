@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from re import compile as regex_compile
 from re import Pattern
-from typing import Optional, cast
+from re import compile as regex_compile
+from typing import Optional, Tuple, cast
 
 from amshan.common import MeterReaderBase
 from amshan.obis import Obis
@@ -20,7 +20,7 @@ _item_pattern: Pattern = regex_compile(
     r"^(?P<obis>.*)\(\s*(?P<value>[^\*]+)(\*(?P<unit>[a-zA-Z]+))?\)\s*$"
 )
 
-P1ReadoutElement = tuple[str, str, Optional[str]]
+P1ReadoutElement = Tuple[str, str, Optional[str]]
 """P1 readout element."""
 
 
