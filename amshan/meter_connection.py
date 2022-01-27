@@ -1,20 +1,11 @@
 """Async meter connection module."""
 from __future__ import annotations
+
 import datetime
 import logging
 from abc import ABCMeta, abstractmethod
-from asyncio import (
-    FIRST_COMPLETED,
-    BaseTransport,
-    CancelledError,
-    Event,
-    Future,
-    Protocol,
-    Queue,
-    iscoroutinefunction,
-    wait,
-    sleep,
-)
+from asyncio import (FIRST_COMPLETED, BaseTransport, CancelledError, Event,
+                     Future, Protocol, Queue, iscoroutinefunction, sleep, wait)
 from typing import Any, Awaitable, Callable, ClassVar, Tuple
 
 from amshan import hdlc

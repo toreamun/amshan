@@ -1,12 +1,14 @@
 """Direct Local Data Exchange of Energy Meters module."""
 from __future__ import annotations
-from datetime import datetime
+
 import logging
+from datetime import datetime
+from re import compile as regex_compile
+from re import Pattern
 from typing import Optional, cast
-from re import compile as regex_compile, Pattern
+
 from amshan.common import MeterReaderBase
 from amshan.obis import Obis
-
 
 _LOGGER = logging.getLogger(__name__)
 
