@@ -1,15 +1,14 @@
 """TCP/IP connection factory."""
 from __future__ import annotations
-from asyncio import AbstractEventLoop, BaseProtocol, get_event_loop
+
 from asyncio import Queue  # pylint: disable=unused-import
+from asyncio import AbstractEventLoop, BaseProtocol, get_event_loop
 from typing import cast
 
 from amshan.hdlc import HdlcFrame  # pylint: disable=unused-import
-from amshan.meter_connection import (
-    MeterTransportProtocol,
-    SmartMeterFrameContentProtocol,
-    SmartMeterFrameProtocol,
-)
+from amshan.meter_connection import (MeterTransportProtocol,
+                                     SmartMeterFrameContentProtocol,
+                                     SmartMeterFrameProtocol)
 
 
 async def create_tcp_frame_connection(

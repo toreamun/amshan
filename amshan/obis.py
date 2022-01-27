@@ -1,11 +1,12 @@
 """OBject Identification System (OBIS)."""
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import Enum, auto
-from re import Pattern
 from re import compile as compile_regex
+from re import Pattern
 from typing import Optional, Tuple
+
+from dataclasses import dataclass
 
 REDUCED_OBIS_PATTERN = r"((?P<AR>\d{0,3}){1}-)?((?P<BR>\d{0,3}){1}:)?((?P<CR>\d{0,3})\.)(?P<DR>\d{0,3})?(\.(?P<ER>\d{0,3}))?(\*(?P<FR>\d{0,3}))?"
 STANDARD_OBIS_PATTERN = r"(?P<AS>\d{0,3})\.(?P<BS>\d{0,3})\.(?P<CS>\d{0,3})\.(?P<DS>\d{0,3})\.(?P<ES>\d{0,3})\.(?P<FS>\d{0,3})?"

@@ -7,7 +7,6 @@ from typing import cast
 from amshan import fastframecheck
 from amshan.common import MeterReaderBase
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

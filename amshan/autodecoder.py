@@ -1,9 +1,9 @@
 """Use this module to easily decode any supported meter frame format."""
 from __future__ import annotations
+
 from datetime import datetime
 
 import construct  # type: ignore
-
 from amshan import aidon, kaifa, kamstrup
 
 
