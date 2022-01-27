@@ -3,7 +3,51 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from enum import Enum, auto
-from typing import cast
+from typing import Optional
+from re import compile as compile_regex, Pattern
+
+REDUCED_OBIS_PATTERN = r"((?P<AR>\d{0,3}){1}-)?((?P<BR>\d{0,3}){1}:)?((?P<CR>\d{0,3})\.)(?P<DR>\d{0,3})?(\.(?P<ER>\d{0,3}))?(\*(?P<FR>\d{0,3}))?"
+STANDARD_OBIS_PATTERN = r"(?P<AS>\d{0,3})\.(?P<BS>\d{0,3})\.(?P<CS>\d{0,3})\.(?P<DS>\d{0,3})\.(?P<ES>\d{0,3})\.(?P<FS>\d{0,3})?"
+OBIS_PATTERN_BOTH = (
+    f"(?P<STANDARD>{STANDARD_OBIS_PATTERN})|(?P<REDUCED>{REDUCED_OBIS_PATTERN})"
+)
+
+# Compiled obis regex
+_obis_pattern: Pattern = compile_regex(OBIS_PATTERN_BOTH)
+
+ObisTupple = tuple[Optional[int], Optional[int], int, int, Optional[int], Optional[int]]
+"""6 part tupple value of all elements in oder A, B, C, D, E, and F."""
+
+
+def to_obis_tupple(
+    obis_code: str,
+) -> ObisTupple:
+    """Create a 6 part tupple from obis-code string."""
+    match = _obis_pattern.match(obis_code)
+    if match:
+        if match.group("REDUCED"):
+            obis = match.group("AR", "BR", "CR", "DR", "ER", "FR")
+            return (
+                int(obis[0]) if obis[0] else None,
+                int(obis[1]) if obis[1] else None,
+                int(obis[2]),
+                int(obis[3]),
+                int(obis[4]) if obis[4] else None,
+                int(obis[5]) if obis[5] else None,
+            )
+
+        if match.group("STANDARD"):
+            obis = match.group("AS", "BS", "CS", "DS", "ES", "FS")
+            return (
+                int(obis[0]),
+                int(obis[1]),
+                int(obis[2]),
+                int(obis[3]),
+                int(obis[4]),
+                int(obis[5]) if obis[5] else None,
+            )
+
+    raise ValueError(f"Not a valid obis code: '{obis_code}'")
 
 
 class Obis:
@@ -11,37 +55,20 @@ class Obis:
     Object Identification System (OBIS) code.
 
     OBIS codes identify data items used in energy metering equipment, in a hierarchical
-    structure using six value groups A to F,
+    structure using six value groups A to F.
+
+    OBIS Reduced ID is supported: <A-><B:>[C.][D]<.E><*F>
     """
 
     def __init__(
         self,
-        group_a: int,
-        group_b: int,
-        group_c: int,
-        group_d: int,
-        group_e: int,
-        group_f: int,
+        obis_tupple: ObisTupple,
     ) -> None:
-        # pylint: disable=too-many-arguments
         """Init Obis."""
-
-        def _to_group(group):
-            if 0 <= group <= 255:
-                return int(group)
-            raise ValueError(f"Group value is {group}, but must be from 0 to 255")
-
-        self._groups = (
-            _to_group(group_a),
-            _to_group(group_b),
-            _to_group(group_c),
-            _to_group(group_d),
-            _to_group(group_e),
-            _to_group(group_f),
-        )
+        self._groups: ObisTupple = obis_tupple
 
     @property
-    def a(self) -> int:  # pylint: disable=invalid-name
+    def a(self) -> int | None:  # pylint: disable=invalid-name
         """
         Get group A.
 
@@ -50,7 +77,7 @@ class Obis:
         return self._groups[0]
 
     @property
-    def b(self) -> int:  # pylint: disable=invalid-name
+    def b(self) -> int | None:  # pylint: disable=invalid-name
         """
         Get group B.
 
@@ -90,7 +117,7 @@ class Obis:
         return self._groups[3]
 
     @property
-    def e(self) -> int:  # pylint: disable=invalid-name
+    def e(self) -> int | None:  # pylint: disable=invalid-name
         """
         Get group E.
 
@@ -100,7 +127,7 @@ class Obis:
         return self._groups[4]
 
     @property
-    def f(self) -> int:  # pylint: disable=invalid-name
+    def f(self) -> int | None:  # pylint: disable=invalid-name
         """
         Get group F.
 
@@ -109,6 +136,25 @@ class Obis:
         can be used for further classification.
         """
         return self._groups[5]
+
+    def as_tupple(self) -> ObisTupple:
+        """Obis as ObisTupple."""
+        return self._groups
+
+    def to_reduced_str(self) -> str:
+        """To redused obis code format."""
+        obis_code = ""
+        if self._groups[0]:
+            obis_code += f"{self._groups[0]}-"
+        if self._groups[1]:
+            obis_code += obis_code + f"{self._groups[1]}:"
+        obis_code += f"{self._groups[2]}.{self._groups[3]}"
+        if self._groups[4]:
+            obis_code += f".{self._groups[4]}"
+        if self._groups[5]:
+            obis_code += f"*{self._groups[5]}"
+
+        return obis_code
 
     def __eq__(self, other) -> bool:
         """Return True if both instances represents the same obis code."""
@@ -126,7 +172,10 @@ class Obis:
 
     def __str__(self) -> str:
         """Return OBIS code as 6 part string."""
-        return f"{self._groups[0]}.{self._groups[1]}.{self._groups[2]}.{self._groups[3]}.{self._groups[4]}.{self._groups[5]}"
+        if all(self._groups):
+            return f"{self._groups[0]}.{self._groups[1]}.{self._groups[2]}.{self._groups[3]}.{self._groups[4]}.{self._groups[5]}"
+
+        return self.to_reduced_str()
 
     def __repr__(self) -> str:
         """Return the “official” string representation."""
@@ -135,43 +184,13 @@ class Obis:
     @classmethod
     def from_string(cls, obis_code: str) -> Obis:
         """Create from obis-code string."""
-        group_a = 0
-        group_b = 0
-        group_c = None
-        group_d = None
-        group_e = None
-        group_f = 255
-        parts = obis_code.split(".")
-        if len(parts) > 6 or len(parts) < 3 or len(parts) in (4, 5):
-            raise ValueError(
-                f"{obis_code} has unexpeced number of groups. Specify A.B.C.D.E.F or C.D.E."
-            )
-
-        if len(parts) == 3:
-            group_c = int(parts[0])
-            group_d = int(parts[1])
-            group_e = int(parts[2])
-
-        if len(parts) == 6:
-            group_a = int(parts[0])
-            group_b = int(parts[1])
-            group_c = int(parts[2])
-            group_d = int(parts[3])
-            group_e = int(parts[4])
-            group_f = int(parts[5])
-
-        return Obis(
-            group_a,
-            group_b,
-            cast(int, group_c),
-            cast(int, group_d),
-            cast(int, group_e),
-            group_f,
-        )
+        return Obis(to_obis_tupple(obis_code))
 
     def filter_group_cde(self):
         """Filter out group C, D and E."""
-        return Obis(0, 0, self._groups[2], self._groups[3], self._groups[4], 255)
+        return Obis(
+            (None, None, self._groups[2], self._groups[3], self._groups[4], None)
+        )
 
     def to_group_cdr_str(self):
         """To OBIS C.D.E string."""
