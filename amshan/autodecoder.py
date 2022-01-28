@@ -4,7 +4,8 @@ from __future__ import annotations
 from datetime import datetime
 
 import construct  # type: ignore
-from amshan import aidon, kaifa, kamstrup
+
+from amshan import aidon, dlde, kaifa, kamstrup
 
 
 class AutoDecoder:
@@ -19,6 +20,7 @@ class AutoDecoder:
         ("Aidon", aidon.decode_frame_content),
         ("Kaifa", kaifa.decode_frame_content),
         ("Kamstrup", kamstrup.decode_frame_content),
+        ("P1", dlde.decode_p1_readout_content),
     ]
 
     def __init__(self) -> None:

@@ -7,6 +7,7 @@ from re import Pattern
 from re import compile as regex_compile
 from typing import Optional, Tuple, cast
 
+from amshan import obis_map
 from amshan.common import MeterReaderBase
 from amshan.obis import Obis
 
@@ -186,8 +187,16 @@ def parse_p1_readout(
     readout: DataReadout,
 ) -> list[P1ReadoutElement]:
     """Parse data readout."""
+    return parse_p1_readout_content(readout.data)
+
+
+def parse_p1_readout_content(
+    content: bytes,
+) -> list[P1ReadoutElement]:
+    """Parse data readout content."""
+    lines = [line for line in content.decode("ascii").splitlines() if len(line.strip())]
     items: list[P1ReadoutElement] = []
-    for line in readout.data_lines:
+    for line in lines:
         match = _item_pattern.match(line)
         if match is None:
             raise ValueError(f"Data line '{line}' is not a valid line.")
@@ -196,13 +205,22 @@ def parse_p1_readout(
     return items
 
 
-def decode_p1_readout(readout: DataReadout) -> dict[str, str | int | float | datetime]:
-    """Decode P1 readout into dictionary."""
-    decoded: dict[str, str | int | float | datetime] = {}
+def _decode_parsed(
+    parsed: list[P1ReadoutElement],
+) -> dict[str, str | int | float | datetime]:
+    decoded: dict[str, str | int | float | datetime] = {
+        obis_map.FIELD_METER_MANUFACTURER: "UNKNOWN"
+    }
 
-    parsed = parse_p1_readout(readout)
     for item in parsed:
         obis = Obis.from_string(item[0])
+
+        obis_group_cdr = obis.to_group_cdr_str()
+        if obis_group_cdr in obis_map.obis_name_map:
+            element_name = obis_map.obis_name_map[obis_group_cdr]
+        else:
+            element_name = obis_group_cdr
+
         value: str | int | float | datetime | None = None
         unit = item[2]
         if unit and unit.lower() in ("kw", "kwh", "kvar", "kvarh", "v", "a"):
@@ -213,6 +231,20 @@ def decode_p1_readout(readout: DataReadout) -> dict[str, str | int | float | dat
             else:
                 value = item[1]
 
-        decoded[obis.to_group_cdr_str()] = value
+        decoded[element_name] = value
 
     return decoded
+
+
+def decode_p1_readout_content(
+    content: bytes,
+) -> dict[str, str | int | float | datetime]:
+    """Decode P1 readout content into dictionary."""
+    parsed = parse_p1_readout_content(content)
+    return _decode_parsed(parsed)
+
+
+def decode_p1_readout(readout: DataReadout) -> dict[str, str | int | float | datetime]:
+    """Decode P1 readout into dictionary."""
+    parsed = parse_p1_readout(readout)
+    return _decode_parsed(parsed)
