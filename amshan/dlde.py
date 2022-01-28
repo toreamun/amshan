@@ -64,7 +64,7 @@ class DataReadout:
         return self._readout[self._end_pos :].decode("ascii").strip()
 
     @property
-    def data(self) -> bytes:
+    def payload(self) -> bytes:
         """Return raw data."""
         return bytes(self._readout[self._data_pos : self._end_pos])
 
@@ -187,7 +187,7 @@ def parse_p1_readout(
     readout: DataReadout,
 ) -> list[P1ReadoutElement]:
     """Parse data readout."""
-    return parse_p1_readout_content(readout.data)
+    return parse_p1_readout_content(readout.payload)
 
 
 def parse_p1_readout_content(

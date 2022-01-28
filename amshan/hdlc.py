@@ -252,8 +252,8 @@ class HdlcFrame:
         return None
 
     @property
-    def information(self) -> bytes | None:
-        """Information field when the field has been read and is available."""
+    def payload(self) -> bytes | None:
+        """Information field (the payload) when the field has been read and is available."""
         info_position = self._header.information_position
         if info_position is not None and len(self._frame_data) > info_position:
             return bytes(self._frame_data[info_position:-2])
