@@ -1,6 +1,7 @@
 """Test dllde."""
 from datetime import datetime
 from pprint import pprint
+
 from amshan.dlde import DataReadout, ModeDReader, decode_p1_readout, parse_p1_readout
 
 IDENT = b"/LGF5E360\r\n"
@@ -119,32 +120,34 @@ class TestParse:
         """Decode example data."""
         decoded = decode_p1_readout(DataReadout(EXAMPLE_DATA))
         pprint(decoded)
-        assert decoded == {
-            "1.0.0": datetime(2021, 2, 17, 18, 40, 19),
-            "1.7.0": 1.727,
-            "1.8.0": 6678.394,
-            "2.7.0": 0.0,
-            "2.8.0": 0.0,
-            "21.7.0": 1.023,
-            "22.7.0": 0.0,
-            "23.7.0": 0.0,
-            "24.7.0": 0.009,
-            "3.7.0": 0.0,
-            "3.8.0": 21.988,
-            "31.7.0": 4.2,
-            "32.7.0": 240.3,
-            "4.7.0": 0.309,
-            "4.8.0": 1020.971,
-            "41.7.0": 0.35,
-            "42.7.0": 0.0,
-            "43.7.0": 0.0,
-            "44.7.0": 0.161,
-            "51.7.0": 1.6,
-            "52.7.0": 240.1,
-            "61.7.0": 0.353,
-            "62.7.0": 0.0,
-            "63.7.0": 0.0,
-            "64.7.0": 0.138,
-            "71.7.0": 1.7,
-            "72.7.0": 241.3,
+        expected = {
+            "active_power_export": 0.0,
+            "active_power_export_l1": 0.0,
+            "active_power_export_l2": 0.0,
+            "active_power_export_l3": 0.0,
+            "active_power_export_total": 0.0,
+            "active_power_import": 1.727,
+            "active_power_import_l1": 1.023,
+            "active_power_import_l2": 0.35,
+            "active_power_import_l3": 0.353,
+            "active_power_import_total": 6678.394,
+            "current_l1": 4.2,
+            "current_l2": 1.6,
+            "current_l3": 1.7,
+            "meter_datetime": datetime(2021, 2, 17, 18, 40, 19),
+            "meter_manufacturer": "UNKNOWN",
+            "reactive_power_export": 0.309,
+            "reactive_power_export_l1": 0.009,
+            "reactive_power_export_l2": 0.161,
+            "reactive_power_export_l3": 0.138,
+            "reactive_power_export_total": 1020.971,
+            "reactive_power_import": 0.0,
+            "reactive_power_import_l1": 0.0,
+            "reactive_power_import_l2": 0.0,
+            "reactive_power_import_l3": 0.0,
+            "reactive_power_import_total": 21.988,
+            "voltage_l1": 240.3,
+            "voltage_l2": 240.1,
+            "voltage_l3": 241.3,
         }
+        assert decoded == expected
