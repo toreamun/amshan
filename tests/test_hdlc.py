@@ -1,8 +1,8 @@
 """HDLC tests."""
 # pylint: disable = no-self-use
 from __future__ import annotations
-import pytest
 
+import pytest
 from amshan import hdlc
 
 FLAG_SEQUENCE = "7e"
@@ -34,7 +34,7 @@ class TestHdlcFrameReader:
         assert frames[0].is_good_ffc
         assert frames[0].is_expected_length
         assert (
-            frames[0].information
+            frames[0].payload
             == bytes.fromhex(FRAME_WITH_ESCAPE_CHARACTER_IN_INFO)[8:-2]
         )
 
@@ -52,7 +52,7 @@ class TestHdlcFrameReader:
         assert frames[0].is_good_ffc
         assert frames[0].is_expected_length
         assert (
-            frames[0].information
+            frames[0].payload
             == bytes.fromhex(FRAME_WITH_FLAG_SEQUENCE_CHARACTER_IN_INFO)[8:-2]
         )
 
@@ -74,7 +74,7 @@ class TestHdlcFrameReader:
         assert len(frames) == 1
         assert frames[0].is_good_ffc
         assert frames[0].is_expected_length
-        assert frames[0].information == bytes.fromhex(FRAME_SHORT_INFO)[8:-2]
+        assert frames[0].payload == bytes.fromhex(FRAME_SHORT_INFO)[8:-2]
 
     def test_empty_info_frame(self):
         """Test read empty frame."""
@@ -88,7 +88,7 @@ class TestHdlcFrameReader:
         assert frames[0].is_good_ffc
         assert frames[0].is_expected_length
         assert not frames[0].header.header_check_sequence is None
-        assert frames[0].information is None
+        assert frames[0].payload is None
 
     def test_too_short_frame_is_discarded(self):
         """Test that too short frame is discarded."""
@@ -129,10 +129,10 @@ class TestHdlcFrameReader:
         assert len(frames) == 2
         assert frames[0].is_good_ffc
         assert frames[0].is_expected_length
-        assert frames[0].information == bytes.fromhex(FRAME_SHORT_INFO)[8:-2]
+        assert frames[0].payload == bytes.fromhex(FRAME_SHORT_INFO)[8:-2]
         assert frames[1].is_good_ffc
         assert frames[1].is_expected_length
-        assert frames[1].information is None
+        assert frames[1].payload is None
 
     def test_two_flag_sequences_between_frames(self):
         """Test double flag seqeuncene between frames."""
@@ -152,10 +152,10 @@ class TestHdlcFrameReader:
         assert len(frames) == 2
         assert frames[0].is_good_ffc
         assert frames[0].is_expected_length
-        assert frames[0].information == bytes.fromhex(FRAME_SHORT_INFO)[8:-2]
+        assert frames[0].payload == bytes.fromhex(FRAME_SHORT_INFO)[8:-2]
         assert frames[1].is_good_ffc
         assert frames[1].is_expected_length
-        assert frames[1].information is None
+        assert frames[1].payload is None
 
     def test_many_flag_sequences_between_frames(self):
         """Test many flag seqeunces between frames."""
@@ -179,10 +179,10 @@ class TestHdlcFrameReader:
         assert len(frames) == 2
         assert frames[0].is_good_ffc
         assert frames[0].is_expected_length
-        assert frames[0].information == bytes.fromhex(FRAME_SHORT_INFO)[8:-2]
+        assert frames[0].payload == bytes.fromhex(FRAME_SHORT_INFO)[8:-2]
         assert frames[1].is_good_ffc
         assert frames[1].is_expected_length
-        assert frames[1].information is None
+        assert frames[1].payload is None
 
     def test_stuffed_frame_short_info(self):
         """Test stuffed frame."""
@@ -198,7 +198,7 @@ class TestHdlcFrameReader:
         assert frames[0].is_good_ffc
         assert frames[0].is_expected_length
         assert not frames[0].header.header_check_sequence is None
-        assert frames[0].information == bytes.fromhex("7e7d03")
+        assert frames[0].payload == bytes.fromhex("7e7d03")
 
     def test_too_long_frame_is_discarded(self):
         """Test too long frame is discarded."""
@@ -496,7 +496,7 @@ class TestHdlcFrame:
         assert frame.frame_data is not None
         assert len(frame.frame_data) == 0
         assert len(frame) == 0
-        assert frame.information is None
+        assert frame.payload is None
         assert frame.frame_check_sequence is None
         assert frame.is_good_ffc is False
         assert frame.is_expected_length is False
@@ -513,7 +513,7 @@ class TestHdlcFrame:
         assert frame.frame_data is not None
         assert len(frame.frame_data) == len(frame_data)
         assert len(frame) == len(frame_data)
-        assert frame.information is None
+        assert frame.payload is None
         assert frame.frame_check_sequence == int(FRAME_EMPTY_INFO[-4:], 16)
         assert frame.is_good_ffc
         assert frame.is_expected_length
@@ -530,7 +530,7 @@ class TestHdlcFrame:
         assert frame.frame_data is not None
         assert len(frame.frame_data) == len(frame_data)
         assert len(frame) == len(frame_data)
-        assert frame.information == bytes.fromhex(FRAME_SHORT_INFO)[-4:-2]
+        assert frame.payload == bytes.fromhex(FRAME_SHORT_INFO)[-4:-2]
         assert frame.frame_check_sequence == int(FRAME_SHORT_INFO[-4:], 16)
         assert frame.is_good_ffc
         assert frame.is_expected_length

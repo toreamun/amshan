@@ -276,7 +276,7 @@ class SmartMeterFrameContentProtocol(SmartMeterBaseProtocol):
         Only content from non empty frames with expected length and checksum is passed on.
         """
         if frame.is_good_ffc and frame.is_expected_length:
-            frame_content = frame.information
+            frame_content = frame.payload
             if frame_content:
                 self.queue.put_nowait(frame_content)
             else:
