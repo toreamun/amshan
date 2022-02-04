@@ -5,7 +5,7 @@ import logging
 from typing import cast
 
 from amshan import fastframecheck
-from amshan.common import MeterReaderBase
+from amshan.common import MeterMessageBase, MeterMessageType, MeterReaderBase
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class HdlcFrameHeader:
         # The length of the frame format field is two bytes. It consists of three sub-fields referred to as the Format
         # type sub-field (4 bit), the Segmentation bit (S, 1 bit) and the frame length sub-field (11 bit).
         if len(self._frame) >= 2:
-            return self._frame.frame_data[0] << 8 | self._frame.frame_data[1]
+            return self._frame.as_bytes[0] << 8 | self._frame.as_bytes[1]
         return None
 
     @property
@@ -110,7 +110,7 @@ class HdlcFrameHeader:
             and len(self._frame) > self._control_position
         )
         if is_available:
-            return self._frame.frame_data[cast(int, self._control_position)]
+            return self._frame.as_bytes[cast(int, self._control_position)]
         return None
 
     @property
@@ -127,8 +127,8 @@ class HdlcFrameHeader:
         )
         if is_available:
             return (
-                self._frame.frame_data[cast(int, self._control_position) + 1] << 8
-                | self._frame.frame_data[cast(int, self._control_position) + 2]
+                self._frame.as_bytes[cast(int, self._control_position) + 1] << 8
+                | self._frame.as_bytes[cast(int, self._control_position) + 2]
             )
         return None
 
@@ -156,7 +156,7 @@ class HdlcFrameHeader:
             adr = bytearray()
 
             i = position
-            frame_data = self._frame.frame_data
+            frame_data = self._frame.as_bytes
             while True:
                 if i >= len(self._frame):
                     return None
@@ -180,7 +180,7 @@ class HdlcFrameHeader:
         return None
 
 
-class HdlcFrame:
+class HdlcFrame(MeterMessageBase):
     """
     Use this class to read HDLC frames by calling append for each byte.
 
@@ -213,7 +213,26 @@ class HdlcFrame:
         self._header.update()
 
     @property
-    def frame_data(self) -> bytes:
+    def message_type(self) -> MeterMessageType:
+        """Return MeterMessageType of message."""
+        return MeterMessageType.HDLC_DLMS
+
+    @property
+    def is_valid(self) -> bool:
+        """Return True when valitation (checksum etc.) is successfull."""
+        if self.is_good_ffc and self.is_expected_length:
+            return True
+
+        _LOGGER.warning(
+            "Got invalid frame (is_good_ffc = %s, is_expected_length = %s): %s",
+            self.is_good_ffc,
+            self.is_expected_length,
+            self.as_bytes.hex(),
+        )
+        return False
+
+    @property
+    def as_bytes(self) -> bytes:
         """
         Return frame data bytes.
 

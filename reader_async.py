@@ -1,12 +1,13 @@
 """Util for reading from HAN port."""
 from __future__ import annotations
+
 import argparse
 import datetime
 import json
 import logging
 import signal
 import sys
-from asyncio import Queue, get_event_loop, create_task, run
+from asyncio import Queue, create_task, get_event_loop, run
 from typing import Any
 
 from amshan import autodecoder
@@ -15,8 +16,8 @@ from amshan.meter_connection import (
     ConnectionManager,
     MeterTransportProtocol,
 )
-from amshan.serial_connection_factory import create_serial_frame_content_connection
-from amshan.tcp_connection_factory import create_tcp_frame_content_connection
+from amshan.serial_connection_factory import create_serial_message_payload_connection
+from amshan.tcp_connection_factory import create_tcp_message_payload_connection
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -93,7 +94,7 @@ _decoder = autodecoder.AutoDecoder()
 
 
 def _measure_received(frame: bytes) -> None:
-    decoded_frame = _decoder.decode_frame_content(frame)
+    decoded_frame = _decoder.decode_message_payload(frame)
     if decoded_frame:
         json_frame = json.dumps(decoded_frame, default=_json_converter)
         LOG.debug("Decoded frame: %s", json_frame)
@@ -118,12 +119,15 @@ async def main() -> None:
 
     async def tcp_connection_factory() -> MeterTransportProtocol:
         host, port = args.hostandport
-        return await create_tcp_frame_content_connection(queue, loop, host, port)
+        return await create_tcp_message_payload_connection(
+            queue, loop, None, host, port
+        )
 
     async def serial_connection_factory() -> MeterTransportProtocol:
-        return await create_serial_frame_content_connection(
+        return await create_serial_message_payload_connection(
             queue,
-            loop=loop,
+            None,
+            None,
             url=args.serialdevice,
             baudrate=args.ser_baudrate,
             parity=args.ser_parity,

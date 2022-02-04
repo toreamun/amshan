@@ -113,7 +113,7 @@ class TestHdlcFrameReader:
         assert len(frames) == 0
 
     def test_single_flag_sequences_between_frames(self):
-        """Test single flag seqeunce between frames."""
+        """Test single flag sequnce between frames."""
         data_feed = bytes.fromhex(
             FLAG_SEQUENCE
             + FRAME_SHORT_INFO
@@ -493,8 +493,8 @@ class TestHdlcFrame:
         frame = hdlc.HdlcFrame()
 
         assert frame.header is not None
-        assert frame.frame_data is not None
-        assert len(frame.frame_data) == 0
+        assert frame.as_bytes is not None
+        assert len(frame.as_bytes) == 0
         assert len(frame) == 0
         assert frame.payload is None
         assert frame.frame_check_sequence is None
@@ -510,8 +510,8 @@ class TestHdlcFrame:
             frame.append(byte)
 
         assert frame.header is not None
-        assert frame.frame_data is not None
-        assert len(frame.frame_data) == len(frame_data)
+        assert frame.as_bytes is not None
+        assert len(frame.as_bytes) == len(frame_data)
         assert len(frame) == len(frame_data)
         assert frame.payload is None
         assert frame.frame_check_sequence == int(FRAME_EMPTY_INFO[-4:], 16)
@@ -527,8 +527,8 @@ class TestHdlcFrame:
             frame.append(byte)
 
         assert frame.header is not None
-        assert frame.frame_data is not None
-        assert len(frame.frame_data) == len(frame_data)
+        assert frame.as_bytes is not None
+        assert len(frame.as_bytes) == len(frame_data)
         assert len(frame) == len(frame_data)
         assert frame.payload == bytes.fromhex(FRAME_SHORT_INFO)[-4:-2]
         assert frame.frame_check_sequence == int(FRAME_SHORT_INFO[-4:], 16)
