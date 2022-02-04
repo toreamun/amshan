@@ -15,7 +15,8 @@
   "python.linting.mypyEnabled": true,
   "[python]": {
     "editor.codeActionsOnSave": {
-      "source.organizeImports": true
+      "source.organizeImports": true,
+      "editor.defaultFormatter": "ms-python.python"
     }
   },
 }
