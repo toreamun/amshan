@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from re import Pattern
 from re import compile as regex_compile
-from typing import Optional, Tuple, cast
+from typing import cast
 
 from amshan import obis_map
 from amshan.common import MeterMessageBase, MeterMessageType, MeterReaderBase
@@ -18,12 +18,6 @@ START_CHARACTER_HEX = 0x2F
 END_CHARACTER_HEX = 0x21
 LF_CHARACTER = 0x0A
 
-_item_pattern: Pattern = regex_compile(
-    r"^(?P<obis>.*)\(\s*(?P<value>[^\*]+)(\*(?P<unit>[a-zA-Z]+))?\)\s*$"
-)
-
-# ^(?:(?![!])(?P<ADR>[ -~]+)\((?P<VALUE>[^\*]+)(\*(?P<unit>[a-zA-Z]+))?\))+$
-# ^(?:(?![!])(?P<ADR>[ -~]+)\((?P<VALUE>[^\*]+)(\*(?P<unit>.+))?)\)+$
 
 _ident_pattern: Pattern = regex_compile(
     r"^\/(?P<MANID>[A-Z][A-Z][a-zA-Z])(?P<BAUDID>\d)((\\\w)*)(?P<ID>[ -~]{1,16})(\r\n)?$"
