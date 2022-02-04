@@ -16,11 +16,9 @@ from asyncio import (
     sleep,
     wait,
 )
-from typing import Any, Awaitable, Callable, ClassVar, Tuple
+from typing import Awaitable, Callable, ClassVar, Sequence, Tuple
 
-from amshan import hdlc
-from amshan.common import MeterReaderBase
-from amshan.hdlc import HdlcFrame
+from amshan.common import MeterMessageBase, MeterReaderBase
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -85,22 +83,18 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
 
     def __init__(
         self,
-        reader: MeterReaderBase | None = None,
+        reader_candidates: Sequence[MeterReaderBase],
     ) -> None:
         """
         Initialize SmartMeterProtocol.
 
-        :param reader: optional reader.
-        A HDLC frame reader with both octet stuffing and abort sequence disabled is created if None.
+        :param reader_candidates: message reader candidates.
         """
         super().__init__()
         self._done: Future[None] = Future()
         self.instance_id: int = SmartMeterBaseProtocol.total_instance_counter
-        self._reader: MeterReaderBase = (
-            reader
-            if reader
-            else hdlc.HdlcFrameReader(use_octet_stuffing=False, use_abort_sequence=True)
-        )
+        self._reader_candidates = list(reader_candidates)
+        self._selected_reader: MeterReaderBase | None = None
         self._transport: BaseTransport | None = None
         self._transport_info: str | None = None
         SmartMeterBaseProtocol.total_instance_counter += 1
@@ -179,23 +173,37 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
         self._done.set_result(None)
 
     def data_received(self, data: bytes) -> None:
-        """Receive data from the transport and put messages(s) on the queue if messages(s) are complete."""
-        frames = self._reader.read(data)
-        for frame in frames:
-            self.message_received(frame)
+        """Receive data from the transport and put messages(s) on the queue if messages(s) are ready."""
+        if self._selected_reader:
+            messages = self._selected_reader.read(data)
+            for msg in messages:
+                self.message_received(msg)
+        else:
+            for reader in self._reader_candidates:
+                messages = reader.read(data)
+                for msg in messages:
+                    if msg.is_valid:
+                        self._selected_reader = reader
+                        self._reader_candidates.clear()
+                        _LOGGER.info("Reader %s selected.", reader)
+                        break
+                if self._selected_reader:
+                    for msg in messages:
+                        self.message_received(msg)
+                    break
 
     @abstractmethod
-    def message_received(self, frame: Any) -> None:
+    def message_received(self, message: MeterMessageBase) -> None:
         """Message is received from the transport."""
 
     def eof_received(self) -> bool:
         """
         Return False to close the transport.
 
-        Called when the other end signals it won’t send any more data.
+        Called when the other end signals it won't send any more data.
         """
         _LOGGER.debug(
-            "%s: eof_received - the other end (%s) signaled it won’t send any more data. Close transport",
+            "%s: eof_received - the other end (%s) signaled it won't send any more data. Close transport",
             self._instance_id(),
             self._transport_info,
         )
@@ -207,82 +215,80 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
         return f"{self.__class__.__name__}[{self.instance_id}]"
 
 
-# pylint: disable=too-many-instance-attributes
-
-
-class SmartMeterFrameProtocol(SmartMeterBaseProtocol):
+class SmartMeterMessageProtocol(SmartMeterBaseProtocol):
     """
-    Network protocol that reads smart meter frames from a stream and forwards them to a queue.
+    Network protocol that reads smart meter messages from a stream and forwards them to a queue.
 
     When the user wants to requests a transport to use with this protocol,
-    they pass a SmartMeterFrameProtocol factory to a utility function (e.g.,
+    they pass a SmartMeterMessageProtocol factory to a utility function (e.g.,
     EventLoop.create_connection() or serial_asyncio.create_serial_connection).
 
     Example:
-        await serial_asyncio.create_serial_connection(loop, lambda: SmartMeterFrameProtocol(queue), url = "/dev/tty01")
+        await serial_asyncio.create_serial_connection(loop, lambda: SmartMeterMessageProtocol(queue), [ModeDReader()], url = "/dev/tty01")
     """
 
     def __init__(
         self,
-        destination_queue: Queue[hdlc.HdlcFrame],
-        frame_reader: hdlc.HdlcFrameReader | None = None,
+        destination_queue: Queue[MeterMessageBase],
+        reader_candidates: Sequence[MeterReaderBase],
     ) -> None:
         """
-        Initialize SmartMeterProtocol.
+        Initialize SmartMeterMessageProtocol.
 
-        :param destination_queue: destination queue for decoded frames.
-        :param frame_reader: optional frame reader.
-        A frame reader with both octet stuffing and abort sequence disabled is created if None.
+        :param destination_queue: destination queue for received messages.
+        :param reader_candidates: message reader candidates.
         """
-        super().__init__(frame_reader)
-        self.queue: Queue[HdlcFrame] = destination_queue
+        super().__init__(reader_candidates)
+        self.queue: Queue[MeterMessageBase] = destination_queue
 
-    def message_received(self, frame: HdlcFrame) -> None:
-        """Frame is passed on to the queue."""
-        self.queue.put_nowait(frame)
+    def message_received(self, message: MeterMessageBase) -> None:
+        """Received message is passed on to the queue."""
+        self.queue.put_nowait(message)
 
 
-class SmartMeterFrameContentProtocol(SmartMeterBaseProtocol):
+class SmartMeterMessagePayloadProtocol(SmartMeterBaseProtocol):
     """
-    Network protocol that reads smart meter frames from a stream and forwards their content to a queue.
+    Network protocol that reads smart meter messages from a stream and forwards their payload to a queue.
 
     When the user wants to requests a transport to use with this protocol,
-    they pass a SmartMeterFrameContentProtocol factory to a utility function (e.g.,
+    they pass a SmartMeterMessagePayloadProtocol factory to a utility function (e.g.,
     EventLoop.create_connection() or serial_asyncio.create_serial_connection).
 
     Example:
-        await serial_asyncio.create_serial_connection(loop, lambda: SmartMeterFrameContentProtocol(queue), url = "/dev/tty01")
+        await serial_asyncio.create_serial_connection(loop, lambda: SmartMeterMessagePayloadProtocol(queue), [ModeDReader()] url = "/dev/tty01")
     """
 
     def __init__(
         self,
         destination_queue: Queue[bytes],
-        frame_reader: hdlc.HdlcFrameReader | None = None,
+        reader_candidates: Sequence[MeterReaderBase],
     ) -> None:
         """
-        Initialize SmartMeterProtocol.
+        Initialize SmartMeterMessagePayloadProtocol.
 
-        :param destination_queue: destination queue for decoded frames.
-        :param frame_reader: optional frame reader.
-        A frame reader with both octet stuffing and abort sequence disabled is created if None.
+        :param destination_queue: destination queue for received messages payloads.
+        :param reader_candidates: message reader candidates.
         """
-        super().__init__(frame_reader)
+        super().__init__(reader_candidates)
         self.queue: Queue[bytes] = destination_queue
 
-    def message_received(self, frame: HdlcFrame) -> None:
+    def message_received(self, message: MeterMessageBase) -> None:
         """
-        Frame is received and its content is passed on to the queue.
+        Message is received and its payload is passed on to the queue.
 
-        Only content from non empty frames with expected length and checksum is passed on.
+        Only payload from non empty payloads of valid messages (check sum etc.) is passed on
         """
-        if frame.is_good_ffc and frame.is_expected_length:
-            frame_content = frame.payload
-            if frame_content:
-                self.queue.put_nowait(frame_content)
+        payload = message.payload
+        if message.is_valid:
+            if payload is not None and len(payload) > 0:
+                self.queue.put_nowait(payload)
             else:
-                _LOGGER.debug("Got empty frame")
+                _LOGGER.debug("Got empty message.")
         else:
-            _LOGGER.warning("Got invalid frame: %s", frame.frame_data.hex())
+            _LOGGER.warning(
+                "Got invalid message: %s",
+                message.as_bytes.hex() if message.as_bytes else "<empty>",
+            )
 
 
 MeterTransportProtocol = Tuple[BaseTransport, SmartMeterBaseProtocol]
@@ -291,6 +297,7 @@ AsyncConnectionFactory = Callable[[], Awaitable[MeterTransportProtocol]]
 
 
 class ConnectionManager:
+    # pylint: disable=too-many-instance-attributes
     """
     Maintain connection and reconnect if connection is lost.
 
@@ -407,7 +414,7 @@ class ConnectionManager:
 
                 self.back_off_connect_error.reset()
             except CancelledError:
-                _LOGGER.debug("The operation was cencelled")
+                _LOGGER.debug("The operation was cancelled")
                 raise
             except Exception as ex:  # pylint: disable=broad-except
                 self._connection = None

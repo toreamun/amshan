@@ -21,7 +21,7 @@ logging.basicConfig(
 LOG = logging.getLogger("")
 
 
-def get_arg_parser() -> argparse.ArgumentParser:
+def _get_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser("read HAN port")
     parser.add_argument("-v", dest="verbose", default=False)
     parser.add_argument(
@@ -54,21 +54,21 @@ def get_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def json_converter(o):
+def _json_converter(o):
     if isinstance(o, datetime.datetime):
         return o.isoformat()
     return None
 
 
-def signal_handler(signal_number, stack_frame):
+def _signal_handler(signal_number, stack_frame):
     LOG.info(
         "%s signal received. Exiting gracefully.", signal.Signals(signal_number).name
     )
-    close_resources()
+    _close_resources()
     exit(0)
 
 
-def close_resources() -> None:
+def _close_resources() -> None:
     if ser is not None and ser.isOpen():
         LOG.debug("Close serial port %s", ser.name)
         ser.close()
@@ -80,7 +80,7 @@ def close_resources() -> None:
         mqtt_client.loop_stop()
 
 
-def dump_to_file(dump_data: bytes) -> None:
+def _dump_to_file(dump_data: bytes) -> None:
     for b in dump_data:
         is_flag = b == b"\x7e"[0]
         if is_flag:
@@ -90,29 +90,29 @@ def dump_to_file(dump_data: bytes) -> None:
             logfile.write("\n")
 
 
-def hdlc_frame_received(frame: hdlc.HdlcFrame) -> None:
+def _hdlc_frame_received(frame: hdlc.HdlcFrame) -> None:
     if frame.is_good_ffc and frame.is_expected_length:
         LOG.debug("Got frame info content: %s", frame.payload.hex())
-        decoded_frame = decoder.decode_frame_content(frame.payload)
+        decoded_frame = decoder.decode_message_payload(frame.payload)
         if decoded_frame:
-            json_frame = json.dumps(decoded_frame, default=json_converter)
+            json_frame = json.dumps(decoded_frame, default=_json_converter)
             LOG.debug("Decoded frame: %s", json_frame)
             mqtt_client.publish(args.mqtttopic, json_frame)
         else:
-            LOG.error("Could not decode frame: %s", frame.frame_data.hex())
+            LOG.error("Could not decode frame: %s", frame.as_bytes.hex())
     else:
-        LOG.warning("Got invalid frame: %s", frame.frame_data.hex())
+        LOG.warning("Got invalid frame: %s", frame.as_bytes.hex())
 
 
 if __name__ == "__main__":
 
-    args = get_arg_parser().parse_args()
+    args = _get_arg_parser().parse_args()
 
     ser = None
-    mqtt_client = None
+    mqtt_client: mqtt.Client | None = None
     logfile = None
 
-    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGINT, _signal_handler)
 
     try:
         if args.dumpfile:
@@ -171,12 +171,12 @@ if __name__ == "__main__":
 
             if len(data) > 0:
                 if args.dumpfile:
-                    dump_to_file(data)
+                    _dump_to_file(data)
 
                 frames = frame_reader.read(data)
                 if len(frames):
                     for f in frames:
-                        hdlc_frame_received(f)
+                        _hdlc_frame_received(f)
     except Exception as ex:
         LOG.error("Exception: %s", ex)
-        close_resources()
+        _close_resources()
