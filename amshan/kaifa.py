@@ -145,7 +145,7 @@ def _normalize_parsed_value_elements_frame(
         else:
             scale = _FIELD_SCALING.get(element_name, None)
             if scale:
-                scaled_value = round(measure.value * (10 ** scale), abs(scale))
+                scaled_value = round(measure.value * (10**scale), abs(scale))
                 dictionary[element_name] = scaled_value
             else:
                 dictionary[element_name] = measure.value
@@ -173,7 +173,7 @@ def _normalize_parsed_obis_elements_frame(
         else:
             scale = _FIELD_SCALING.get(element_name, None)
             if scale:
-                scaled_value = round(measure.value * (10 ** scale), abs(scale))
+                scaled_value = round(measure.value * (10**scale), abs(scale))
                 dictionary[element_name] = scaled_value
             else:
                 dictionary[element_name] = measure.value

@@ -86,7 +86,7 @@ def normalize_parsed_frame(
             if isinstance(measure.value, int):
                 scale = field_scaling.get(measure.obis, None)
                 if scale:
-                    dictionary[element_name] = measure.value * (10 ** scale)
+                    dictionary[element_name] = measure.value * (10**scale)
                 else:
                     dictionary[element_name] = measure.value
             else:
