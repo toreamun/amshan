@@ -4,8 +4,8 @@ from __future__ import annotations
 import logging
 from typing import cast
 
-from amshan import fastframecheck
-from amshan.common import MeterMessageBase, MeterMessageType, MeterReaderBase
+from han import fastframecheck
+from han.common import MeterMessageBase, MeterMessageType, MeterReaderBase
 
 _LOGGER = logging.getLogger(__name__)
 

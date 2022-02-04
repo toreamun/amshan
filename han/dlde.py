@@ -8,9 +8,9 @@ from re import Pattern
 from re import compile as regex_compile
 from typing import cast
 
-from amshan import obis_map
-from amshan.common import MeterMessageBase, MeterMessageType, MeterReaderBase
-from amshan.obis import Obis
+from han import obis_map
+from han.common import MeterMessageBase, MeterMessageType, MeterReaderBase
+from han.obis import Obis
 
 _LOGGER = logging.getLogger(__name__)
 

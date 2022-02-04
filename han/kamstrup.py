@@ -6,8 +6,8 @@ from datetime import datetime
 
 import construct  # type: ignore
 
-from amshan import cosem, obis_map
-from amshan.obis import Obis
+from han import cosem, obis_map
+from han.obis import Obis
 
 Element: construct.Struct = construct.Struct(
     "_element_type" / construct.Peek(cosem.CommonDataTypes),

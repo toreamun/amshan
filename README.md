@@ -87,7 +87,7 @@ hdlc.HdlcFrameReader can be used to read frame by frame from bytes. Call read() 
 
 # Decode norwegian and swedish messages
 
-P1 readout and MBUS frames using the norwegian or swedish DMLS AMS format can be parsed into meter specific objects or decoded into a common dictionary. Modules exists for P1 (generic format), Aidon, Kaifa and Kamstrup meters, but the easiest is to use [autodecoder.AutoDecode](amshan/autodecode.py) to automatically detect meter type and decode the frame into a dictionary. The dictionay content is as far as possible common between meters. Possible dictionary keys kan be found as constants in [obis_map.py](amshan/obis_map.py).
+P1 readout and MBUS frames using the norwegian or swedish DMLS AMS format can be parsed into meter specific objects or decoded into a common dictionary. Modules exists for P1 (generic format), Aidon, Kaifa and Kamstrup meters, but the easiest is to use [autodecoder.AutoDecode](han/autodecode.py) to automatically detect meter type and decode the frame into a dictionary. The dictionay content is as far as possible common between meters. Possible dictionary keys kan be found as constants in [obis_map.py](han/obis_map.py).
 
 Example:
 

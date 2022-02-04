@@ -6,7 +6,7 @@ from pprint import pprint
 
 import construct
 
-from amshan import kaifa
+from han import kaifa
 from tests.assert_utils import (
     assert_apdu,
     assert_obis_element,

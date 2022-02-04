@@ -14,8 +14,8 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     platforms=["POSIX", "Windows"],
     url="https://github.com/toreamun/amshan",
-    packages=["amshan"],
-    package_data={"amshan": ["py.typed"]},
+    packages=["han"],
+    package_data={"han": ["py.typed"]},
     keywords=[
         "meter",
         "han",

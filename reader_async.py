@@ -10,14 +10,14 @@ import sys
 from asyncio import Queue, create_task, get_event_loop, run
 from typing import Any
 
-from amshan import autodecoder
-from amshan.meter_connection import (
+from han import autodecoder
+from han.meter_connection import (
     AsyncConnectionFactory,
     ConnectionManager,
     MeterTransportProtocol,
 )
-from amshan.serial_connection_factory import create_serial_message_payload_connection
-from amshan.tcp_connection_factory import create_tcp_message_payload_connection
+from han.serial_connection_factory import create_serial_message_payload_connection
+from han.tcp_connection_factory import create_tcp_message_payload_connection
 
 logging.basicConfig(
     level=logging.DEBUG,

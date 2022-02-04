@@ -5,11 +5,11 @@ from asyncio import Queue  # pylint: disable=unused-import
 from asyncio import AbstractEventLoop, BaseProtocol, get_event_loop
 from typing import Sequence, cast
 
-from amshan.common import MeterMessageBase  # pylint: disable=unused-import
-from amshan.common import MeterReaderBase
-from amshan.dlde import ModeDReader
-from amshan.hdlc import HdlcFrameReader
-from amshan.meter_connection import (
+from han.common import MeterMessageBase  # pylint: disable=unused-import
+from han.common import MeterReaderBase
+from han.dlde import ModeDReader
+from han.hdlc import HdlcFrameReader
+from han.meter_connection import (
     MeterTransportProtocol,
     SmartMeterMessagePayloadProtocol,
     SmartMeterMessageProtocol,

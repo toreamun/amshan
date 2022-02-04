@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from amshan import hdlc
+from han import hdlc
 
 FLAG_SEQUENCE = "7e"
 CONTROL_ESCAPE = "7d"

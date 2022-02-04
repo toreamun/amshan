@@ -7,7 +7,7 @@ from decimal import Decimal
 
 import construct
 
-from amshan import aidon
+from han import aidon
 from tests.assert_utils import assert_apdu
 
 no_list_1 = bytes.fromhex(

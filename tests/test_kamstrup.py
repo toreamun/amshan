@@ -6,7 +6,7 @@ from pprint import pprint
 
 import construct
 
-from amshan import kamstrup
+from han import kamstrup
 from tests.assert_utils import (
     assert_apdu,
     assert_obis_element,

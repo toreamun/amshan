@@ -1,8 +1,8 @@
 """Autodecoder tests."""
 from __future__ import annotations
 
-from amshan import autodecoder
-from amshan.dlde import DataReadout
+from han import autodecoder
+from han.dlde import DataReadout
 
 import tests.test_aidon
 import tests.test_dlde

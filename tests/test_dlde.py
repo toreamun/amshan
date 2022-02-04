@@ -2,7 +2,7 @@
 from datetime import datetime
 from pprint import pprint
 
-from amshan.dlde import (
+from han.dlde import (
     DataReadout,
     DataSet,
     DataSetValue,

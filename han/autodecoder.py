@@ -6,8 +6,8 @@ from typing import cast
 
 import construct  # type: ignore
 
-from amshan import aidon, dlde, kaifa, kamstrup
-from amshan.common import MeterMessageBase
+from han import aidon, dlde, kaifa, kamstrup
+from han.common import MeterMessageBase
 
 
 class AutoDecoder:

@@ -11,7 +11,7 @@ import time
 import paho.mqtt.client as mqtt
 import serial
 
-from amshan import autodecoder, hdlc
+from han import autodecoder, hdlc
 
 logging.basicConfig(
     level=logging.DEBUG,

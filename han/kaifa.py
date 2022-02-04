@@ -7,8 +7,8 @@ from enum import Enum
 
 import construct  # type: ignore
 
-from amshan import cosem, obis_map
-from amshan.obis import Obis
+from han import cosem, obis_map
+from han.obis import Obis
 
 
 class KaifaBodyType(Enum):

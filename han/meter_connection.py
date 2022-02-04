@@ -18,7 +18,7 @@ from asyncio import (
 )
 from typing import Awaitable, Callable, ClassVar, Sequence, Tuple
 
-from amshan.common import MeterMessageBase, MeterReaderBase
+from han.common import MeterMessageBase, MeterReaderBase
 
 _LOGGER = logging.getLogger(__name__)
 
