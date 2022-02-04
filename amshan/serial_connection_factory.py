@@ -5,7 +5,7 @@ from asyncio import Queue  # pylint: disable=unused-import
 from asyncio import AbstractEventLoop, get_event_loop
 from typing import Sequence, cast
 
-import serial_asyncio
+import serial_asyncio  # type: ignore
 
 from amshan.common import MeterMessageBase  # pylint: disable=unused-import
 from amshan.common import MeterReaderBase
