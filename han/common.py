@@ -9,7 +9,9 @@ from typing import Generic, TypeVar
 class MeterMessageType(Enum):
     """Meter message type."""
 
+    UNKNOWN = auto()
     HDLC_DLMS = auto()
+    DLMS = auto()
     P1 = auto()
 
 
@@ -35,6 +37,35 @@ class MeterMessageBase(ABC):
     @abstractmethod
     def payload(self) -> bytes | None:
         """Payload field."""
+
+
+class DlmsMessage(MeterMessageBase):
+    """Message containing DLMS (binary) message without HDLC framing."""
+
+    def __init__(self, binary: bytes) -> None:
+        """Initialize DlmsMessage."""
+        super().__init__()
+        self._binary: bytes = binary
+
+    @property
+    def message_type(self) -> MeterMessageType:
+        """Return MeterMessageType (DLMS) of message."""
+        return MeterMessageType.DLMS
+
+    @property
+    def is_valid(self) -> bool:
+        """Return True when minimum length is fulfilled."""
+        return len(self._binary) > 4
+
+    @property
+    def as_bytes(self) -> bytes | None:
+        """Message as data."""
+        return self._binary
+
+    @property
+    def payload(self) -> bytes | None:
+        """Return None for stop message."""
+        return self._binary
 
 
 TMessage = TypeVar("TMessage", bound=MeterMessageBase)  # pylint: disable=invalid-name
