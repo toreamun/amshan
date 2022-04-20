@@ -157,6 +157,10 @@ EXAMPLE_DATA_D_LANDISGYR_360 = (
     b"!8012\r\n"
 )
 
+EXAMPLE_DATA_KAMSTRUP = bytes.fromhex(
+    "0d0a2f4b414d350d0a0d0a302d303a312e302e302832323034303831333530323157290d0a312d303a312e382e302830303036303939352e3432342a6b5768290d0a312d303a322e382e302830303030303030302e3030302a6b5768290d0a312d303a332e382e302830303030303031322e3639362a6b56417268290d0a312d303a342e382e302830303031323534312e3830322a6b56417268290d0a312d303a312e372e3028303030322e3230322a6b57290d0a312d303a322e372e3028303030302e3030302a6b57290d0a312d303a332e372e3028303030302e3030302a6b564172290d0a312d303a342e372e3028303030302e3530352a6b564172290d0a312d303a32312e372e3028303030312e3934372a6b57290d0a312d303a34312e372e3028303030302e3036332a6b57290d0a312d303a36312e372e3028303030302e3139322a6b57290d0a312d303a32322e372e3028303030302e3030302a6b57290d0a312d303a34322e372e3028303030302e3030302a6b57290d0a312d303a36322e372e3028303030302e3030302a6b57290d0a312d303a32332e372e3028303030302e3030302a6b564172290d0a312d303a34332e372e3028303030302e3030302a6b564172290d0a312d303a36332e372e3028303030302e3030302a6b564172290d0a312d303a32342e372e3028303030302e3230342a6b564172290d0a312d303a34342e372e3028303030302e3039352a6b564172290d0a312d303a36342e372e3028303030302e3230362a6b564172290d0a312d303a33322e372e30283233352e352a56290d0a312d303a35322e372e30283233392e352a56290d0a312d303a37322e372e30283233392e312a56290d0a312d303a33312e372e30283030382e332a41290d0a312d303a35312e372e30283030302e342a41290d0a312d303a37312e372e30283030312e342a41290d0a21393246350d0a"
+)
+
 
 class TestModeDReader:
     """Test Mode D reader."""
@@ -208,6 +212,7 @@ class TestDataReadout:
         readout = DataReadout(EXAMPLE_DATA_A_LANDISGYR_360)
         assert readout.identification_line
         assert str(readout.identification_line) == "/LGF5E360"
+        assert readout.identification_line.identification == "E360"
         assert readout.end_line == "!A077"
         assert readout.expected_checksum == 0xA077
         assert readout._calculated_crc == 0xA077  # pylint: disable=protected-access
@@ -218,6 +223,8 @@ class TestDataReadout:
         readout = DataReadout(EXAMPLE_DATA_B)
         assert readout.identification_line
         assert str(readout.identification_line) == "/XMX5LGBBFFB231314239"
+        assert readout.identification_line.manufacturer_id == "XMX"
+        assert readout.identification_line.identification == "LGBBFFB231314239"
         assert readout.end_line == "!"
 
     def test_example_c(self):
@@ -225,6 +232,8 @@ class TestDataReadout:
         readout = DataReadout(EXAMPLE_DATA_C)
         assert readout.identification_line
         assert str(readout.identification_line) == "/ELL5\\253833635_A"
+        assert readout.identification_line.manufacturer_id == "ELL"
+        assert readout.identification_line.identification == "53833635_A"
         assert readout.end_line == "!80FF"
         assert readout.expected_checksum == 0x80FF
         assert readout._calculated_crc == 0x80FF  # pylint: disable=protected-access
@@ -235,9 +244,25 @@ class TestDataReadout:
         readout = DataReadout(EXAMPLE_DATA_D_LANDISGYR_360)
         assert readout.identification_line
         assert str(readout.identification_line) == "/LGF5E360"
+        assert readout.identification_line.manufacturer_id == "LGF"
+        assert readout.identification_line.identification == "E360"
         assert readout.end_line == "!8012"
         assert readout.expected_checksum == 0x8012
         assert readout._calculated_crc == 0x8012  # pylint: disable=protected-access
+        assert readout.is_valid
+
+    def test_example_kamstrup(self):
+        """Load example data Kamstrup."""
+        data = EXAMPLE_DATA_KAMSTRUP
+
+        readout = DataReadout(data)
+        assert readout.identification_line
+        assert str(readout.identification_line) == "/KAM5"
+        assert readout.identification_line.manufacturer_id == "KAM"
+        assert readout.identification_line.identification is None
+        assert readout.end_line == "!92F5"
+        assert readout.expected_checksum == 0x92F5
+        assert readout._calculated_crc == 0x92F5  # pylint: disable=protected-access
         assert readout.is_valid
 
 
@@ -423,5 +448,42 @@ class TestDecode:
             "voltage_l1": 232.1,
             "voltage_l2": 233.1,
             "voltage_l3": 231.9,
+        }
+        assert decoded == expected
+
+    def test_decode_kamstrup(self):
+        """Decode example data."""
+        decoded = decode_p1_readout(DataReadout(EXAMPLE_DATA_KAMSTRUP))
+        pprint(decoded)
+        expected = {
+            "active_power_export": 0,
+            "active_power_export_l1": 0,
+            "active_power_export_l2": 0,
+            "active_power_export_l3": 0,
+            "active_power_export_total": 0,
+            "active_power_import": 2202,
+            "active_power_import_l1": 1947,
+            "active_power_import_l2": 63,
+            "active_power_import_l3": 192,
+            "active_power_import_total": 60995424,
+            "current_l1": 8.3,
+            "current_l2": 0.4,
+            "current_l3": 1.4,
+            "meter_datetime": datetime(2022, 4, 8, 13, 50, 21),
+            "meter_manufacturer_id": "KAM",
+            "meter_type_id": None,
+            "reactive_power_export": 505,
+            "reactive_power_export_l1": 204,
+            "reactive_power_export_l2": 95,
+            "reactive_power_export_l3": 206,
+            "reactive_power_export_total": 12541802,
+            "reactive_power_import": 0,
+            "reactive_power_import_l1": 0,
+            "reactive_power_import_l2": 0,
+            "reactive_power_import_l3": 0,
+            "reactive_power_import_total": 12696,
+            "voltage_l1": 235.5,
+            "voltage_l2": 239.5,
+            "voltage_l3": 239.1,
         }
         assert decoded == expected

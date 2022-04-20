@@ -20,7 +20,7 @@ LF_CHARACTER = 0x0A
 
 
 _ident_pattern: Pattern = regex_compile(
-    r"^\/(?P<MANID>[A-Z][A-Z][a-zA-Z])(?P<BAUDID>\d)((\\\w)*)(?P<ID>[ -~]{1,16})(\r\n)?$"
+    r"^\/(?P<MANID>[A-Z][A-Z][a-zA-Z])(?P<BAUDID>\d)((\\\w)*)(?P<ID>[ -~]{1,16})?(\r\n)?$"
 )
 
 
@@ -109,7 +109,7 @@ class Ident:
         """Initialize Ident."""
         match = _ident_pattern.match(ident_line)
         if not match:
-            raise ValueError("Not an Ident message.")
+            raise ValueError(f"{ident_line}' is not an ident message.")
         self._match = match
 
     @property
@@ -122,7 +122,7 @@ class Ident:
         return cast(str, self._match.group("MANID"))
 
     @property
-    def identification(self) -> str:
+    def identification(self) -> str | None:
         """Manufacturer specific identification."""
         return cast(str, self._match.group("ID"))
 
@@ -141,19 +141,19 @@ class DataReadout(MeterMessageBase):
 
     def __init__(self, readout: bytes) -> None:
         """Initialize DataReadout."""
-        self._readout = readout
-        if readout[0] != START_CHARACTER_HEX:
-            raise ValueError("Readout must start with '/' character.")
+        self._readout = readout.lstrip()
+        if self._readout[0] != START_CHARACTER_HEX:
+            raise ValueError("Readout must start with '/' character")
 
-        self._end_pos = readout.find(END_CHARACTER_HEX)
+        self._end_pos = self._readout.find(END_CHARACTER_HEX)
         if self._end_pos == -1:
             raise ValueError(
                 "Readout must have an end line starting with '!' character."
             )
 
-        self._data_pos = readout.find(LF_CHARACTER) + 1
-        if self._data_pos < 1:
-            raise ValueError("Data not found.")
+        self._data_pos = self._readout.find(LF_CHARACTER) + 1
+        # if self._data_pos < 1:
+        #     raise ValueError("Data not found.")
 
         self._calculated_crc = self._calculate_crc16()
         self._ident: Ident | None = None
