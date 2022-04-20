@@ -471,7 +471,6 @@ class TestDecode:
             "current_l3": 1.4,
             "meter_datetime": datetime(2022, 4, 8, 13, 50, 21),
             "meter_manufacturer_id": "KAM",
-            "meter_type_id": None,
             "reactive_power_export": 505,
             "reactive_power_export_l1": 204,
             "reactive_power_export_l2": 95,

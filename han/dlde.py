@@ -426,6 +426,9 @@ def decode_p1_readout(readout: DataReadout) -> dict[str, str | int | float | dat
     decoded[
         obis_map.FIELD_METER_MANUFACTURER_ID
     ] = readout.identification_line.manufacturer_id
-    decoded[obis_map.FIELD_METER_TYPE_ID] = readout.identification_line.identification
+    if readout.identification_line.identification is not None:
+        decoded[
+            obis_map.FIELD_METER_TYPE_ID
+        ] = readout.identification_line.identification
 
     return decoded
