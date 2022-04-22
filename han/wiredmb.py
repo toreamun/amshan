@@ -112,8 +112,7 @@ class FrameReader(MeterReaderBase[LongFrame]):
             start = start_pos + 1
 
             if (
-                start_pos >= 0
-                and len(buffer) > start_pos + 3
+                len(buffer) > start_pos + 3
                 and buffer[start_pos + 3] == FRAME_START
                 and buffer[start_pos + 1] == buffer[start_pos + 2]
             ):
