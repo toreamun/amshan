@@ -1,131 +1,161 @@
 """Kamstrup tests."""
 # pylint: disable = no-self-use
 from __future__ import annotations
+
 from datetime import datetime
 from pprint import pprint
 
 import construct
 
 from han import kamstrup
-from tests.assert_utils import (
-    assert_apdu,
-    assert_obis_element,
+from tests.assert_utils import assert_apdu, assert_obis_element
+
+# Kamstrup example 1: 10 seconds list, three-phases, four-quadrants
+NOTIFICATION_BODY_NO_LIST_2_THREE_PHASE = (
+    "0219"  # structure of 0x19 elements
+    "0A0E 4B616D73747275705F5630303031"  # visible_string
+    "0906 0101000005FF  0A10 35373036353637303030303030303030"  # octet_string (obis) + visible_string
+    "0906 0101600101FF  0A12 303030303030303030303030303030303030"  # octet_string (obis) + visible_string
+    "0906 0101010700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101020700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101030700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101040700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 01011F0700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101330700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101470700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101200700FF  12 0000"  # octet_string (obis) + long_unsigned
+    "0906 0101340700FF  12 0000"  # octet_string (obis) + long_unsigned
+    "0906 0101480700FF  12 0000"  # octet_string (obis) + long_unsigned
 )
 
 # Kamstrup example 1: 10 seconds list, three-phases, four-quadrants
 no_list_1_three_phase = bytes.fromhex(
     (
-        "E6 E7 00"  # LLC: dsap, ssap, control
-        "0F"  # APDU: tag
-        "00000000"  # APDU: LongInvokeIdAndPriority
-        "0C07D0010106162100FF800001"  # APDU: DateTime
-        "0219"  # structure of 0x19 elements
-        "0A0E 4B616D73747275705F5630303031"  # visible_string
-        "0906 0101000005FF  0A10 35373036353637303030303030303030"  # octet_string (obis) + visible_string
-        "0906 0101600101FF  0A12 303030303030303030303030303030303030"  # octet_string (obis) + visible_string
-        "0906 0101010700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101020700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101030700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101040700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 01011F0700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101330700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101470700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101200700FF  12 0000"  # octet_string (obis) + long_unsigned
-        "0906 0101340700FF  12 0000"  # octet_string (obis) + long_unsigned
-        "0906 0101480700FF  12 0000"  # octet_string (obis) + long_unsigned
+        (
+            "E6 E7 00"  # LLC: dsap, ssap, control
+            "0F"  # APDU: tag
+            "00000000"  # APDU: LongInvokeIdAndPriority
+            "0C07D0010106162100FF800001"  # APDU: DateTime
+        )
+        + NOTIFICATION_BODY_NO_LIST_2_THREE_PHASE
     ).replace(" ", "")
+)
+
+# Kamstrup example 3: 1 hour list, single-phase, one-quadrant
+NOTIFICATION_BODY_NO_LIST_2_SINGLE_PHASE = (
+    "020F"  # structure of 0x0f elements
+    "0A0E 4B616D73747275705F5630303031"  # visible_string
+    "0906 0101000005FF  0A10 35373036353637303030303030303030"
+    "0906 0101600101FF  0A12 303030303030303030303030303030303030"
+    "0906 0101010700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 01011F0700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101200700FF  12 0000"  # octet_string (obis) + long_unsigned
+    "0906 0001010000FF  090C 07E1081003100005FF800000"  # octet_string (obis) + octet_string
+    "0906 0101010800FF  0600000000"  # octet_string + double_long_unsigned
 )
 
 # Kamstrup example 3: 1 hour list, single-phase, one-quadrant
 no_list_2_single_phase = bytes.fromhex(
     (
-        "E6 E7 00"  # LLC: dsap, ssap, control
-        "0F"  # APDU: tag
-        "00000000"  # APDU: LongInvokeIdAndPriority
-        "0C07E1081003100005FF800000"  # APDU: DateTime
-        "020F"  # structure of 0x0f elements
-        "0A0E 4B616D73747275705F5630303031"  # visible_string
-        "0906 0101000005FF  0A10 35373036353637303030303030303030"
-        "0906 0101600101FF  0A12 303030303030303030303030303030303030"
-        "0906 0101010700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 01011F0700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101200700FF  12 0000"  # octet_string (obis) + long_unsigned
-        "0906 0001010000FF  090C 07E1081003100005FF800000"  # octet_string (obis) + octet_string
-        "0906 0101010800FF  0600000000"  # octet_string + double_long_unsigned
+        (
+            "E6 E7 00"  # LLC: dsap, ssap, control
+            "0F"  # APDU: tag
+            "00000000"  # APDU: LongInvokeIdAndPriority
+            "0C07E1081003100005FF800000"  # APDU: DateTime
+        )
+        + NOTIFICATION_BODY_NO_LIST_2_SINGLE_PHASE
     ).replace(" ", "")
+)
+
+# Kamstrup example 2: 1 hour list, three-phases, four-quadrants
+NOTIFICATION_BODY_NO_LIST_2_THREE_PHASE = (
+    "0223"  # structure of 0x23 elements
+    "0A0E 4B616D73747275705F5630303031"  # visible_string
+    "0906 0101000005FF  0A10 35373036353637303030303030303030"
+    "0906 0101600101FF  0A12 303030303030303030303030303030303030"
+    "0906 0101010700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101020700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101030700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101040700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 01011F0700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101330700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101470700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101200700FF  12 0000"  # octet_string (obis) + long_unsigned
+    "0906 0101340700FF  12 0000"  # octet_string (obis) + long_unsigned
+    "0906 0101480700FF  12 0000"  # octet_string (obis) + long_unsigned
+    "0906 0001010000FF  090C 07E1081003100005FF800000"  # octet_string (obis) + octet_string
+    "0906 0101010800FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101020800FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101030800FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+    "0906 0101040800FF  06 00000000"  # octet_string (obis) + double_long_unsigned
 )
 
 # Kamstrup example 2: 1 hour list, three-phases, four-quadrants
 no_list_2_three_phase = bytes.fromhex(
     (
-        "E6 E 700"  # LLC: dsap, ssap, control
-        "0F"  # APDU: tag
-        "00000000"  # APDU: LongInvokeIdAndPriority
-        "0C07E1081003100005FF800000"  # APDU: DateTime
-        "0223"  # structure of 0x23 elements
-        "0A0E 4B616D73747275705F5630303031"  # visible_string
-        "0906 0101000005FF  0A10 35373036353637303030303030303030"
-        "0906 0101600101FF  0A12 303030303030303030303030303030303030"
-        "0906 0101010700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101020700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101030700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101040700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 01011F0700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101330700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101470700FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101200700FF  12 0000"  # octet_string (obis) + long_unsigned
-        "0906 0101340700FF  12 0000"  # octet_string (obis) + long_unsigned
-        "0906 0101480700FF  12 0000"  # octet_string (obis) + long_unsigned
-        "0906 0001010000FF  090C 07E1081003100005FF800000"  # octet_string (obis) + octet_string
-        "0906 0101010800FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101020800FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101030800FF  06 00000000"  # octet_string (obis) + double_long_unsigned
-        "0906 0101040800FF  06 00000000"  # octet_string (obis) + double_long_unsigned
+        (
+            "E6 E 700"  # LLC: dsap, ssap, control
+            "0F"  # APDU: tag
+            "00000000"  # APDU: LongInvokeIdAndPriority
+            "0C07E1081003100005FF800000"  # APDU: DateTime
+        )
+        + NOTIFICATION_BODY_NO_LIST_2_THREE_PHASE
     ).replace(" ", "")
+)
+
+NOTIFICATION_BODY_NO_LIST_1_SINGLE_PHASE_REAL_SAMPLE = (
+    "0219"
+    "0a0e 4b616d73747275705f5630303031"  # OBIS List version identifier
+    "0906 0101000005ff  0a10 35373035373035373035373035373032"  # 1.1.0.0.5.255 (GS1 number)
+    "0906 0101600101ff  0a12 36383631313131424e323432313031303430"  # 1.1.96.1.1.255 (Meter type)
+    "0906 0101010700ff  0600000768"  # 1.1.1.7.0.255 (P14)
+    "0906 0101020700ff  0600000000"  # 1.1.2.7.0.255 (P23)
+    "0906 0101030700ff  0600000000"  # 1.1.3.7.0.255 (Q12)
+    "0906 0101040700ff  06000001ed"  # 1.1.4.7.0.255 (Q34)
+    "0906 01011f0700ff  0600000380"  # 1.1.31.7.0.255 (IL1)
+    "00000000"
+    "0906 0101200700ff  1200e1"  # 1.1.32.7.0.255 (UL1)
+    "00000000"
 )
 
 no_list_1_single_phase_real_sample = bytes.fromhex(
     (
-        "e6 e7 00"
-        "0f"
-        "000000000"
-        "c07e60111010c2c28ff800000"
-        "0219"
-        "0a0e 4b616d73747275705f5630303031"  # OBIS List version identifier
-        "0906 0101000005ff  0a10 35373035373035373035373035373032"  # 1.1.0.0.5.255 (GS1 number)
-        "0906 0101600101ff  0a12 36383631313131424e323432313031303430"  # 1.1.96.1.1.255 (Meter type)
-        "0906 0101010700ff  0600000768"  # 1.1.1.7.0.255 (P14)
-        "0906 0101020700ff  0600000000"  # 1.1.2.7.0.255 (P23)
-        "0906 0101030700ff  0600000000"  # 1.1.3.7.0.255 (Q12)
-        "0906 0101040700ff  06000001ed"  # 1.1.4.7.0.255 (Q34)
-        "0906 01011f0700ff  0600000380"  # 1.1.31.7.0.255 (IL1)
-        "00000000"
-        "0906 0101200700ff  1200e1"  # 1.1.32.7.0.255 (UL1)
-        "00000000"
+        (
+            "e6 e7 00"  # LLC: dsap, ssap, control
+            "0f"  # APDU: tag
+            "000000000"  # APDU: LongInvokeIdAndPriority
+            "c07e60111010c2c28ff800000"  # APDU: DateTime
+        )
+        + NOTIFICATION_BODY_NO_LIST_1_SINGLE_PHASE_REAL_SAMPLE
     ).replace(" ", "")
 )
 
+NOTIFICATION_BODY_NO_LIST_2_SINGLE_PHASE_REAL_SAMPLE = (
+    "0223"
+    "0a0e 4b616d73747275705f5630303031"
+    "0906 0101000005ff  0a10 35373035373035373035373035373032"
+    "0906 0101600101ff  0a12 36383631313131424e323432313031303430"
+    "0906 0101010700ff  06 00002742"
+    "0906 0101020700ff  06 00000000"
+    "0906 0101030700ff  06 00000000"
+    "0906 0101040700ff  06 00000117"
+    "0906 01011f0700ff  06 000011a000000000"
+    "0906 0101200700ff  12 00df00000000"
+    "0906 0001010000ff  090c 07e50b1803000019ff800000"
+    "0906 0101010800ff  06 00762ee2"
+    "0906 0101020800ff  06 00000000"
+    "0906 0101030800ff  06 000035a3"
+    "0906 0101040800ff  06 00116b53"
+)
 no_list_2_single_phase_real_sample = bytes.fromhex(
     (
-        "e6e700"
-        "0f"
-        "000000000"
-        "c07e50b1803000019ff800000"
-        "0223"
-        "0a0e 4b616d73747275705f5630303031"
-        "0906 0101000005ff  0a10 35373035373035373035373035373032"
-        "0906 0101600101ff  0a12 36383631313131424e323432313031303430"
-        "0906 0101010700ff  06 00002742"
-        "0906 0101020700ff  06 00000000"
-        "0906 0101030700ff  06 00000000"
-        "0906 0101040700ff  06 00000117"
-        "0906 01011f0700ff  06 000011a000000000"
-        "0906 0101200700ff  12 00df00000000"
-        "0906 0001010000ff  090c 07e50b1803000019ff800000"
-        "0906 0101010800ff  06 00762ee2"
-        "0906 0101020800ff  06 00000000"
-        "0906 0101030800ff  06 000035a3"
-        "0906 0101040800ff  06 00116b53"
+        (
+            "e6e700"  # LLC: dsap, ssap, control
+            "0f"  # APDU: tag
+            "000000000"  # APDU: LongInvokeIdAndPriority
+            "c07e50b1803000019ff800000"  # APDU: DateTime
+        )
+        + NOTIFICATION_BODY_NO_LIST_2_SINGLE_PHASE_REAL_SAMPLE
     ).replace(" ", "")
 )
 
@@ -133,26 +163,31 @@ no_list_2_single_phase_real_sample = bytes.fromhex(
 
 # 7EA0E22B2113239AE6E7000F000000000C07E6011801123A32FF80000002190A0E4B616D73747275705F563030303109060101000005FF0A103537303635363733323635393034303709060101600101FF0A1236383431313338424E32343531303130393009060101010700FF060000033A09060101020700FF060000000009060101030700FF060000006809060101040700FF06000000B0090601011F0700FF06000000ED09060101330700FF060000005909060101470700FF060000004B09060101200700FF1200E809060101340700FF1200E909060101480700FF1200EC84467E
 
+NOTIFICATION_BODY_SE_LIST_REAL_SAMPLE = (
+    "0219"
+    "0A0E 4B616D73747275705F5630303031"
+    "0906 0101000005FF"
+    "0A10 35373035373035373035373035373037  0906 0101600101FF"
+    "0A12 36383431313338424E323435313031303930  09060101010700FF060000033A"
+    "0906 0101020700FF  0600000000"
+    "0906 0101030700FF  0600000068"
+    "0906 0101040700FF  06000000B0"
+    "0906 01011F0700FF  06000000ED"
+    "0906 0101330700FF  0600000059"
+    "0906 0101470700FF  060000004B"
+    "0906 0101200700FF  1200E8"
+    "0906 0101340700FF  1200E9"
+    "0906 0101480700FF  1200EC"
+)
 se_list_real_sample = bytes.fromhex(
     (
-        "E6E700"
-        "0F"
-        "000000000"
-        "C07E6011801123A32FF800000"
-        "0219"
-        "0A0E 4B616D73747275705F5630303031"
-        "0906 0101000005FF"
-        "0A10 35373035373035373035373035373037  0906 0101600101FF"
-        "0A12 36383431313338424E323435313031303930  09060101010700FF060000033A"
-        "0906 0101020700FF  0600000000"
-        "0906 0101030700FF  0600000068"
-        "0906 0101040700FF  06000000B0"
-        "0906 01011F0700FF  06000000ED"
-        "0906 0101330700FF  0600000059"
-        "0906 0101470700FF  060000004B"
-        "0906 0101200700FF  1200E8"
-        "0906 0101340700FF  1200E9"
-        "0906 0101480700FF  1200EC"
+        (
+            "E6E700"  # LLC: dsap, ssap, control
+            "0F"  # APDU: tag
+            "000000000"  # APDU: LongInvokeIdAndPriority
+            "C07E6011801123A32FF800000"  # APDU: DateTime
+        )
+        + NOTIFICATION_BODY_SE_LIST_REAL_SAMPLE
     ).replace(" ", "")
 )
 
