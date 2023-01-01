@@ -70,6 +70,10 @@ LlcPdu: construct.Struct = construct.Select(
     LlcPduNotificationBodyObisElements, LlcPduNotificationBodyValueElements
 )
 
+NotificationBody: construct.Struct = construct.Select(
+    NotificationBodyObisElements, NotificationBodyValueElements
+)
+
 
 def _get_field_lists() -> list[list[str]]:
     item_order_list_3_three_phase = [
@@ -124,18 +128,24 @@ _FIELD_SCALING = {
 }
 
 
-def _normalize_parsed_value_elements_frame(
-    frame: construct.Struct,
+def _normalize_parsed_value_elements(
+    parsed: construct.Struct,
 ) -> dict[str, str | int | float | datetime]:
-    list_items = frame.information.notification_body.list_items
+    dictionary: dict[str, str | int | float | datetime] = {
+        obis_map.FIELD_METER_MANUFACTURER: "Kaifa"
+    }
+
+    if hasattr(parsed, "information"):
+        notification_body = parsed.information.notification_body
+        dictionary[obis_map.FIELD_METER_DATETIME] = parsed.information.DateTime.datetime
+    else:
+        notification_body = parsed
+
+    list_items = notification_body.list_items
+
     current_list_names: list[str] = next(
         (x for x in _field_order_lists if len(x) == len(list_items)), []
     )
-
-    dictionary: dict[str, str | int | float | datetime] = {
-        obis_map.FIELD_METER_MANUFACTURER: "Kaifa",
-        obis_map.FIELD_METER_DATETIME: frame.information.DateTime.datetime,
-    }
 
     for measure in list_items:
         element_name = current_list_names[measure.index]
@@ -153,14 +163,18 @@ def _normalize_parsed_value_elements_frame(
     return dictionary
 
 
-def _normalize_parsed_obis_elements_frame(
-    frame: construct.Struct,
+def _normalize_parsed_obis_elements(
+    parsed: construct.Struct,
 ) -> dict[str, str | int | float | datetime]:
     dictionary: dict[str, str | int | float | datetime] = {
         obis_map.FIELD_METER_MANUFACTURER: "Kaifa",
     }
 
-    list_items = frame.information.notification_body.list_items
+    if hasattr(parsed, "information"):
+        list_items = parsed.information.notification_body.list_items
+    else:
+        list_items = parsed.list_items
+
     for measure in list_items:
         obis_group_cdr = Obis.from_string(measure.obis).to_group_cdr_str()
         if obis_group_cdr in obis_map.obis_name_map:
@@ -187,10 +201,24 @@ def normalize_parsed_frame(
     """Convert data from meters construct structure to a dictionary with common key names."""
     list_type = frame.information.notification_body.type
     if list_type == KaifaBodyType.VALUE_ELEMENTS:
-        return _normalize_parsed_value_elements_frame(frame)
+        return _normalize_parsed_value_elements(frame)
 
     if list_type == KaifaBodyType.OBIS_ELEMENTS:
-        return _normalize_parsed_obis_elements_frame(frame)
+        return _normalize_parsed_obis_elements(frame)
+
+    raise ValueError(f"Unexpected list type {list_type}")
+
+
+def normalize_parsed_notification(
+    notification: construct.Struct,
+) -> dict[str, str | int | float | datetime]:
+    """Convert data from meters construct structure to a dictionary with common key names."""
+    list_type = notification.type
+    if list_type == KaifaBodyType.VALUE_ELEMENTS:
+        return _normalize_parsed_value_elements(notification)
+
+    if list_type == KaifaBodyType.OBIS_ELEMENTS:
+        return _normalize_parsed_obis_elements(notification)
 
     raise ValueError(f"Unexpected list type {list_type}")
 
@@ -201,3 +229,11 @@ def decode_frame_content(
     """Decode meter LLC PDU frame content as a dictionary."""
     parsed = LlcPdu.parse(frame_content)
     return normalize_parsed_frame(parsed)
+
+
+def decode_notification_body(
+    notification_body: bytes,
+) -> dict[str, str | int | float | datetime]:
+    """Decode meter APDU notification body as a dictionary."""
+    parsed = NotificationBody.parse(notification_body)
+    return normalize_parsed_notification(parsed)

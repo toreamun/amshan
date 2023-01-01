@@ -57,16 +57,12 @@ _field_scaling_ct_meter = {
 }
 
 
-def normalize_parsed_frame(
-    frame: construct.Struct,
+def _normalize_parsed_items(
+    list_items: construct.ListContainer,
 ) -> dict[str, str | int | float | datetime]:
-    """Convert data from meters construct structure to a dictionary with common key names."""
-    dictionary = {
+    dictionary: dict[str, str | int | float | datetime] = {
         obis_map.FIELD_METER_MANUFACTURER: "Kamstrup",
-        obis_map.FIELD_METER_DATETIME: frame.information.DateTime.datetime,
     }
-
-    list_items = frame.information.notification_body.list_items
 
     meter_type = next((x for x in list_items if x.obis == "1.1.96.1.1.256"), None)
     is_ct_meter = meter_type is not None and meter_type.startswith("685")
@@ -95,9 +91,33 @@ def normalize_parsed_frame(
     return dictionary
 
 
+def normalize_parsed_frame(
+    frame: construct.Struct,
+) -> dict[str, str | int | float | datetime]:
+    """Convert data from meters construct structure to a dictionary with common key names."""
+    dictionary = _normalize_parsed_items(frame.information.notification_body.list_items)
+    dictionary[obis_map.FIELD_METER_DATETIME] = frame.information.DateTime.datetime
+    return dictionary
+
+
+def normalize_parsed_notification(
+    notification: construct.Struct,
+) -> dict[str, str | int | float | datetime]:
+    """Convert data from meters construct structure to a dictionary with common key names."""
+    return _normalize_parsed_items(notification.list_items)
+
+
 def decode_frame_content(
     frame_content: bytes,
 ) -> dict[str, str | int | float | datetime]:
     """Decode meter LLC PDU frame content as a dictionary."""
     parsed = LlcPdu.parse(frame_content)
     return normalize_parsed_frame(parsed)
+
+
+def decode_notification_body(
+    notification_body: bytes,
+) -> dict[str, str | int | float | datetime]:
+    """Decode meter APDU notification body as a dictionary."""
+    parsed = NotificationBody.parse(notification_body)
+    return normalize_parsed_notification(parsed)
