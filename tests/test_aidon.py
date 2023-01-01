@@ -7,6 +7,7 @@ from decimal import Decimal
 from pprint import pprint
 
 import construct
+import pytest
 
 from han import aidon
 from tests.assert_utils import assert_apdu
@@ -110,7 +111,8 @@ NOTIFICATION_BODY_SE_LIST = (
     "0203 0906 0100020800ff 06 00000008 0202 0f00 161e"
     "0203 0906 0100030800ff 06 0064ed4b 0202 0f00 1620"
     "0203 0906 0100040800ff 06 00000005 0202 0f00 1620"
-)
+).replace(" ", "")
+
 se_list = bytes.fromhex(
     (
         (
@@ -140,366 +142,410 @@ def assert_obis_element(
 class TestParseAidon:
     """Test parse Aidon frames."""
 
-    def test_parse_se_list(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [se_list, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_SE_LIST)],
+        ],
+    )
+    def test_parse_se_list(self, llc_pdu, notification_body):
         """Parse swedish list number 1."""
-        parsed = aidon.LlcPdu.parse(se_list)
+        if llc_pdu is not None:
+            parsed = aidon.LlcPdu.parse(llc_pdu)
+            print(parsed)
+            assert_apdu(parsed, 4194304, 0)
+            parsed_notification_body = parsed.information.notification_body
 
-        print(parsed)
+        if notification_body is not None:
+            parsed = aidon.NotificationBody.parse(notification_body)
+            print(parsed)
+            parsed_notification_body = parsed
 
-        assert_apdu(parsed, 4194304, 0)
-        assert parsed.information.notification_body.length == 27
-        assert isinstance(
-            parsed.information.notification_body.list_items, construct.ListContainer
-        )
+        assert parsed_notification_body.length == 27
+        assert isinstance(parsed_notification_body.list_items, construct.ListContainer)
 
-        date_time = parsed.information.notification_body.list_items[0]
+        date_time = parsed_notification_body.list_items[0]
         assert date_time.obis == "0.0.1.0.0.255"
         assert date_time.content_type == "octet_string"
         assert date_time.content.datetime == datetime(2019, 12, 16, 7, 59, 40)
 
         assert_obis_element(
-            parsed.information.notification_body.list_items[1],
+            parsed_notification_body.list_items[1],
             "1.0.1.7.0.255",
             "double_long_unsigned",
             1122,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[2],
+            parsed_notification_body.list_items[2],
             "1.0.2.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[3],
+            parsed_notification_body.list_items[3],
             "1.0.3.7.0.255",
             "double_long_unsigned",
             1507,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[4],
+            parsed_notification_body.list_items[4],
             "1.0.4.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[5],
+            parsed_notification_body.list_items[5],
             "1.0.31.7.0.255",
             "long",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[6],
+            parsed_notification_body.list_items[6],
             "1.0.51.7.0.255",
             "long",
             7.5,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[7],
+            parsed_notification_body.list_items[7],
             "1.0.71.7.0.255",
             "long",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[8],
+            parsed_notification_body.list_items[8],
             "1.0.32.7.0.255",
             "long_unsigned",
             Decimal("230.7"),
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[9],
+            parsed_notification_body.list_items[9],
             "1.0.52.7.0.255",
             "long_unsigned",
             Decimal("249.9"),
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[10],
+            parsed_notification_body.list_items[10],
             "1.0.72.7.0.255",
             "long_unsigned",
             Decimal("230.8"),
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[11],
+            parsed_notification_body.list_items[11],
             "1.0.21.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[12],
+            parsed_notification_body.list_items[12],
             "1.0.22.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[13],
+            parsed_notification_body.list_items[13],
             "1.0.23.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[14],
+            parsed_notification_body.list_items[14],
             "1.0.24.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[15],
+            parsed_notification_body.list_items[15],
             "1.0.41.7.0.255",
             "double_long_unsigned",
             1122,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[16],
+            parsed_notification_body.list_items[16],
             "1.0.42.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[17],
+            parsed_notification_body.list_items[17],
             "1.0.43.7.0.255",
             "double_long_unsigned",
             1506,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[18],
+            parsed_notification_body.list_items[18],
             "1.0.44.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[19],
+            parsed_notification_body.list_items[19],
             "1.0.61.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[20],
+            parsed_notification_body.list_items[20],
             "1.0.62.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[21],
+            parsed_notification_body.list_items[21],
             "1.0.63.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[22],
+            parsed_notification_body.list_items[22],
             "1.0.64.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[23],
+            parsed_notification_body.list_items[23],
             "1.0.1.8.0.255",
             "double_long_unsigned",
             10049926,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[24],
+            parsed_notification_body.list_items[24],
             "1.0.2.8.0.255",
             "double_long_unsigned",
             8,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[25],
+            parsed_notification_body.list_items[25],
             "1.0.3.8.0.255",
             "double_long_unsigned",
             6614347,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[26],
+            parsed_notification_body.list_items[26],
             "1.0.4.8.0.255",
             "double_long_unsigned",
             5,
         )
 
-    def test_parse_no_list_1(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_1, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_1)],
+        ],
+    )
+    def test_parse_no_list_1(self, llc_pdu, notification_body):
         """Parse list number 1."""
-        parsed = aidon.LlcPdu.parse(no_list_1)
+        if llc_pdu is not None:
+            parsed = aidon.LlcPdu.parse(llc_pdu)
+            print(parsed)
+            assert_apdu(parsed, 4194304, 0)
+            parsed_notification_body = parsed.information.notification_body
 
-        print(parsed)
+        if notification_body is not None:
+            parsed = aidon.NotificationBody.parse(notification_body)
+            print(parsed)
+            parsed_notification_body = parsed
 
-        assert_apdu(parsed, 4194304, 0)
-        assert parsed.information.notification_body.length == 1
-        assert isinstance(
-            parsed.information.notification_body.list_items, construct.ListContainer
-        )
+        assert parsed_notification_body.length == 1
+        assert isinstance(parsed_notification_body.list_items, construct.ListContainer)
         assert_obis_element(
-            parsed.information.notification_body.list_items[0],
+            parsed_notification_body.list_items[0],
             "1.0.1.7.0.255",
             "double_long_unsigned",
             280,
         )
 
-    def test_parse_no_list_2(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_2, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2)],
+        ],
+    )
+    def test_parse_no_list_2(self, llc_pdu, notification_body):
         """Parse list number 2."""
-        parsed = aidon.LlcPdu.parse(no_list_2)
+        if llc_pdu is not None:
+            parsed = aidon.LlcPdu.parse(llc_pdu)
+            print(parsed)
+            assert_apdu(parsed, 4194304, 0)
+            parsed_notification_body = parsed.information.notification_body
 
-        print(parsed)
+        if notification_body is not None:
+            parsed = aidon.NotificationBody.parse(notification_body)
+            print(parsed)
+            parsed_notification_body = parsed
 
-        assert_apdu(parsed, 4194304, 0)
-        assert parsed.information.notification_body.length == 12
-        assert isinstance(
-            parsed.information.notification_body.list_items, construct.ListContainer
-        )
+        assert parsed_notification_body.length == 12
+        assert isinstance(parsed_notification_body.list_items, construct.ListContainer)
         assert_obis_element(
-            parsed.information.notification_body.list_items[0],
+            parsed_notification_body.list_items[0],
             "1.1.0.2.129.255",
             "visible_string",
             "AIDON_V0001",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[1],
+            parsed_notification_body.list_items[1],
             "0.0.96.1.0.255",
             "visible_string",
             "7359992892587665",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[2],
+            parsed_notification_body.list_items[2],
             "0.0.96.1.7.255",
             "visible_string",
             "6525",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[3],
+            parsed_notification_body.list_items[3],
             "1.0.1.7.0.255",
             "double_long_unsigned",
             280,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[4],
+            parsed_notification_body.list_items[4],
             "1.0.2.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[5],
+            parsed_notification_body.list_items[5],
             "1.0.3.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[6],
+            parsed_notification_body.list_items[6],
             "1.0.4.7.0.255",
             "double_long_unsigned",
             128,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[7],
+            parsed_notification_body.list_items[7],
             "1.0.31.7.0.255",
             "long",
             Decimal("1.3"),
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[8],
+            parsed_notification_body.list_items[8],
             "1.0.71.7.0.255",
             "long",
             Decimal("0.9"),
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[9],
+            parsed_notification_body.list_items[9],
             "1.0.32.7.0.255",
             "long_unsigned",
             Decimal("227.4"),
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[10],
+            parsed_notification_body.list_items[10],
             "1.0.52.7.0.255",
             "long_unsigned",
             Decimal("230.1"),
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[11],
+            parsed_notification_body.list_items[11],
             "1.0.72.7.0.255",
             "long_unsigned",
             Decimal("230.8"),
         )
 
-    def test_parse_no_list_3(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_3, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_3)],
+        ],
+    )
+    def test_parse_no_list_3(self, llc_pdu, notification_body):
         """Parse list number 2."""
-        parsed = aidon.LlcPdu.parse(no_list_3)
+        if llc_pdu is not None:
+            parsed = aidon.LlcPdu.parse(llc_pdu)
+            print(parsed)
+            assert_apdu(parsed, 4194304, 0)
+            parsed_notification_body = parsed.information.notification_body
 
-        print(parsed)
+        if notification_body is not None:
+            parsed = aidon.NotificationBody.parse(notification_body)
+            print(parsed)
+            parsed_notification_body = parsed
 
-        assert_apdu(parsed, 4194304, 0)
-        assert parsed.information.notification_body.length == 17
-        assert isinstance(
-            parsed.information.notification_body.list_items, construct.ListContainer
-        )
+        assert parsed_notification_body.length == 17
+        assert isinstance(parsed_notification_body.list_items, construct.ListContainer)
         assert_obis_element(
-            parsed.information.notification_body.list_items[0],
+            parsed_notification_body.list_items[0],
             "1.1.0.2.129.255",
             "visible_string",
             "AIDON_V0001",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[1],
+            parsed_notification_body.list_items[1],
             "0.0.96.1.0.255",
             "visible_string",
             "7359992892587665",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[2],
+            parsed_notification_body.list_items[2],
             "0.0.96.1.7.255",
             "visible_string",
             "6525",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[3],
+            parsed_notification_body.list_items[3],
             "1.0.1.7.0.255",
             "double_long_unsigned",
             280,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[4],
+            parsed_notification_body.list_items[4],
             "1.0.2.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[5],
+            parsed_notification_body.list_items[5],
             "1.0.3.7.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[6],
+            parsed_notification_body.list_items[6],
             "1.0.4.7.0.255",
             "double_long_unsigned",
             128,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[7],
+            parsed_notification_body.list_items[7],
             "1.0.31.7.0.255",
             "long",
             Decimal("1.3"),
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[8],
+            parsed_notification_body.list_items[8],
             "1.0.71.7.0.255",
             "long",
             Decimal("0.9"),
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[9],
+            parsed_notification_body.list_items[9],
             "1.0.32.7.0.255",
             "long_unsigned",
             Decimal("227.6"),
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[10],
+            parsed_notification_body.list_items[10],
             "1.0.52.7.0.255",
             "long_unsigned",
             Decimal("230.3"),
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[11],
+            parsed_notification_body.list_items[11],
             "1.0.72.7.0.255",
             "long_unsigned",
             Decimal("230.9"),
         )
-        date_time = parsed.information.notification_body.list_items[12]
+        date_time = parsed_notification_body.list_items[12]
         assert isinstance(date_time, construct.Container)
         assert date_time.obis == "0.0.1.0.0.255"
         assert date_time.content_type == "octet_string"
@@ -507,25 +553,25 @@ class TestParseAidon:
             2020, 1, 21, 16, 0, 0, tzinfo=timezone.utc
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[13],
+            parsed_notification_body.list_items[13],
             "1.0.1.8.0.255",
             "double_long_unsigned",
             22721380,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[14],
+            parsed_notification_body.list_items[14],
             "1.0.2.8.0.255",
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[15],
+            parsed_notification_body.list_items[15],
             "1.0.3.8.0.255",
             "double_long_unsigned",
             582430,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[16],
+            parsed_notification_body.list_items[16],
             "1.0.4.8.0.255",
             "double_long_unsigned",
             1708430,
@@ -535,12 +581,25 @@ class TestParseAidon:
 class TestDecodeAidon:
     """Test decode Aidon frames."""
 
-    def test_decode_frame_se_list(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [se_list, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_SE_LIST)],
+        ],
+    )
+    def test_decode_frame_se_list(self, llc_pdu, notification_body):
         """Decode SE list."""
-        decoded = aidon.decode_frame_content(se_list)
+        if llc_pdu is not None:
+            decoded = aidon.decode_frame_content(llc_pdu)
+
+        if notification_body is not None:
+            decoded = aidon.decode_notification_body(notification_body)
+
         pprint(decoded)
-        assert isinstance(decoded, dict)
+
         assert len(decoded) == 28
+        assert isinstance(decoded, dict)
         assert decoded["active_power_export"] == 0
         assert decoded["active_power_export_total"] == 8
         assert decoded["active_power_export_l1"] == 0
@@ -569,18 +628,45 @@ class TestDecodeAidon:
         assert decoded["voltage_l2"] == 249.9
         assert decoded["voltage_l3"] == 230.8
 
-    def test_decode_frame_no_list_1(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_1, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_1)],
+        ],
+    )
+    def test_decode_frame_no_list_1(self, llc_pdu, notification_body):
         """Decode NO list number 1."""
-        decoded = aidon.decode_frame_content(no_list_1)
+        if llc_pdu is not None:
+            decoded = aidon.decode_frame_content(llc_pdu)
+
+        if notification_body is not None:
+            decoded = aidon.decode_notification_body(notification_body)
+
         pprint(decoded)
+
         assert isinstance(decoded, dict)
         assert len(decoded) == 2
         assert decoded["active_power_import"] == 280
         assert decoded["meter_manufacturer"] == "Aidon"
 
-    def test_decode_frame_no_list_2(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_2, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2)],
+        ],
+    )
+    def test_decode_frame_no_list_2(self, llc_pdu, notification_body):
         """Decode NO list number 2."""
-        decoded = aidon.decode_frame_content(no_list_2)
+        if llc_pdu is not None:
+            decoded = aidon.decode_frame_content(llc_pdu)
+
+        if notification_body is not None:
+            decoded = aidon.decode_notification_body(notification_body)
+
+        pprint(decoded)
+
         assert isinstance(decoded, dict)
         assert len(decoded) == 13
         assert decoded["active_power_export"] == 0
@@ -597,10 +683,23 @@ class TestDecodeAidon:
         assert decoded["voltage_l2"] == 230.1
         assert decoded["voltage_l3"] == 230.8
 
-    def test_decode_frame_no_list_3(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_3, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_3)],
+        ],
+    )
+    def test_decode_frame_no_list_3(self, llc_pdu, notification_body):
         """Decode NO list number 3."""
-        decoded = aidon.decode_frame_content(no_list_3)
+        if llc_pdu is not None:
+            decoded = aidon.decode_frame_content(llc_pdu)
+
+        if notification_body is not None:
+            decoded = aidon.decode_notification_body(notification_body)
+
         pprint(decoded)
+
         assert isinstance(decoded, dict)
         assert len(decoded) == 18
         assert decoded["active_power_export"] == 0

@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 
 import construct  # type: ignore
+
 from han import cosem, obis_map
 from han.obis import Obis
 
@@ -49,12 +50,9 @@ NotificationBody: construct.Struct = construct.Struct(
 LlcPdu: construct.Struct = cosem.get_llc_pdu_struct(NotificationBody)
 
 
-def normalize_parsed_frame(
-    frame: construct.Struct,
+def _normalize_parsed_items(
+    list_items: construct.ListContainer,
 ) -> dict[str, str | int | float | datetime]:
-    """Convert data from meters construct structure to a dictionary with common key names."""
-    list_items = frame.information.notification_body.list_items
-
     dictionary: dict[str, str | int | float | datetime] = {
         obis_map.FIELD_METER_MANUFACTURER: "Aidon"
     }
@@ -80,9 +78,31 @@ def normalize_parsed_frame(
     return dictionary
 
 
+def normalize_parsed_frame(
+    frame: construct.Struct,
+) -> dict[str, str | int | float | datetime]:
+    """Convert data from meters construct structure to a dictionary with common key names."""
+    return _normalize_parsed_items(frame.information.notification_body.list_items)
+
+
+def normalize_parsed_notification(
+    notification: construct.Struct,
+) -> dict[str, str | int | float | datetime]:
+    """Convert data from meters construct structure to a dictionary with common key names."""
+    return _normalize_parsed_items(notification.list_items)
+
+
 def decode_frame_content(
     frame_content: bytes,
 ) -> dict[str, str | int | float | datetime]:
     """Decode meter LLC PDU frame content as a dictionary."""
     parsed = LlcPdu.parse(frame_content)
     return normalize_parsed_frame(parsed)
+
+
+def decode_notification_body(
+    notification_body: bytes,
+) -> dict[str, str | int | float | datetime]:
+    """Decode meter APDU notification body as a dictionary."""
+    parsed = NotificationBody.parse(notification_body)
+    return normalize_parsed_notification(parsed)

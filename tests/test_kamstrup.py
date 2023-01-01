@@ -6,12 +6,13 @@ from datetime import datetime
 from pprint import pprint
 
 import construct
+import pytest
 
 from han import kamstrup
 from tests.assert_utils import assert_apdu, assert_obis_element
 
 # Kamstrup example 1: 10 seconds list, three-phases, four-quadrants
-NOTIFICATION_BODY_NO_LIST_2_THREE_PHASE = (
+NOTIFICATION_BODY_NO_LIST_1_THREE_PHASE = (
     "0219"  # structure of 0x19 elements
     "0A0E 4B616D73747275705F5630303031"  # visible_string
     "0906 0101000005FF  0A10 35373036353637303030303030303030"  # octet_string (obis) + visible_string
@@ -37,7 +38,7 @@ no_list_1_three_phase = bytes.fromhex(
             "00000000"  # APDU: LongInvokeIdAndPriority
             "0C07D0010106162100FF800001"  # APDU: DateTime
         )
-        + NOTIFICATION_BODY_NO_LIST_2_THREE_PHASE
+        + NOTIFICATION_BODY_NO_LIST_1_THREE_PHASE
     ).replace(" ", "")
 )
 
@@ -195,392 +196,477 @@ se_list_real_sample = bytes.fromhex(
 class TestParseKamstrup:
     """Test parse Kamstrup frames."""
 
-    def test_parse_se_list_three_phase_real_sample(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [se_list_real_sample, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_SE_LIST_REAL_SAMPLE)],
+        ],
+    )
+    def test_parse_se_list_three_phase_real_sample(self, llc_pdu, notification_body):
         """Parse SE list."""
-        parsed = kamstrup.LlcPdu.parse(se_list_real_sample)
+        if llc_pdu is not None:
+            parsed = kamstrup.LlcPdu.parse(llc_pdu)
+            print(parsed)
+            assert_apdu(parsed, 0, datetime(2022, 1, 24, 18, 58, 50))
+            parsed_notification_body = parsed.information.notification_body
 
-        print(parsed)
+        if notification_body is not None:
+            parsed = kamstrup.NotificationBody.parse(notification_body)
+            print(parsed)
+            parsed_notification_body = parsed
 
-        assert_apdu(parsed, 0, datetime(2022, 1, 24, 18, 58, 50))
-        assert isinstance(parsed.information.notification_body, construct.Container)
-        assert parsed.information.notification_body.length == 0x19
-        assert isinstance(
-            parsed.information.notification_body.list_items, construct.ListContainer
-        )
+        assert isinstance(parsed_notification_body, construct.Container)
+        assert parsed_notification_body.length == 0x19
+        assert isinstance(parsed_notification_body.list_items, construct.ListContainer)
         assert_obis_element(
-            parsed.information.notification_body.list_items[0],
+            parsed_notification_body.list_items[0],
             None,
             "visible_string",
             "Kamstrup_V0001",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[1],
+            parsed_notification_body.list_items[1],
             "1.1.0.0.5.255",  # GS1 number
             "visible_string",
             "5705705705705707",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[2],
+            parsed_notification_body.list_items[2],
             "1.1.96.1.1.255",  # Meter type
             "visible_string",
             "6841138BN245101090",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[3],
+            parsed_notification_body.list_items[3],
             "1.1.1.7.0.255",  # P14
             "double_long_unsigned",
             826,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[4],
+            parsed_notification_body.list_items[4],
             "1.1.2.7.0.255",  # P23
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[5],
+            parsed_notification_body.list_items[5],
             "1.1.3.7.0.255",  # Q12
             "double_long_unsigned",
             104,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[6],
+            parsed_notification_body.list_items[6],
             "1.1.4.7.0.255",  # Q34
             "double_long_unsigned",
             176,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[7],
+            parsed_notification_body.list_items[7],
             "1.1.31.7.0.255",  # IL1
             "double_long_unsigned",
             237,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[8],
+            parsed_notification_body.list_items[8],
             "1.1.51.7.0.255",  # IL2
             "double_long_unsigned",
             89,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[9],
+            parsed_notification_body.list_items[9],
             "1.1.71.7.0.255",  # IL3
             "double_long_unsigned",
             75,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[10],
+            parsed_notification_body.list_items[10],
             "1.1.32.7.0.255",  # UL1
             "long_unsigned",
             232,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[11],
+            parsed_notification_body.list_items[11],
             "1.1.52.7.0.255",  # UL2
             "long_unsigned",
             233,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[12],
+            parsed_notification_body.list_items[12],
             "1.1.72.7.0.255",  # UL3
             "long_unsigned",
             236,
         )
 
-    def test_parse_no_list_1_single_phase_real_sample(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_1_single_phase_real_sample, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_1_SINGLE_PHASE_REAL_SAMPLE)],
+        ],
+    )
+    def test_parse_no_list_1_single_phase_real_sample(self, llc_pdu, notification_body):
         """Parse single phase NO list number 1."""
-        parsed = kamstrup.LlcPdu.parse(no_list_1_single_phase_real_sample)
+        if llc_pdu is not None:
+            parsed = kamstrup.LlcPdu.parse(llc_pdu)
+            print(parsed)
+            assert_apdu(parsed, 0, datetime(2022, 1, 17, 12, 44, 40))
+            parsed_notification_body = parsed.information.notification_body
 
-        print(parsed)
+        if notification_body is not None:
+            parsed = kamstrup.NotificationBody.parse(notification_body)
+            print(parsed)
+            parsed_notification_body = parsed
 
-        assert_apdu(parsed, 0, datetime(2022, 1, 17, 12, 44, 40))
-        assert isinstance(parsed.information.notification_body, construct.Container)
-        assert parsed.information.notification_body.length == 0x19
-        assert isinstance(
-            parsed.information.notification_body.list_items, construct.ListContainer
-        )
+        assert isinstance(parsed_notification_body, construct.Container)
+        assert parsed_notification_body.length == 0x19
+        assert isinstance(parsed_notification_body.list_items, construct.ListContainer)
         assert_obis_element(
-            parsed.information.notification_body.list_items[0],
+            parsed_notification_body.list_items[0],
             None,
             "visible_string",
             "Kamstrup_V0001",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[1],
+            parsed_notification_body.list_items[1],
             "1.1.0.0.5.255",  # GS1 number
             "visible_string",
             "5705705705705702",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[2],
+            parsed_notification_body.list_items[2],
             "1.1.96.1.1.255",  # Meter type
             "visible_string",
             "6861111BN242101040",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[3],
+            parsed_notification_body.list_items[3],
             "1.1.1.7.0.255",  # P14
             "double_long_unsigned",
             1896,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[4],
+            parsed_notification_body.list_items[4],
             "1.1.2.7.0.255",  # P23
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[5],
+            parsed_notification_body.list_items[5],
             "1.1.3.7.0.255",  # Q12
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[6],
+            parsed_notification_body.list_items[6],
             "1.1.4.7.0.255",  # Q34
             "double_long_unsigned",
             493,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[7],
+            parsed_notification_body.list_items[7],
             "1.1.31.7.0.255",  # IL1
             "double_long_unsigned",
             896,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[8],
+            parsed_notification_body.list_items[8],
             "1.1.32.7.0.255",  # UL1
             "long_unsigned",
             225,
         )
 
-    def test_parse_no_list_2_single_phase_real_sample(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_2_single_phase_real_sample, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2_SINGLE_PHASE_REAL_SAMPLE)],
+        ],
+    )
+    def test_parse_no_list_2_single_phase_real_sample(self, llc_pdu, notification_body):
         """Parse single phase NO list number 1."""
-        parsed = kamstrup.LlcPdu.parse(no_list_2_single_phase_real_sample)
+        if llc_pdu is not None:
+            parsed = kamstrup.LlcPdu.parse(llc_pdu)
+            print(parsed)
+            assert_apdu(parsed, 0, datetime(2021, 11, 24, 0, 0, 25))
+            parsed_notification_body = parsed.information.notification_body
 
-        print(parsed)
+        if notification_body is not None:
+            parsed = kamstrup.NotificationBody.parse(notification_body)
+            print(parsed)
+            parsed_notification_body = parsed
 
-        assert_apdu(parsed, 0, datetime(2021, 11, 24, 0, 0, 25))
-        assert isinstance(parsed.information.notification_body, construct.Container)
-        assert parsed.information.notification_body.length == 35
-        assert isinstance(
-            parsed.information.notification_body.list_items, construct.ListContainer
-        )
+        assert isinstance(parsed_notification_body, construct.Container)
+        assert parsed_notification_body.length == 35
+        assert isinstance(parsed_notification_body.list_items, construct.ListContainer)
         assert_obis_element(
-            parsed.information.notification_body.list_items[0],
+            parsed_notification_body.list_items[0],
             None,
             "visible_string",
             "Kamstrup_V0001",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[1],
+            parsed_notification_body.list_items[1],
             "1.1.0.0.5.255",  # GS1 number
             "visible_string",
             "5705705705705702",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[2],
+            parsed_notification_body.list_items[2],
             "1.1.96.1.1.255",  # Meter type
             "visible_string",
             "6861111BN242101040",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[3],
+            parsed_notification_body.list_items[3],
             "1.1.1.7.0.255",  # P14
             "double_long_unsigned",
             10050,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[4],
+            parsed_notification_body.list_items[4],
             "1.1.2.7.0.255",  # P23
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[5],
+            parsed_notification_body.list_items[5],
             "1.1.3.7.0.255",  # Q12
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[6],
+            parsed_notification_body.list_items[6],
             "1.1.4.7.0.255",  # Q34
             "double_long_unsigned",
             279,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[7],
+            parsed_notification_body.list_items[7],
             "1.1.31.7.0.255",  # IL1
             "double_long_unsigned",
             4512,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[8],
+            parsed_notification_body.list_items[8],
             "1.1.32.7.0.255",  # UL1
             "long_unsigned",
             223,
         )
 
-        rtc = parsed.information.notification_body.list_items[9]
+        rtc = parsed_notification_body.list_items[9]
         assert isinstance(rtc, construct.Container)
         assert rtc.obis == "0.1.1.0.0.255"  # RTC
         assert rtc.value_type == "octet_string"
         assert rtc.value.datetime == datetime(2021, 11, 24, 0, 0, 25)
 
         assert_obis_element(
-            parsed.information.notification_body.list_items[10],
+            parsed_notification_body.list_items[10],
             "1.1.1.8.0.255",  # A14
             "double_long_unsigned",
             7745250,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[11],
+            parsed_notification_body.list_items[11],
             "1.1.2.8.0.255",  # A23
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[12],
+            parsed_notification_body.list_items[12],
             "1.1.3.8.0.255",  # R12
             "double_long_unsigned",
             13731,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[13],
+            parsed_notification_body.list_items[13],
             "1.1.4.8.0.255",  # R12
             "double_long_unsigned",
             1141587,
         )
 
-    def test_parse_no_list_1_three_phase(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_1_three_phase, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_1_THREE_PHASE)],
+        ],
+    )
+    def test_parse_no_list_1_three_phase(self, llc_pdu, notification_body):
         """Parse three phase NO list number 1."""
-        parsed = kamstrup.LlcPdu.parse(no_list_1_three_phase)
-        print(parsed)
+        if llc_pdu is not None:
+            parsed = kamstrup.LlcPdu.parse(llc_pdu)
+            print(parsed)
+            assert_apdu(parsed, 0, datetime(2000, 1, 1, 22, 33, 0))
+            parsed_notification_body = parsed.information.notification_body
 
-        assert_apdu(parsed, 0, datetime(2000, 1, 1, 22, 33, 0))
-        assert parsed.information.notification_body.length == 0x19
-        assert isinstance(
-            parsed.information.notification_body.list_items, construct.ListContainer
-        )
+        if notification_body is not None:
+            parsed = kamstrup.NotificationBody.parse(notification_body)
+            print(parsed)
+            parsed_notification_body = parsed
+
+        assert parsed_notification_body.length == 0x19
+        assert isinstance(parsed_notification_body.list_items, construct.ListContainer)
         assert_obis_element(
-            parsed.information.notification_body.list_items[0],
+            parsed_notification_body.list_items[0],
             None,
             "visible_string",
             "Kamstrup_V0001",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[1],
+            parsed_notification_body.list_items[1],
             "1.1.0.0.5.255",  # GS1 number
             "visible_string",
             "5706567000000000",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[2],
+            parsed_notification_body.list_items[2],
             "1.1.96.1.1.255",  # Meter type
             "visible_string",
             "000000000000000000",
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[3],
+            parsed_notification_body.list_items[3],
             "1.1.1.7.0.255",  # P14
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[4],
+            parsed_notification_body.list_items[4],
             "1.1.2.7.0.255",  # P23
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[5],
+            parsed_notification_body.list_items[5],
             "1.1.3.7.0.255",  # Q12
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[6],
+            parsed_notification_body.list_items[6],
             "1.1.4.7.0.255",  # Q34
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[7],
+            parsed_notification_body.list_items[7],
             "1.1.31.7.0.255",  # IL1
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[8],
+            parsed_notification_body.list_items[8],
             "1.1.51.7.0.255",  # IL2
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[9],
+            parsed_notification_body.list_items[9],
             "1.1.71.7.0.255",  # IL3
             "double_long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[10],
+            parsed_notification_body.list_items[10],
             "1.1.32.7.0.255",  # UL1
             "long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[11],
+            parsed_notification_body.list_items[11],
             "1.1.52.7.0.255",  # UL2
             "long_unsigned",
             0,
         )
         assert_obis_element(
-            parsed.information.notification_body.list_items[12],
+            parsed_notification_body.list_items[12],
             "1.1.72.7.0.255",  # UL3
             "long_unsigned",
             0,
         )
 
-    def test_parse_no_list_2_single_phase(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_2_single_phase, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2_SINGLE_PHASE)],
+        ],
+    )
+    def test_parse_no_list_2_single_phase(self, llc_pdu, notification_body):
         """Parse single phase NO list number 2."""
-        parsed = kamstrup.LlcPdu.parse(no_list_2_single_phase)
+        if llc_pdu is not None:
+            parsed = kamstrup.LlcPdu.parse(llc_pdu)
+            print(parsed)
+            assert_apdu(parsed, 0, datetime(2017, 8, 16, 16, 0, 5))
+            parsed_notification_body = parsed.information.notification_body
 
-        print(parsed)
+        if notification_body is not None:
+            parsed = kamstrup.NotificationBody.parse(notification_body)
+            print(parsed)
+            parsed_notification_body = parsed
 
-        assert_apdu(parsed, 0, datetime(2017, 8, 16, 16, 0, 5))
-        assert parsed.information.notification_body.length == 15
-        assert isinstance(
-            parsed.information.notification_body.list_items, construct.ListContainer
-        )
+        assert parsed_notification_body.length == 15
+        assert isinstance(parsed_notification_body.list_items, construct.ListContainer)
 
-    def test_parse_no_list_2_three_phase(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_2_three_phase, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2_THREE_PHASE)],
+        ],
+    )
+    def test_parse_no_list_2_three_phase(self, llc_pdu, notification_body):
         """Parse three phase NO list number 2."""
-        parsed = kamstrup.LlcPdu.parse(no_list_2_three_phase)
+        if llc_pdu is not None:
+            parsed = kamstrup.LlcPdu.parse(llc_pdu)
+            print(parsed)
+            assert_apdu(parsed, 0, datetime(2017, 8, 16, 16, 0, 5))
+            parsed_notification_body = parsed.information.notification_body
 
-        print(parsed)
+        if notification_body is not None:
+            parsed = kamstrup.NotificationBody.parse(notification_body)
+            print(parsed)
+            parsed_notification_body = parsed
 
-        assert_apdu(parsed, 0, datetime(2017, 8, 16, 16, 0, 5))
-        assert parsed.information.notification_body.length == 35
-        assert isinstance(
-            parsed.information.notification_body.list_items, construct.ListContainer
-        )
+        assert parsed_notification_body.length == 35
+        assert isinstance(parsed_notification_body.list_items, construct.ListContainer)
 
 
 class TestDecodeKamstrup:
     """Test decode Kamstrup frames."""
 
-    def test_decode_se_list_three_phase_real_sample(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [se_list_real_sample, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_SE_LIST_REAL_SAMPLE)],
+        ],
+    )
+    def test_decode_se_list_three_phase_real_sample(self, llc_pdu, notification_body):
         """Decode three phase SE list (real sample)."""
-        decoded = kamstrup.decode_frame_content(se_list_real_sample)
+        if llc_pdu is not None:
+            decoded = kamstrup.decode_frame_content(llc_pdu)
+
+        if notification_body is not None:
+            decoded = kamstrup.decode_notification_body(notification_body)
+
         pprint(decoded)
+
         assert isinstance(decoded, dict)
-        assert len(decoded) == 15
+
+        if llc_pdu is not None:
+            assert len(decoded) == 15
+            assert decoded["meter_datetime"] == datetime(2022, 1, 24, 18, 58, 50)
+        if notification_body is not None:
+            assert len(decoded) == 14
+
         assert decoded["active_power_export"] == 0
         assert decoded["active_power_import"] == 826
         assert decoded["current_l1"] == 2.37
         assert decoded["current_l2"] == 0.89
         assert decoded["current_l3"] == 0.75
         assert decoded["list_ver_id"] == "Kamstrup_V0001"
-        assert decoded["meter_datetime"] == datetime(2022, 1, 24, 18, 58, 50)
         assert decoded["meter_id"] == "5705705705705707"
         assert decoded["meter_manufacturer"] == "Kamstrup"
         assert decoded["meter_type"] == "6841138BN245101090"
@@ -590,17 +676,36 @@ class TestDecodeKamstrup:
         assert decoded["voltage_l2"] == 233
         assert decoded["voltage_l3"] == 236
 
-    def test_decode_frame_no_list_1_single_phase_real_sample(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_1_single_phase_real_sample, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_1_SINGLE_PHASE_REAL_SAMPLE)],
+        ],
+    )
+    def test_decode_frame_no_list_1_single_phase_real_sample(
+        self, llc_pdu, notification_body
+    ):
         """Decode three phase no list number 1."""
-        decoded = kamstrup.decode_frame_content(no_list_1_single_phase_real_sample)
+        if llc_pdu is not None:
+            decoded = kamstrup.decode_frame_content(llc_pdu)
+
+        if notification_body is not None:
+            decoded = kamstrup.decode_notification_body(notification_body)
+
         pprint(decoded)
         assert isinstance(decoded, dict)
-        assert len(decoded) == 11
+
+        if llc_pdu is not None:
+            assert len(decoded) == 11
+            assert decoded["meter_datetime"] == datetime(2022, 1, 17, 12, 44, 40)
+        if notification_body is not None:
+            assert len(decoded) == 10
+
         assert decoded["active_power_export"] == 0
         assert decoded["active_power_import"] == 1896
         assert decoded["current_l1"] == 8.96
         assert decoded["list_ver_id"] == "Kamstrup_V0001"
-        assert decoded["meter_datetime"] == datetime(2022, 1, 17, 12, 44, 40)
         assert decoded["meter_id"] == "5705705705705702"
         assert decoded["meter_manufacturer"] == "Kamstrup"
         assert decoded["meter_type"] == "6861111BN242101040"
@@ -608,10 +713,25 @@ class TestDecodeKamstrup:
         assert decoded["reactive_power_import"] == 0
         assert decoded["voltage_l1"] == 225
 
-    def test_decode_frame_no_list_2_single_phase_real_sample(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_2_single_phase_real_sample, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2_SINGLE_PHASE_REAL_SAMPLE)],
+        ],
+    )
+    def test_decode_frame_no_list_2_single_phase_real_sample(
+        self, llc_pdu, notification_body
+    ):
         """Decode three phase no list number 1."""
-        decoded = kamstrup.decode_frame_content(no_list_2_single_phase_real_sample)
+        if llc_pdu is not None:
+            decoded = kamstrup.decode_frame_content(llc_pdu)
+
+        if notification_body is not None:
+            decoded = kamstrup.decode_notification_body(notification_body)
+
         pprint(decoded)
+
         assert isinstance(decoded, dict)
         assert len(decoded) == 15
         assert decoded["active_power_export"] == 0
@@ -630,19 +750,36 @@ class TestDecodeKamstrup:
         assert decoded["reactive_power_import_total"] == 137310
         assert decoded["voltage_l1"] == 223
 
-    def test_decode_frame_no_list_1_three_phase(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_1_three_phase, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_1_THREE_PHASE)],
+        ],
+    )
+    def test_decode_frame_no_list_1_three_phase(self, llc_pdu, notification_body):
         """Decode three phase no list number 1."""
-        decoded = kamstrup.decode_frame_content(no_list_1_three_phase)
+        if llc_pdu is not None:
+            decoded = kamstrup.decode_frame_content(llc_pdu)
+
+        if notification_body is not None:
+            decoded = kamstrup.decode_notification_body(notification_body)
+
         pprint(decoded)
         assert isinstance(decoded, dict)
-        assert len(decoded) == 15
+
+        if llc_pdu is not None:
+            assert len(decoded) == 15
+            assert decoded["meter_datetime"] == datetime(2000, 1, 1, 22, 33)
+        if notification_body is not None:
+            assert len(decoded) == 14
+
         assert decoded["active_power_export"] == 0
         assert decoded["active_power_import"] == 0
         assert decoded["current_l1"] == 0.0
         assert decoded["current_l2"] == 0.0
         assert decoded["current_l3"] == 0.0
         assert decoded["list_ver_id"] == "Kamstrup_V0001"
-        assert decoded["meter_datetime"] == datetime(2000, 1, 1, 22, 33)
         assert decoded["meter_id"] == "5706567000000000"
         assert decoded["meter_manufacturer"] == "Kamstrup"
         assert decoded["meter_type"] == "000000000000000000"
@@ -652,10 +789,23 @@ class TestDecodeKamstrup:
         assert decoded["voltage_l2"] == 0
         assert decoded["voltage_l3"] == 0
 
-    def test_decode_frame_no_list_2_three_phase(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_2_three_phase, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2_THREE_PHASE)],
+        ],
+    )
+    def test_decode_frame_no_list_2_three_phase(self, llc_pdu, notification_body):
         """Decode three phase no list number 2."""
-        decoded = kamstrup.decode_frame_content(no_list_2_three_phase)
+        if llc_pdu is not None:
+            decoded = kamstrup.decode_frame_content(llc_pdu)
+
+        if notification_body is not None:
+            decoded = kamstrup.decode_notification_body(notification_body)
+
         pprint(decoded)
+
         assert isinstance(decoded, dict)
         assert len(decoded) == 19
         assert decoded["active_power_export"] == 0
@@ -678,10 +828,23 @@ class TestDecodeKamstrup:
         assert decoded["voltage_l2"] == 0
         assert decoded["voltage_l3"] == 0
 
-    def test_decode_frame_no_list_2_single_phase(self):
+    @pytest.mark.parametrize(
+        "llc_pdu,notification_body",
+        [
+            [no_list_2_single_phase, None],
+            [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2_SINGLE_PHASE)],
+        ],
+    )
+    def test_decode_frame_no_list_2_single_phase(self, llc_pdu, notification_body):
         """Decode single phase no list number 2."""
-        decoded = kamstrup.decode_frame_content(no_list_2_single_phase)
+        if llc_pdu is not None:
+            decoded = kamstrup.decode_frame_content(llc_pdu)
+
+        if notification_body is not None:
+            decoded = kamstrup.decode_notification_body(notification_body)
+
         pprint(decoded)
+
         assert isinstance(decoded, dict)
         assert len(decoded) == 9
         assert decoded["active_power_import"] == 0
