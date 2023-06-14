@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="UTF-8") as fh:
 
 setuptools.setup(
     name="amshan",
-    version="2.1.0",
+    version="2.1.1",
     author="Tore Amundsen",
     author_email="tore@amundsen.org",
     description="Decode P1 and MBUS (Meter Bus) DLMS data. Special support for norwegian and swedish meters.",
