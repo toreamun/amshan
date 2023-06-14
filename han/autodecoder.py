@@ -91,7 +91,6 @@ class AutoDecoder:
             )
             name, decoder = AutoDecoder.payload_decoder_functions[index]
             try:
-
                 decoded = (
                     dlde.decode_p1_readout(cast(dlde.DataReadout, message))
                     if name == "P1" and isinstance(message, dlde.DataReadout)
