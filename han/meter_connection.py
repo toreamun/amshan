@@ -15,6 +15,8 @@ from asyncio import (
     iscoroutinefunction,
     sleep,
     wait,
+    create_task,
+    ensure_future,
 )
 from typing import Awaitable, Callable, ClassVar, Sequence, Tuple
 
@@ -350,15 +352,19 @@ class ConnectionManager:
         The connection is not reconnected on connection loss if close() was called on this instance.
         """
         while not self._is_closing.is_set():
+            connect_task = create_task(self._try_connect())
+            closing_task = create_task(self._is_closing.wait())
             await wait(
-                (self._try_connect(), self._is_closing.wait()),
+                (connect_task, closing_task),
                 return_when=FIRST_COMPLETED,
             )
 
             if self._connection:
                 _, protocol = self._connection
+                done_task = ensure_future(protocol.done)
+                closing_task2 = create_task(self._is_closing.wait())
                 await wait(
-                    (protocol.done, self._is_closing.wait()),
+                    (done_task, closing_task2),
                     return_when=FIRST_COMPLETED,
                 )
 
