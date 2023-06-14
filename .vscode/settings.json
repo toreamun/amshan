@@ -4,7 +4,7 @@
   "python.linting.pylintEnabled": true,
   "python.linting.enabled": true,
   "python.linting.flake8Enabled": true,
-  "python.formatting.provider": "black",
+  "python.formatting.provider": "none",
   "editor.formatOnPaste": false,
   "editor.formatOnSave": true,
   "editor.formatOnType": true,
@@ -17,6 +17,7 @@
     "editor.codeActionsOnSave": {
       "source.organizeImports": true,
       "editor.defaultFormatter": "ms-python.python"
-    }
+    },
+    "editor.defaultFormatter": "ms-python.black-formatter"
   },
 }
