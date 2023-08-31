@@ -11,6 +11,7 @@ class MeterMessageType(Enum):
 
     UNKNOWN = auto()
     HDLC_DLMS = auto()
+    WIRED_MB_HDLC = auto()
     DLMS = auto()
     P1 = auto()
 
