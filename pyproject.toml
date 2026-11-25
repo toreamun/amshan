@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "amshan"
+version = "2.1.1"
+description = "Decode P1 and MBUS (Meter Bus) DLMS data. Special support for norwegian and swedish meters."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Tore Amundsen", email = "tore@amundsen.org" }]
+requires-python = ">=3.12"
+dependencies = ["construct"]
+keywords = [
+    "meter",
+    "han",
+    "ams",
+    "p1",
+    "mbus",
+    "aidon",
+    "kaifa",
+    "kamstrup",
+    "dlms",
+    "cosem",
+    "hdlc",
+    "fast frame check",
+]
+classifiers = [
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Home Automation",
+    "Typing :: Typed",
+]
+
+[project.optional-dependencies]
+serial = ["pyserial-asyncio>=0.4"]
+
+[project.urls]
+Homepage = "https://github.com/toreamun/amshan"
+Issues = "https://github.com/toreamun/amshan/issues"
+
+[dependency-groups]
+dev = [
+    "mypy",
+    "paho-mqtt",
+    "pyserial-asyncio",
+    "pytest",
+    "ruff",
+]
+
+[tool.setuptools]
+packages = ["han"]
+
+[tool.setuptools.package-data]
+han = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+# Keep README examples as written (e.g. hex grouped by field).
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+# Rules beyond this baseline are evaluated in the quality review.
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.mypy]
+packages = ["han"]
