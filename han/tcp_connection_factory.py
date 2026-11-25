@@ -1,12 +1,19 @@
 """TCP/IP connection factory."""
+
 from __future__ import annotations
 
-from asyncio import Queue  # pylint: disable=unused-import
-from asyncio import AbstractEventLoop, BaseProtocol, get_event_loop
+from asyncio import (
+    AbstractEventLoop,
+    BaseProtocol,
+    Queue,  # pylint: disable=unused-import
+    get_event_loop,
+)
 from typing import Sequence, cast
 
-from han.common import MeterMessageBase  # pylint: disable=unused-import
-from han.common import MeterReaderBase
+from han.common import (
+    MeterMessageBase,  # pylint: disable=unused-import
+    MeterReaderBase,
+)
 from han.dlde import ModeDReader
 from han.hdlc import HdlcFrameReader
 from han.meter_connection import (

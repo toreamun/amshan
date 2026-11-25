@@ -1,4 +1,5 @@
 """Compute or check checksum using a 16-bit Fast Frame Check Sequence (FCS) derived from RFC1662."""
+
 from __future__ import annotations
 
 

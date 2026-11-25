@@ -1,4 +1,5 @@
 """Use this module to easily decode any supported meter message format."""
+
 from __future__ import annotations
 
 from datetime import datetime

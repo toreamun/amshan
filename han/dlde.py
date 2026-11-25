@@ -1,4 +1,5 @@
 """Direct Local Data Exchange of Energy Meters (IEC 62056-21) module."""
+
 from __future__ import annotations
 
 import logging
@@ -423,12 +424,12 @@ def decode_p1_readout(readout: DataReadout) -> dict[str, str | int | float | dat
     data_sets = parse_p1_readout(readout)
     decoded = _decode_parsed(data_sets)
 
-    decoded[
-        obis_map.FIELD_METER_MANUFACTURER_ID
-    ] = readout.identification_line.manufacturer_id
+    decoded[obis_map.FIELD_METER_MANUFACTURER_ID] = (
+        readout.identification_line.manufacturer_id
+    )
     if readout.identification_line.identification is not None:
-        decoded[
-            obis_map.FIELD_METER_TYPE_ID
-        ] = readout.identification_line.identification
+        decoded[obis_map.FIELD_METER_TYPE_ID] = (
+            readout.identification_line.identification
+        )
 
     return decoded

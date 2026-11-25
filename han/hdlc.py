@@ -1,4 +1,5 @@
 """Use this module to read HDLC frames."""
+
 from __future__ import annotations
 
 import logging
