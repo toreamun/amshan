@@ -1,8 +1,10 @@
 """HDLC tests."""
+
 # pylint: disable = no-self-use
 from __future__ import annotations
 
 import pytest
+
 from han import hdlc
 
 FLAG_SEQUENCE = "7e"
@@ -87,7 +89,7 @@ class TestHdlcFrameReader:
         assert len(frames) == 1
         assert frames[0].is_good_ffc
         assert frames[0].is_expected_length
-        assert not frames[0].header.header_check_sequence is None
+        assert frames[0].header.header_check_sequence is not None
         assert frames[0].payload is None
 
     def test_too_short_frame_is_discarded(self):
@@ -197,7 +199,7 @@ class TestHdlcFrameReader:
         assert len(frames) == 1
         assert frames[0].is_good_ffc
         assert frames[0].is_expected_length
-        assert not frames[0].header.header_check_sequence is None
+        assert frames[0].header.header_check_sequence is not None
         assert frames[0].payload == bytes.fromhex("7e7d03")
 
     def test_too_long_frame_is_discarded(self):

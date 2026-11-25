@@ -1,4 +1,5 @@
 """Async meter connection module."""
+
 from __future__ import annotations
 
 import datetime
@@ -12,11 +13,11 @@ from asyncio import (
     Future,
     Protocol,
     Queue,
+    create_task,
+    ensure_future,
     iscoroutinefunction,
     sleep,
     wait,
-    create_task,
-    ensure_future,
 )
 from typing import Awaitable, Callable, ClassVar, Sequence, Tuple
 

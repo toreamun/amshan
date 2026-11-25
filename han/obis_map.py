@@ -1,4 +1,5 @@
 """Mappings between OBIS codes and keys used in decoded data."""
+
 from __future__ import annotations
 
 FIELD_OBIS_LIST_VER_ID = "list_ver_id"

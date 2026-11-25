@@ -105,7 +105,6 @@ def _hdlc_frame_received(frame: hdlc.HdlcFrame) -> None:
 
 
 if __name__ == "__main__":
-
     args = _get_arg_parser().parse_args()
 
     ser = None

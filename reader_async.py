@@ -1,4 +1,5 @@
 """Util for reading from HAN port."""
+
 from __future__ import annotations
 
 import argparse
