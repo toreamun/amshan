@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import cast
 
 from han import fastframecheck
@@ -297,7 +298,17 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
         Construct HHdlcFrameReader.
 
         :param use_octet_stuffing: true to use octet stuffing (0x7D as escape octet)
+        :param use_abort_sequence: true to silently discard frames aborted with the
+            abort sequence (0x7D followed by a flag). Only used together with octet
+            stuffing; without octet stuffing it has no effect and a warning is issued.
         """
+        if use_abort_sequence and not use_octet_stuffing:
+            warnings.warn(
+                "use_abort_sequence has no effect without use_octet_stuffing: "
+                "without octet stuffing 0x7D is an ordinary octet",
+                UserWarning,
+                stacklevel=2,
+            )
         self._use_octet_stuffing = use_octet_stuffing
         self._use_abort_sequence = use_abort_sequence
         self._unescape_next = False
@@ -372,6 +383,17 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
             _LOGGER.debug("Found flag sequence in frame hunt mode")
             self._start_frame()
 
+        elif self._use_abort_sequence and self._unescape_next:
+            # Abort sequence: a Control Escape directly followed by a flag. A pending
+            # escape only exists with octet stuffing (see _append_to_frame); without it
+            # 0x7D is an ordinary octet, e.g. the last FCS octet, so there is no abort.
+            # The aborted frame is silently discarded, and the flag may open the next
+            # frame.
+            _LOGGER.debug(
+                "Abort sequence. Discard frame: %s", self._raw_frame_data.hex()
+            )
+            self._start_frame()
+
         elif len(self._frame) == 0:
             # Found new flag sequence. Two is normal ( end + start), one is allowed, and many possible if time fill.
             pass
@@ -382,20 +404,6 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
                 "Found flag sequence. Too short frame (%d bytes). Discard frame: %s",
                 len(self._frame),
                 self._raw_frame_data.hex(),
-            )
-            self._goto_hunt_mode()
-
-        # check if previous octet was Control Escape if abort sequence is activated
-        elif (
-            self._use_abort_sequence
-            and len(self._raw_frame_data) > 1
-            and self._raw_frame_data[-1:][0] == self.CONTROL_ESCAPE
-        ):
-            # Frames which end with a Control Escape octet
-            # followed immediately by a closing Flag Sequence,
-            # are silently discarded, and not counted as a FCS error.
-            _LOGGER.debug(
-                "Abort sequence. Discard frame: %s", self._raw_frame_data.hex()
             )
             self._goto_hunt_mode()
 
@@ -430,6 +438,7 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
     def _start_frame(self) -> None:
         self._frame = HdlcFrame()
         self._raw_frame_data.clear()
+        self._unescape_next = False
 
     def _goto_hunt_mode(self) -> None:
         self._frame = None

@@ -104,12 +104,14 @@ class TestHdlcFrameReader:
         assert len(frames) == 0
 
     def test_abort_sequence(self):
-        """Test abort sequence."""
+        """Control escape followed by flag aborts the frame when octet stuffing is used."""
         data_feed = bytes.fromhex(
             FLAG_SEQUENCE + FRAME_SHORT_INFO + CONTROL_ESCAPE + FLAG_SEQUENCE
         )
 
-        frame_reader = hdlc.HdlcFrameReader()
+        frame_reader = hdlc.HdlcFrameReader(
+            use_octet_stuffing=True, use_abort_sequence=True
+        )
         frames = frame_reader.read(data_feed)
 
         assert frames is not None
@@ -568,3 +570,92 @@ def test_frame_with_flag_octet_as_length() -> None:
     read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(frame)
 
     assert [f.as_bytes for f in read] == [frame[1:-1]]
+
+
+def test_frame_ending_with_control_escape_is_not_aborted_without_octet_stuffing() -> (
+    None
+):
+    """Without octet stuffing 0x7D is data, so a valid FCS may end with it."""
+    frame = frames.aidon_frame_with_last_octet(0x7D)
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(frame)
+
+    assert [f.as_bytes for f in read] == [frame[1:-1]]
+    assert read[0].is_valid
+
+
+def test_abort_sequence_without_octet_stuffing_warns_and_has_no_effect() -> None:
+    frame = frames.aidon_frame_with_last_octet(0x7D)
+
+    with pytest.warns(UserWarning, match="no effect without use_octet_stuffing"):
+        reader = hdlc.HdlcFrameReader(use_octet_stuffing=False, use_abort_sequence=True)
+
+    assert [f.as_bytes for f in reader.read(frame)] == [frame[1:-1]]
+
+
+@pytest.mark.parametrize(
+    ("stuffing", "abort"), [(False, False), (True, True), (True, False)]
+)
+def test_valid_combinations_give_no_warning(
+    recwarn: pytest.WarningsRecorder, stuffing: bool, abort: bool
+) -> None:
+    hdlc.HdlcFrameReader(use_octet_stuffing=stuffing, use_abort_sequence=abort)
+
+    assert not recwarn.list
+
+
+def test_aborted_frame_is_returned_invalid_without_abort_sequence() -> None:
+    frame = _stuff(frames.aidon_frame_with_last_octet(0x7D))
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=True).read(
+        frame[:15] + b"\x7d\x7e" + frame[1:]
+    )
+
+    assert [f.is_valid for f in read] == [False, True]
+
+
+def _stuff(frame: bytes, also_escape: bytes = b"") -> bytes:
+    """Apply HDLC octet stuffing to a flagged frame."""
+    out = bytearray()
+    for octet in frame[1:-1]:
+        if octet in (0x7E, 0x7D) or octet in also_escape:
+            out += bytes([0x7D, octet ^ 0x20])
+        else:
+            out.append(octet)
+    return b"\x7e" + bytes(out) + b"\x7e"
+
+
+def test_stuffed_frame_with_escaped_last_fcs_octet_is_not_aborted() -> None:
+    """0x5D may be sent escaped as 0x7D 0x7D; the closing flag is then no abort."""
+    frame = frames.aidon_frame_with_last_octet(0x5D)
+    stuffed = _stuff(frame, also_escape=b"\x5d")
+    assert stuffed[-3:] == b"\x7d\x7d\x7e"
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=True, use_abort_sequence=True).read(
+        stuffed
+    )
+
+    assert [f.as_bytes for f in read] == [frame[1:-1]]
+    assert read[0].is_valid
+
+
+def test_abort_right_after_opening_flag_does_not_corrupt_next_frame() -> None:
+    frame = frames.aidon_frame_with_last_octet(0x7D)
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=True, use_abort_sequence=True).read(
+        b"\x7e\x7d\x7e" + _stuff(frame)
+    )
+
+    assert [f.as_bytes for f in read] == [frame[1:-1]]
+    assert read[0].is_valid
+
+
+def test_aborting_flag_opens_next_frame() -> None:
+    frame = _stuff(frames.aidon_frame_with_last_octet(0x7D))
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=True, use_abort_sequence=True).read(
+        frame[:15] + b"\x7d\x7e" + frame[1:]
+    )
+
+    assert len(read) == 1
+    assert read[0].is_valid
