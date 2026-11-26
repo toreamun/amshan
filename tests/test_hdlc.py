@@ -797,3 +797,40 @@ def test_dangling_escape_before_flag_does_not_corrupt_next_frame() -> None:
 
     assert len(read) == 1
     assert read[0].is_valid
+
+
+# Recovery after a broken frame: the reader must resynchronise on the flag that ends it.
+# Without octet stuffing a truncated frame has no closing flag of its own: the flag that
+# "ends" it is the opening flag of the next frame. Today that flag is either read as data
+# (truncated after the length field; the reader waits until MAX_FRAME_LENGTH) or skipped
+# by hunt mode (truncated before the header is complete), so following frames are lost.
+
+
+def _aidon_frame() -> bytes:
+    frame = frames.hdlc_frame(
+        frames.data_notification(
+            frames.aidon_list(
+                frames.aidon_register(
+                    "1.0.1.7.0.255", frames.double_long_unsigned(42), 0, 27
+                )
+            )
+        )
+    )
+    assert 0x7E not in frame[1:-1] and 0x7D not in frame[1:-1]
+    return frame
+
+
+def _valid(read: list[hdlc.HdlcFrame]) -> list[bytes]:
+    return [f.as_bytes for f in read if f.is_good_ffc and f.is_expected_length]
+
+
+@pytest.mark.parametrize("use_octet_stuffing", [False, True])
+def test_too_short_frame_does_not_cost_the_next_frame(
+    use_octet_stuffing: bool,
+) -> None:
+    frame = _aidon_frame()
+    reader = hdlc.HdlcFrameReader(use_octet_stuffing=use_octet_stuffing)
+
+    read = reader.read(b"\x7e\xa0\x2a\x41" + frame)
+
+    assert _valid(read) == [frame[1:-1]]
