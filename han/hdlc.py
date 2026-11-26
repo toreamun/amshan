@@ -396,7 +396,8 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
 
         elif len(self._frame) == 0:
             # Found new flag sequence. Two is normal ( end + start), one is allowed, and many possible if time fill.
-            pass
+            # A dangling escape before the flag belongs to no frame and is dropped.
+            self._unescape_next = False
 
         elif self._frame.header.header_check_sequence is None:
             # Frames which are too short are silently discarded, and not counted as a FCS error.
@@ -442,6 +443,7 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
 
     def _goto_hunt_mode(self) -> None:
         self._frame = None
+        self._unescape_next = False
         self._buffer.trim_buffer_to_flag_or_end()
 
 

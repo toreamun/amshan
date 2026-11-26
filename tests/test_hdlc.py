@@ -659,3 +659,16 @@ def test_aborting_flag_opens_next_frame() -> None:
 
     assert len(read) == 1
     assert read[0].is_valid
+
+
+def test_dangling_escape_before_flag_does_not_corrupt_next_frame() -> None:
+    """With stuffing but without abort handling, a lone escape before a flag is dropped."""
+    frame = _stuff(frames.aidon_frame_with_last_octet(0x7D))
+    reader = hdlc.HdlcFrameReader(use_octet_stuffing=True)
+
+    assert reader.read(b"\x7e\x7d") == []
+    assert reader.read(b"\x7e") == []
+    read = reader.read(frame[1:])
+
+    assert len(read) == 1
+    assert read[0].is_valid
