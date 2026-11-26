@@ -6,6 +6,7 @@ from __future__ import annotations
 import pytest
 
 from han import hdlc
+from tests import frames
 
 FLAG_SEQUENCE = "7e"
 CONTROL_ESCAPE = "7d"
@@ -536,3 +537,34 @@ class TestHdlcFrame:
         assert frame.frame_check_sequence == int(FRAME_SHORT_INFO[-4:], 16)
         assert frame.is_good_ffc
         assert frame.is_expected_length
+
+
+def test_long_hdlc_frame_with_format_a1() -> None:
+    """Frames longer than 255 bytes have format byte 0xA1 (length bit 8 set)."""
+    registers = [
+        frames.aidon_register(f"1.0.{c}.7.0.255", frames.double_long_unsigned(c), 0, 27)
+        for c in range(1, 16)
+    ]
+    information = frames.data_notification(frames.aidon_list(*registers))
+    frame = frames.hdlc_frame(information)
+    assert frame[1] == 0xA1
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(frame)
+
+    assert len(read) == 1
+    assert read[0].is_valid
+    assert read[0].payload == information
+
+
+@pytest.mark.xfail(
+    reason="F16: flag octet in the HDLC header discards the frame", strict=True
+)
+def test_frame_with_flag_octet_as_length() -> None:
+    information = frames.data_notification(frames.aidon_list())
+    information += b"\x00" * (0x7E - 12 - len(information))
+    frame = frames.hdlc_frame(information)
+    assert frame[2] == 0x7E
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(frame)
+
+    assert [f.as_bytes for f in read] == [frame[1:-1]]

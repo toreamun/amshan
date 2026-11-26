@@ -11,6 +11,7 @@ import construct
 import pytest
 
 from han import aidon
+from tests import frames
 from tests.assert_utils import assert_apdu
 
 NOTIFICATION_BODY_NO_LIST_1 = "0101" + "020309060100010700ff060000011802020f00161b"
@@ -722,3 +723,33 @@ class TestDecodeAidon:
         assert decoded["voltage_l1"] == 227.6
         assert decoded["voltage_l2"] == 230.3
         assert decoded["voltage_l3"] == 230.9
+
+
+@pytest.mark.xfail(
+    reason="F3: COSEM double-long (signed 32 bit) is not supported", strict=True
+)
+def test_cosem_double_long_negative_value() -> None:
+    """A signed 32 bit register value decodes to a negative number."""
+    decoded = aidon.decode_frame_content(
+        frames.data_notification(
+            frames.aidon_list(
+                frames.aidon_register("1.0.1.7.0.255", frames.double_long(-1000), 0, 27)
+            )
+        )
+    )
+
+    assert decoded["active_power_import"] == -1000
+
+
+def test_unknown_obis_code_is_keyed_by_cde_groups() -> None:
+    decoded = aidon.decode_frame_content(
+        frames.data_notification(
+            frames.aidon_list(
+                frames.aidon_register(
+                    "1.0.99.7.0.255", frames.double_long_unsigned(42), 0, 27
+                )
+            )
+        )
+    )
+
+    assert decoded["99.7.0"] == 42

@@ -1,8 +1,13 @@
 """Test dllde."""
 
+import subprocess
+import sys
 from datetime import datetime
 from pprint import pprint
 
+import pytest
+
+from han import dlde
 from han.dlde import (
     DataReadout,
     DataSet,
@@ -12,6 +17,7 @@ from han.dlde import (
     parse_p1_readout,
     parse_p1_readout_content,
 )
+from tests import frames
 
 IDENT = b"/LGF5E360\r\n"
 CRLF = b"\r\n"
@@ -487,3 +493,134 @@ class TestDecode:
             "voltage_l3": 239.1,
         }
         assert decoded == expected
+
+
+@pytest.mark.xfail(reason="F2: byte 0x80 in P1 data is not rejected", strict=True)
+def test_p1_readout_with_non_ascii_byte_is_invalid() -> None:
+    """Data bytes >= 0x80 are invalid in a P1 readout, even with a correct CRC."""
+    body = b"/ABC5TEST\r\n\r\n1-0:1.7.0(01.000*kW)\x80\r\n!"
+    readout = body + f"{frames.crc16_arc(body):04X}\r\n".encode()
+
+    assert not dlde.DataReadout(readout).is_valid
+
+
+@pytest.mark.xfail(
+    reason="F12: DataReadout.is_valid raises on an invalid identification line",
+    strict=True,
+)
+def test_p1_readout_with_invalid_identification_line_is_invalid() -> None:
+    body = b"/X\r\n\r\n1-0:1.7.0(01.000*kW)\r\n!"
+    readout = body + f"{frames.crc16_arc(body):04X}\r\n".encode()
+
+    assert not dlde.DataReadout(readout).is_valid
+
+
+def p1_power(kw: float) -> bytes:
+    return frames.p1_readout("LGF5E360", [f"1-0:1.7.0({kw:06.3f}*kW)"])
+
+
+def test_reader_skips_noise_and_non_ident_start_lines() -> None:
+    reader = ModeDReader()
+
+    readouts = reader.read(b"noise\r\n/X\r\nmore noise\r\n" + p1_power(1))
+
+    assert [r.as_bytes for r in readouts] == [p1_power(1)]
+    assert readouts[0].is_valid
+
+
+def test_reader_discards_chunk_without_start_character() -> None:
+    reader = ModeDReader()
+
+    assert reader.read(b"noise without start character\r\n") == []
+    assert [r.as_bytes for r in reader.read(p1_power(1))] == [p1_power(1)]
+
+
+def test_reader_joins_lines_split_between_chunks() -> None:
+    reader = ModeDReader()
+    readout = p1_power(1)
+    split = readout.index(b"kW")
+
+    assert reader.read(readout[:split]) == []
+    readouts = reader.read(readout[split:])
+
+    assert [r.as_bytes for r in readouts] == [readout]
+    assert readouts[0].is_valid
+
+
+@pytest.mark.xfail(
+    reason="F14: reader does not resync on a new identification line", strict=True
+)
+def test_reader_resyncs_after_lost_end_line() -> None:
+    reader = ModeDReader()
+    broken = p1_power(1).replace(b"!", b"#")
+
+    readouts = reader.read(broken + p1_power(2) + p1_power(3))
+
+    assert [r.as_bytes for r in readouts if r.is_valid] == [p1_power(2), p1_power(3)]
+
+
+@pytest.mark.xfail(reason="F14: stale data is kept after buffer overflow", strict=True)
+def test_reader_recovers_after_buffer_overflow() -> None:
+    reader = ModeDReader()
+    reader.read(IDENT + CRLF + LINE_WITH_UNIT * 400)
+
+    readouts = reader.read(p1_power(2))
+
+    assert [r.as_bytes for r in readouts if r.is_valid] == [p1_power(2)]
+
+
+def test_decode_ignores_lines_with_multiple_values() -> None:
+    """Multi value lines (like DSMR gas readings with timestamp) are not decoded."""
+    decoded = dlde.decode_p1_readout_content(
+        b"1-0:1.7.0(01.000*kW)\r\n0-1:24.2.1(201231235959W)(00123.456*m3)\r\n"
+    )
+
+    assert decoded == {"active_power_import": 1000}
+
+
+@pytest.mark.xfail(
+    reason="F17: reader raises on non-ASCII in a line starting with '/'", strict=True
+)
+def test_reader_skips_non_ascii_start_line() -> None:
+    reader = ModeDReader()
+
+    readouts = reader.read(b"/\xff\r\n" + p1_power(1))
+
+    assert [r.as_bytes for r in readouts] == [p1_power(1)]
+
+
+F18_CHILD = """
+import sys, threading
+from han import dlde
+
+def parse():
+    try:
+        dlde.parse_p1_readout_content(sys.argv[1].encode())
+    except ValueError:
+        pass  # rejecting the line is also a valid fix
+
+worker = threading.Thread(target=parse, daemon=True)
+worker.start()
+worker.join(2)
+sys.exit(3 if worker.is_alive() else 0)
+"""
+
+
+@pytest.mark.xfail(
+    reason="F18: P1 parser loops forever on text after ')' or a missing ')'",
+    strict=True,
+    raises=AssertionError,
+)
+@pytest.mark.parametrize(
+    "line",
+    ["1-0:1.7.0(01.000*kW) ", "1-0:1.7.0(01.0"],
+    ids=["trailing-space", "no-close"],
+)
+def test_parse_line_with_trailing_text_terminates(line: str) -> None:
+    # Run in a subprocess: the endless loop also grows memory and cannot be interrupted.
+    # The parse timeout starts after imports, so slow interpreter startup does not matter.
+    result = subprocess.run(
+        [sys.executable, "-c", F18_CHILD, line], capture_output=True, timeout=60
+    )
+
+    assert result.returncode == 0, result.stderr.decode()
