@@ -904,6 +904,14 @@ def _aidon_frame_with_value(value: int) -> bytes:
     )
 
 
+def test_frame_missing_only_its_closing_flag_shares_the_next_opening_flag() -> None:
+    frame = _aidon_frame()
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(frame[:-1] + frame)
+
+    assert _valid(read) == [frame[1:-1]] * 2
+
+
 def test_consecutive_truncated_frames_do_not_cost_following_frames() -> None:
     frame = _aidon_frame()
     stream = frame[:20] + frame[:5] + frame[:30] + frame[:9] + frame * 3
@@ -945,3 +953,55 @@ def test_frame_with_flag_octets_in_data_inside_invalid_frame_of_expected_length(
     read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(broken[:20] + frame)
 
     assert _valid(read) == [frame[1:-1]]
+
+
+def test_corrupted_frame_with_flag_in_data_does_not_cost_following_frames() -> None:
+    frame = _aidon_frame_with_value(0x7E7E7E7E)
+    corrupted = bytearray(frame)
+    corrupted[-3] ^= 0xFF  # wrong FCS, same length
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(
+        bytes(corrupted) + frame * 2
+    )
+
+    assert len(read) >= 3
+    assert not read[0].is_good_ffc
+    assert _valid(read) == [frame[1:-1]] * 2
+
+
+def test_valid_frame_is_not_read_again() -> None:
+    # A valid frame with flag octets in its data must be returned once, and the flags
+    # inside it must not start extra frames.
+    frame = _aidon_frame_with_value(0x7E7E7E7E)
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(frame * 3)
+
+    assert [f.as_bytes for f in read] == [frame[1:-1]] * 3
+
+
+def test_truncated_stuffed_frame_does_not_cost_the_next_frame() -> None:
+    frame = _aidon_frame()
+    reader = hdlc.HdlcFrameReader(use_octet_stuffing=True)
+
+    read = reader.read(frame[:30] + frame)
+
+    assert len(read) == 2
+    assert not read[0].is_good_ffc
+    assert _valid(read) == [frame[1:-1]]
+
+
+def test_reader_buffer_stays_bounded_with_garbage() -> None:
+    import random
+
+    rnd = random.Random(20261127)
+    frame = _aidon_frame()
+    reader = hdlc.HdlcFrameReader(use_octet_stuffing=False)
+    valid = 0
+    for _ in range(100):
+        chunk = bytes(rnd.choice(b"\x7e\xa0\xa7\x00\xff\x41") for _ in range(400))
+        valid += len(_valid(reader.read(chunk + frame)))
+        # Unread octets are kept in the buffer and octets of a frame being read in
+        # the frame: neither can grow past what one frame can hold.
+        assert len(reader._buffer._buffer) <= hdlc.HdlcFrame.MAX_FRAME_LENGTH + 500
+        assert len(reader._raw_frame_data) <= hdlc.HdlcFrame.MAX_FRAME_LENGTH + 1
+    assert valid > 0
