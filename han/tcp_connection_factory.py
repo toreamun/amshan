@@ -51,9 +51,7 @@ async def create_tcp_message_connection(
                     readers
                     if readers
                     else [
-                        HdlcFrameReader(
-                            use_octet_stuffing=False, use_abort_sequence=True
-                        ),
+                        HdlcFrameReader(use_octet_stuffing=False),
                         ModeDReader(),
                     ],
                 ),
@@ -92,9 +90,7 @@ async def create_tcp_message_payload_connection(
                     readers
                     if readers
                     else [
-                        HdlcFrameReader(
-                            use_octet_stuffing=False, use_abort_sequence=True
-                        ),
+                        HdlcFrameReader(use_octet_stuffing=False),
                         ModeDReader(),
                     ],
                 ),
