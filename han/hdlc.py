@@ -26,6 +26,16 @@ length and frame check (an aborted frame normally fails them). Without octet
 stuffing there is no abort sequence, because a valid frame may end with 0x7D
 (for example as the last octet of the frame check sequence), so
 ``use_abort_sequence`` has no effect.
+
+Recovering after broken frames
+------------------------------
+Without octet stuffing a flag inside a frame is read as data, so a truncated frame
+(its closing flag is missing) reads the opening flag of the next frame as data. The
+reader can only tell when the frame has passed the length in its frame format field,
+or ends at that length with a bad frame check sequence. It then reads the octets of the
+broken frame again from the first flag inside it, so frames it had swallowed are not
+lost, only returned later. A broken frame that ends at its length is still returned
+(as invalid), so the same octets can give one invalid and one valid frame.
 """
 
 from __future__ import annotations
