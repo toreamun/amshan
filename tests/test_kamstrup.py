@@ -10,6 +10,7 @@ import construct
 import pytest
 
 from han import kamstrup
+from tests import frames
 from tests.assert_utils import assert_apdu, assert_obis_element
 
 # Kamstrup example 1: 10 seconds list, three-phases, four-quadrants
@@ -857,3 +858,63 @@ class TestDecodeKamstrup:
         assert decoded["meter_manufacturer"] == "Kamstrup"
         assert decoded["meter_type"] == "000000000000000000"
         assert decoded["voltage_l1"] == 0
+
+
+KAMSTRUP_HEADER = frames.LLC + bytes.fromhex("0f000000000c07ea0b1a03163a00ff800000")
+
+
+def kamstrup_body(meter_type: str, *elements: bytes) -> bytes:
+    """Kamstrup style flat structure: list id, meter id, meter type, then elements."""
+    items = [
+        frames.visible_string("Kamstrup_V0001"),
+        frames.obis("1.1.0.0.5.255") + frames.visible_string("5706567000000000"),
+        frames.obis("1.1.96.1.1.255") + frames.visible_string(meter_type),
+        *elements,
+    ]
+    return b"\x02" + bytes([2 * len(items) - 1]) + b"".join(items)
+
+
+def kamstrup_current(code: str, value: int) -> bytes:
+    return frames.obis(code) + frames.double_long_unsigned(value)
+
+
+@pytest.mark.parametrize(
+    ("meter_type", "expected_current"),
+    [
+        ("6841131BN243101040", 12.34),
+        pytest.param(
+            "6851131BN243101040",
+            1.234,
+            marks=pytest.mark.xfail(
+                reason="F1: Kamstrup CT meters (685) are not detected", strict=True
+            ),
+        ),
+    ],
+    ids=["direct-684", "ct-685"],
+)
+def test_kamstrup_current_scaling_by_meter_type(
+    meter_type: str, expected_current: float
+) -> None:
+    """Kamstrup current scaler is -2 for direct meters and -3 for CT meters (685)."""
+    decoded = kamstrup.decode_frame_content(
+        KAMSTRUP_HEADER
+        + kamstrup_body(meter_type, kamstrup_current("1.1.31.7.0.255", 1234))
+    )
+
+    assert decoded["current_l1"] == pytest.approx(expected_current)
+
+
+def test_kamstrup_null_data_for_missing_objects() -> None:
+    """Kamstrup sends null-data (00) for objects the meter variant does not have."""
+    decoded = kamstrup.decode_frame_content(
+        KAMSTRUP_HEADER
+        + kamstrup_body(
+            "6861111BN242101040",
+            kamstrup_current("1.1.31.7.0.255", 1234),
+            frames.obis("1.1.51.7.0.255") + b"\x00",
+            frames.obis("1.1.32.7.0.255") + frames.long_unsigned(230),
+        )
+    )
+
+    assert decoded["current_l1"] == pytest.approx(12.34)
+    assert decoded["voltage_l1"] == 230

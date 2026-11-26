@@ -47,11 +47,15 @@ Issues = "https://github.com/toreamun/amshan/issues"
 
 [dependency-groups]
 dev = [
+    "hypothesis",
     "mypy",
     "paho-mqtt",
     "pyserial-asyncio",
     "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
     "ruff",
+    "syrupy",
 ]
 
 [tool.setuptools]
@@ -62,6 +66,17 @@ han = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+xfail_strict = true
+
+[tool.coverage.run]
+source = ["han"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 95
 
 [tool.ruff]
 target-version = "py312"

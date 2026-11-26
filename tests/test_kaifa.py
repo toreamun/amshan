@@ -531,3 +531,12 @@ class TestDecodeKaifa:
         assert decoded["voltage_l1"] == 219.3
         assert decoded["voltage_l2"] == 0.0
         assert decoded["voltage_l3"] == 220.5
+
+
+def test_unknown_obis_code_is_keyed_by_cde_groups() -> None:
+    body = NOTIFICATION_BODY_SE_LIST.replace("0100040800ff", "0100630800ff")
+
+    decoded = kaifa.decode_notification_body(bytes.fromhex(body))
+
+    assert "reactive_power_export_total" not in decoded
+    assert decoded["99.8.0"] == 578528

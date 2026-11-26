@@ -1,0 +1,267 @@
+# serializer version: 1
+# name: test_decode_corpus[issue029_kam5_p1_28]
+  dict({
+    'decoded': dict({
+      'active_power_export': 0,
+      'active_power_export_l1': 0,
+      'active_power_export_l2': 0,
+      'active_power_export_l3': 0,
+      'active_power_export_total': 0,
+      'active_power_import': 2202,
+      'active_power_import_l1': 1947,
+      'active_power_import_l2': 63,
+      'active_power_import_l3': 192,
+      'active_power_import_total': 60995424,
+      'current_l1': 8.3,
+      'current_l2': 0.4,
+      'current_l3': 1.4,
+      'meter_datetime': datetime.datetime(2022, 4, 8, 13, 50, 21),
+      'meter_manufacturer_id': 'KAM',
+      'reactive_power_export': 505,
+      'reactive_power_export_l1': 204,
+      'reactive_power_export_l2': 95,
+      'reactive_power_export_l3': 206,
+      'reactive_power_export_total': 12541802,
+      'reactive_power_import': 0,
+      'reactive_power_import_l1': 0,
+      'reactive_power_import_l2': 0,
+      'reactive_power_import_l3': 0,
+      'reactive_power_import_total': 12696,
+      'voltage_l1': 235.5,
+      'voltage_l2': 239.5,
+      'voltage_l3': 239.1,
+    }),
+    'message_type': 'P1',
+  })
+# ---
+# name: test_decode_corpus[issue033_kamstrup_hdlc_11]
+  dict({
+    'decoded': dict({
+      'active_power_export': 0,
+      'active_power_import': 396,
+      'current_l1': 2.09,
+      'list_ver_id': 'Kamstrup_V0001',
+      'meter_datetime': datetime.datetime(2022, 4, 18, 13, 28),
+      'meter_id': '7359992890941742',
+      'meter_manufacturer': 'Kamstrup',
+      'meter_type': '6861111BN242101040',
+      'reactive_power_export': 114,
+      'reactive_power_import': 0,
+      'voltage_l1': 224,
+    }),
+    'message_type': 'HDLC_DLMS',
+  })
+# ---
+# name: test_decode_corpus[issue037_lgf5e360_p1_29]
+  dict({
+    'decoded': dict({
+      'active_power_export': 5097,
+      'active_power_export_l1': 2314,
+      'active_power_export_l2': 503,
+      'active_power_export_l3': 2280,
+      'active_power_export_total': 314574,
+      'active_power_import': 0,
+      'active_power_import_l1': 0,
+      'active_power_import_l2': 0,
+      'active_power_import_l3': 0,
+      'active_power_import_total': 834195,
+      'current_l1': 9.7,
+      'current_l2': 3.1,
+      'current_l3': 9.6,
+      'meter_datetime': datetime.datetime(2022, 7, 11, 13, 42, 50),
+      'meter_manufacturer_id': 'LGF',
+      'meter_type_id': 'E360',
+      'reactive_power_export': 0,
+      'reactive_power_export_l1': 207,
+      'reactive_power_export_l2': 0,
+      'reactive_power_export_l3': 148,
+      'reactive_power_export_total': 137648,
+      'reactive_power_import': 171,
+      'reactive_power_import_l1': 0,
+      'reactive_power_import_l2': 526,
+      'reactive_power_import_l3': 0,
+      'reactive_power_import_total': 70665,
+      'voltage_l1': 237.9,
+      'voltage_l2': 233.7,
+      'voltage_l3': 236.6,
+    }),
+    'message_type': 'P1',
+  })
+# ---
+# name: test_decode_corpus[issue044_aidon_hdlc_28]
+  dict({
+    'decoded': dict({
+      'active_power_export': 0,
+      'active_power_export_l1': 0,
+      'active_power_export_l2': 0,
+      'active_power_export_l3': 0,
+      'active_power_export_total': 0,
+      'active_power_import': 839,
+      'active_power_import_l1': 402,
+      'active_power_import_l2': 175,
+      'active_power_import_l3': 261,
+      'active_power_import_total': 44547043,
+      'current_l1': 1.7,
+      'current_l2': 0.8,
+      'current_l3': 1.2,
+      'meter_datetime': datetime.datetime(2022, 9, 1, 19, 58, 50),
+      'meter_manufacturer': 'Aidon',
+      'reactive_power_export': 285,
+      'reactive_power_export_l1': 74,
+      'reactive_power_export_l2': 85,
+      'reactive_power_export_l3': 123,
+      'reactive_power_export_total': 2263855,
+      'reactive_power_import': 0,
+      'reactive_power_import_l1': 0,
+      'reactive_power_import_l2': 0,
+      'reactive_power_import_l3': 0,
+      'reactive_power_import_total': 11022844,
+      'voltage_l1': 231.7,
+      'voltage_l2': 232.9,
+      'voltage_l3': 232.9,
+    }),
+    'message_type': 'HDLC_DLMS',
+  })
+# ---
+# name: test_decode_corpus[issue046_aidon_payload_10]
+  dict({
+    'decoded': dict({
+      'active_power_export': 0,
+      'active_power_import': 2780,
+      'current_l1': 11.8,
+      'list_ver_id': 'AIDON_V0001',
+      'meter_id': '7359992890941742',
+      'meter_manufacturer': 'Aidon',
+      'meter_type': '6515',
+      'reactive_power_export': 116,
+      'reactive_power_import': 0,
+      'voltage_l1': 237.1,
+    }),
+    'message_type': None,
+  })
+# ---
+# name: test_decode_corpus[issue046_aidon_payload_2]
+  dict({
+    'decoded': dict({
+      'active_power_import': 2784,
+      'meter_manufacturer': 'Aidon',
+    }),
+    'message_type': None,
+  })
+# ---
+# name: test_decode_corpus[issue047_aidon_hdlc_13]
+  dict({
+    'decoded': dict({
+      'active_power_export': 0,
+      'active_power_import': 17,
+      'current_l1': 0,
+      'current_l3': 0,
+      'list_ver_id': 'AIDON_V0001',
+      'meter_id': '7359992890941742',
+      'meter_manufacturer': 'Aidon',
+      'meter_type': '6540',
+      'reactive_power_export': 15,
+      'reactive_power_import': 0,
+      'voltage_l1': 237.2,
+      'voltage_l2': 236.9,
+      'voltage_l3': 237.9,
+    }),
+    'message_type': 'HDLC_DLMS',
+  })
+# ---
+# name: test_decode_corpus[issue047_aidon_hdlc_2]
+  dict({
+    'decoded': dict({
+      'active_power_import': 17,
+      'meter_manufacturer': 'Aidon',
+    }),
+    'message_type': 'HDLC_DLMS',
+  })
+# ---
+# name: test_decode_corpus[issue052_kamstrup_payload_14]
+  dict({
+    'decoded': dict({
+      'active_power_export': 0,
+      'active_power_import': 189,
+      'current_l1': 0.76,
+      'current_l2': 0.81,
+      'current_l3': 0.09,
+      'list_ver_id': 'Kamstrup_V0001',
+      'meter_id': '7359992890941742',
+      'meter_manufacturer': 'Kamstrup',
+      'meter_type': '6841131BN243101040',
+      'reactive_power_export': 260,
+      'reactive_power_import': 0,
+      'voltage_l1': 238,
+      'voltage_l2': 236,
+      'voltage_l3': 236,
+    }),
+    'message_type': None,
+  })
+# ---
+# name: test_decode_corpus[issue055_kaifa_hdlc_15]
+  dict({
+    'decoded': dict({
+      'active_power_export': 0,
+      'active_power_import': 5419,
+      'current_l1': 1.329,
+      'current_l2': 22.742,
+      'current_l3': 21.809,
+      'list_ver_id': 'KFM_001',
+      'meter_datetime': datetime.datetime(2022, 12, 26, 9, 40),
+      'meter_id': '7359992890941742',
+      'meter_manufacturer': 'Kaifa',
+      'meter_type': 'MA304H3E',
+      'reactive_power_export': 535,
+      'reactive_power_import': 0,
+      'voltage_l1': 234.2,
+      'voltage_l2': 0.0,
+      'voltage_l3': 232.8,
+    }),
+    'message_type': 'HDLC_DLMS',
+  })
+# ---
+# name: test_decode_corpus[issue055_kaifa_hdlc_3]
+  dict({
+    'decoded': dict({
+      'active_power_import': 4417,
+      'meter_datetime': datetime.datetime(2022, 12, 26, 9, 39, 54),
+      'meter_manufacturer': 'Kaifa',
+    }),
+    'message_type': 'HDLC_DLMS',
+  })
+# ---
+# name: test_decode_corpus[issue056_lgf5e360_payload_27]
+  dict({
+    'decoded': dict({
+      'active_power_export': 0,
+      'active_power_export_l1': 0,
+      'active_power_export_l2': 0,
+      'active_power_export_l3': 0,
+      'active_power_export_total': 9088286,
+      'active_power_import': 1330,
+      'active_power_import_l1': 927,
+      'active_power_import_l2': 296,
+      'active_power_import_l3': 106,
+      'active_power_import_total': 19858310,
+      'current_l1': 3.9,
+      'current_l2': 1.7,
+      'current_l3': 0.6,
+      'meter_datetime': datetime.datetime(2023, 1, 2, 16, 36, 50),
+      'reactive_power_export': 450,
+      'reactive_power_export_l1': 38,
+      'reactive_power_export_l2': 295,
+      'reactive_power_export_l3': 115,
+      'reactive_power_export_total': 4760335,
+      'reactive_power_import': 0,
+      'reactive_power_import_l1': 0,
+      'reactive_power_import_l2': 0,
+      'reactive_power_import_l3': 0,
+      'reactive_power_import_total': 405819,
+      'voltage_l1': 233.7,
+      'voltage_l2': 238.7,
+      'voltage_l3': 238.9,
+    }),
+    'message_type': None,
+  })
+# ---

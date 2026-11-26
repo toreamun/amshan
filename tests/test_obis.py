@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from han.obis import OBIS_CODES, Obis, to_obis_tupple
 from han.obis_map import (
     FIELD_METER_DATETIME,
@@ -60,3 +62,34 @@ class TestToTupple:
     def test_standard(self):
         """Assert that standard codes parse correctly."""
         assert to_obis_tupple("1.2.3.4.5.6") == (1, 2, 3, 4, 5, 6)
+
+
+@pytest.mark.parametrize(
+    ("groups", "expected"),
+    [
+        pytest.param(
+            (None, 0, 1, 8, 1, None),
+            "0:1.8.1",
+            marks=pytest.mark.xfail(reason="F8: group B=0 is dropped", strict=True),
+        ),
+        pytest.param(
+            (1, 1, 1, 8, 1, None),
+            "1-1:1.8.1",
+            marks=pytest.mark.xfail(reason="F8: group A is repeated", strict=True),
+        ),
+        pytest.param(
+            (None, None, 1, 8, 0, None),
+            "1.8.0",
+            marks=pytest.mark.xfail(reason="F8: group E=0 is dropped", strict=True),
+        ),
+    ],
+)
+def test_obis_reduced_string(groups: tuple[int | None, ...], expected: str) -> None:
+    assert Obis(groups).to_reduced_str() == expected  # type: ignore[arg-type]
+
+
+@pytest.mark.xfail(
+    reason="F9: str(Obis) is not the full code when a group is 0", strict=True
+)
+def test_obis_str_with_zero_group() -> None:
+    assert str(Obis.from_string("1.0.1.8.0.255")) == "1.0.1.8.0.255"
