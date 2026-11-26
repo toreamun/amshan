@@ -183,3 +183,34 @@ async def test_serial_connection_uses_given_readers(
     assert captured["protocol"]._reader_candidates == readers
     assert captured["args"] == ("/dev/ttyUSB0",)
     assert captured["kwargs"] == {"baudrate": 2400}
+
+
+# A valid frame where the last FCS octet is 0x7D (HDLC control escape).
+FRAME_FCS_7D = frames.aidon_frame_with_last_octet(0x7D)
+
+
+@pytest.mark.xfail(
+    reason="the factories discard a valid frame ending with 0x7D", strict=True
+)
+@pytest.mark.parametrize("transport_kind", ["tcp", "serial"])
+async def test_factory_keeps_valid_frame_ending_with_control_escape(
+    meter_server: tuple[str, int, list[bytes]], transport_kind: str
+) -> None:
+    host, port, to_send = meter_server
+    to_send.extend([FRAME_FCS_7D, FRAME])
+    queue: asyncio.Queue[Any] = asyncio.Queue()
+
+    if transport_kind == "tcp":
+        transport, _ = await tcp_connection_factory.create_tcp_message_connection(
+            queue, None, None, host, port
+        )
+    else:
+        transport, _ = await serial_connection_factory.create_serial_message_connection(
+            queue, None, None, url=f"socket://{host}:{port}", baudrate=2400
+        )
+    try:
+        first = await _get(queue)
+        assert first.is_valid
+        assert first.as_bytes == FRAME_FCS_7D[1:-1]
+    finally:
+        transport.close()

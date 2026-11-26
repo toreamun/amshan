@@ -109,3 +109,22 @@ def crc16_arc(data: bytes) -> int:
         for _ in range(8):
             crc = (crc >> 1) ^ 0xA001 if crc & 1 else crc >> 1
     return crc
+
+
+def aidon_frame_with_last_octet(value: int) -> bytes:
+    """A valid Aidon HDLC frame whose last octet before the closing flag is ``value``.
+
+    The last octet is the high byte of the frame check sequence. Used to build frames
+    ending with 0x7D (HDLC control escape).
+    """
+    for n in range(100_000):
+        frame = hdlc_frame(
+            data_notification(
+                aidon_list(
+                    aidon_register("1.0.1.7.0.255", double_long_unsigned(n), 0, 27)
+                )
+            )
+        )
+        if frame[-2] == value:
+            return frame
+    raise AssertionError("no such frame found")
