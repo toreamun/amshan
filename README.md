@@ -85,6 +85,14 @@ dlde.ModeDReader can be used to read readout by readout from bytes. Call read() 
 
 hdlc.HdlcFrameReader can be used to read frame by frame from bytes. Call read() to read frames as more bytes become available. The function takes bytes as an argument and returns a list of HdlcFrame (the list can be empty). The function can receive incomplete frames in the buffer input and add incomplete data to an internal buffer. The buffer is schrinked when complete frames are found and returned. You should check if returned frames are valid with frame.is_valid before using them.
 
+### HDLC framing, octet stuffing and the abort sequence
+
+HDLC frames start and end with the flag octet `0x7E`. Many HDLC links use *octet stuffing*: the sender replaces `0x7E` and `0x7D` in the data with `0x7D` followed by the octet XOR `0x20`, so a flag can only appear at frame boundaries. In that scheme `0x7D` directly before a flag can never be data, and it is used as the *abort sequence* (the sender aborts a frame with `0x7D 0x7E`).
+
+The meters this package has been tested with on the Norwegian and Swedish HAN port (Aidon, Kaifa and Kamstrup) send frames **without** octet stuffing: `0x7E` and `0x7D` occur as ordinary data octets, and the end of a frame is given by the length in the frame format field. No requirement has been found that rules out octet stuffing, and other meters or new firmware may behave differently. `HdlcFrameReader(use_octet_stuffing=False)` is the default because it matches the meters seen so far; use `use_octet_stuffing=True` for a meter that escapes `0x7E` and `0x7D` in the data.
+
+The abort sequence is part of octet stuffing. With `use_octet_stuffing=True, use_abort_sequence=True` a frame aborted with `0x7D 0x7E` is silently discarded; with `use_abort_sequence=False` the dangling `0x7D` is dropped and the frame goes through the normal length and frame check (an aborted frame normally fails them). Without octet stuffing there is no abort sequence, because a valid frame may end with `0x7D` (for example as the last octet of the frame check sequence), so `use_abort_sequence` has no effect and a warning is issued.
+
 # Decode norwegian and swedish messages
 
 P1 readout and MBUS frames using the norwegian or swedish DMLS AMS format can be parsed into meter specific objects or decoded into a common dictionary. Modules exists for P1 (generic format), Aidon, Kaifa and Kamstrup meters, but the easiest is to use [autodecoder.AutoDecode](han/autodecode.py) to automatically detect meter type and decode the frame into a dictionary. The dictionay content is as far as possible common between meters. Possible dictionary keys kan be found as constants in [obis_map.py](han/obis_map.py).
