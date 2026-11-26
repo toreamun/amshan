@@ -93,6 +93,8 @@ The meters this package has been tested with on the Norwegian and Swedish HAN po
 
 The abort sequence is part of octet stuffing. With `use_octet_stuffing=True, use_abort_sequence=True` a frame aborted with `0x7D 0x7E` is silently discarded; with `use_abort_sequence=False` the dangling `0x7D` is dropped and the frame goes through the normal length and frame check (an aborted frame normally fails them). Without octet stuffing there is no abort sequence, because a valid frame may end with `0x7D` (for example as the last octet of the frame check sequence), so `use_abort_sequence` has no effect and a warning is issued.
 
+Without octet stuffing a truncated frame reads the opening flag of the next frame as data. When the reader finds that a frame is broken (it has passed the length in its frame format field, or ends at that length with a bad frame check sequence), it reads the octets of the broken frame again from the first flag inside it. Frames that the broken frame had swallowed are therefore returned, a little later, instead of being lost.
+
 # Decode norwegian and swedish messages
 
 P1 readout and MBUS frames using the norwegian or swedish DMLS AMS format can be parsed into meter specific objects or decoded into a common dictionary. Modules exists for P1 (generic format), Aidon, Kaifa and Kamstrup meters, but the easiest is to use [autodecoder.AutoDecode](han/autodecode.py) to automatically detect meter type and decode the frame into a dictionary. The dictionay content is as far as possible common between meters. Possible dictionary keys kan be found as constants in [obis_map.py](han/obis_map.py).
