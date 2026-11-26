@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from han import hdlc
 from tests import frames
@@ -669,6 +671,119 @@ def test_repeated_aborts_do_not_grow_the_buffer() -> None:
         reader.read(fragment)
 
     assert len(reader._buffer._buffer) < 2 * len(fragment)
+
+
+class TestReaderBuffer:
+    """Edge cases of the internal byte buffer used by HdlcFrameReader."""
+
+    @staticmethod
+    def _filled(data: bytes, popped: int = 0) -> hdlc._ReaderBuffer:
+        buffer = hdlc._ReaderBuffer()
+        buffer.extend(data)
+        for _ in range(popped):
+            buffer.pop()
+        return buffer
+
+    @staticmethod
+    def _rest(buffer: hdlc._ReaderBuffer) -> bytes:
+        rest = bytearray()
+        while buffer.is_available:
+            rest.append(buffer.pop())
+        return bytes(rest)
+
+    def test_pop_on_empty_buffer_raises(self) -> None:
+        buffer = hdlc._ReaderBuffer()
+
+        assert not buffer.is_available
+        with pytest.raises(IndexError):
+            buffer.pop()
+
+    @pytest.mark.parametrize(
+        ("data", "popped", "expected"),
+        [
+            (b"\x7e\x01\x02", 0, b"\x7e\x01\x02"),  # flag first
+            (b"\x01\x02\x7e\x03", 0, b"\x7e\x03"),  # flag in the middle
+            (b"\x01\x02\x7e", 0, b"\x7e"),  # flag last
+            (b"\x01\x02\x03", 0, b""),  # no flag
+            (b"", 0, b""),  # empty
+            (b"\x7e\x01\x7e\x02", 1, b"\x7e\x02"),  # flag before position is consumed
+            (b"\x7e\x01\x02", 3, b""),  # everything consumed
+        ],
+        ids=[
+            "first",
+            "middle",
+            "last",
+            "none",
+            "empty",
+            "consumed-flag",
+            "all-consumed",
+        ],
+    )
+    def test_trim_buffer_to_flag_or_end(
+        self, data: bytes, popped: int, expected: bytes
+    ) -> None:
+        buffer = self._filled(data, popped)
+
+        buffer.trim_buffer_to_flag_or_end()
+
+        assert self._rest(buffer) == expected
+
+    def test_trim_to_current_position_keeps_unread_and_accepts_more(self) -> None:
+        buffer = self._filled(b"\x01\x02\x03", popped=2)
+
+        buffer.trim_buffer_to_current_position()
+        buffer.extend(b"\x04")
+
+        assert self._rest(buffer) == b"\x03\x04"
+
+    def test_trim_when_everything_is_read(self) -> None:
+        buffer = self._filled(b"\x01\x02", popped=2)
+
+        buffer.trim_buffer_to_current_position()
+
+        assert not buffer.is_available
+        buffer.extend(b"\x03")
+        assert self._rest(buffer) == b"\x03"
+
+
+_buffer_operation = st.one_of(
+    # a small alphabet makes flags (0x7E) common at every position
+    st.tuples(
+        st.just("extend"),
+        st.lists(st.sampled_from([0x01, 0x7D, 0x7E]), max_size=6).map(bytes),
+    ),
+    st.tuples(st.just("pop"), st.none()),
+    st.tuples(st.just("trim_current"), st.none()),
+    st.tuples(st.just("trim_flag"), st.none()),
+)
+
+
+@given(operations=st.lists(_buffer_operation, max_size=60))
+def test_reader_buffer_matches_simple_model(
+    operations: list[tuple[str, bytes | None]],
+) -> None:
+    """The buffer behaves like a plain byte string with a read position."""
+    buffer = hdlc._ReaderBuffer()
+    unread = b""  # model: the bytes that are not read yet
+
+    for operation, data in operations:
+        if operation == "extend":
+            assert data is not None
+            buffer.extend(data)
+            unread += data
+        elif operation == "pop":
+            if unread:
+                assert buffer.pop() == unread[0]
+                unread = unread[1:]
+        elif operation == "trim_current":
+            buffer.trim_buffer_to_current_position()
+        else:
+            buffer.trim_buffer_to_flag_or_end()
+            flag = unread.find(b"\x7e")
+            unread = b"" if flag == -1 else unread[flag:]
+        assert buffer.is_available == bool(unread)
+
+    assert TestReaderBuffer._rest(buffer) == unread
 
 
 def test_dangling_escape_before_flag_does_not_corrupt_next_frame() -> None:
