@@ -194,3 +194,66 @@ def test_hdlc_reader_recovers_after_truncated_frames(
 
     valid = [f.as_bytes for f in read if f.is_good_ffc and f.is_expected_length]
     assert valid[: len(expected)] == expected
+
+
+def _reader_result(frames_read: list[hdlc.HdlcFrame]) -> list[tuple[bytes, bool, bool]]:
+    return [(f.as_bytes, f.is_good_ffc, f.is_expected_length) for f in frames_read]
+
+
+@given(
+    data=st.binary(max_size=600)
+    | st.lists(
+        st.sampled_from([b"\x7e", b"\x7d", b"\xa0", b"\xa7\xff", b"\x00", b"\x41"])
+        | aidon_hdlc_frame()
+        | aidon_hdlc_frame().map(lambda f: f[: len(f) // 2]),
+        max_size=12,
+    ).map(b"".join),
+    cuts=st.lists(st.integers(min_value=0), max_size=20),
+    use_octet_stuffing=st.booleans(),
+)
+def test_hdlc_reader_result_is_independent_of_chunking_for_any_input(
+    data: bytes, cuts: list[int], use_octet_stuffing: bool
+) -> None:
+    whole = hdlc.HdlcFrameReader(use_octet_stuffing=use_octet_stuffing).read(data)
+    chunked = read_all(
+        hdlc.HdlcFrameReader(use_octet_stuffing=use_octet_stuffing), split(data, cuts)
+    )
+
+    assert _reader_result(chunked) == _reader_result(whole)
+
+
+@given(
+    data=st.lists(
+        st.binary(max_size=30)
+        | st.sampled_from([b"\x7e", b"\x7e\xa0", b"\x7e\xa7\xff"])
+        | aidon_hdlc_frame()
+        | aidon_hdlc_frame().map(lambda f: f[: len(f) // 2]),
+        max_size=12,
+    ).map(b"".join)
+)
+def test_hdlc_frames_are_taken_from_the_input(data: bytes) -> None:
+    # Without octet stuffing every frame (valid or not) is a run of input octets.
+    for frame in hdlc.HdlcFrameReader(use_octet_stuffing=False).read(data):
+        assert frame.as_bytes in data
+
+
+@given(
+    items=st.lists(
+        st.tuples(aidon_hdlc_frame(), st.binary(max_size=60)), min_size=1, max_size=5
+    ),
+    cuts=st.lists(st.integers(min_value=0), max_size=20),
+)
+def test_hdlc_reader_recovers_frames_between_any_garbage(
+    items: list[tuple[bytes, bytes]], cuts: list[int]
+) -> None:
+    # Garbage may contain flags and look like frame headers. Every complete frame
+    # after it must still be read.
+    # A flag octet in the header (length, address, control, HCS) still discards the
+    # frame; that is an xfail test in test_hdlc.py.
+    assume(all(0x7E not in f[1:9] for f, _ in items))
+    stream = b"".join(garbage + f for f, garbage in items) + _MORE_FRAMES
+
+    read = read_all(hdlc.HdlcFrameReader(use_octet_stuffing=False), split(stream, cuts))
+
+    valid = [f.as_bytes for f in read if f.is_good_ffc and f.is_expected_length]
+    assert valid[: len(items)] == [f[1:-1] for f, _ in items]
