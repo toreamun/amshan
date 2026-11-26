@@ -433,12 +433,14 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
 
         elif self._frame.header.header_check_sequence is None:
             # Frames which are too short are silently discarded, and not counted as a FCS error.
+            # The flag may be the opening flag of the next frame (a truncated frame has no
+            # closing flag of its own), so it starts a new frame.
             _LOGGER.debug(
                 "Found flag sequence. Too short frame (%d bytes). Discard frame: %s",
                 len(self._frame),
                 self._raw_frame_data.hex(),
             )
-            self._goto_hunt_mode()
+            self._start_frame()
 
         elif self._use_octet_stuffing:
             # Control Escape is never in content when using octet stuffing
