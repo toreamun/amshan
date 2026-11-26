@@ -189,9 +189,6 @@ async def test_serial_connection_uses_given_readers(
 FRAME_FCS_7D = frames.aidon_frame_with_last_octet(0x7D)
 
 
-@pytest.mark.xfail(
-    reason="the factories discard a valid frame ending with 0x7D", strict=True
-)
 @pytest.mark.parametrize("transport_kind", ["tcp", "serial"])
 async def test_factory_keeps_valid_frame_ending_with_control_escape(
     meter_server: tuple[str, int, list[bytes]], transport_kind: str

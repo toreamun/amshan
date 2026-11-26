@@ -51,7 +51,7 @@ class FakeSerialTransport(FakeTransport):
 
 
 def hdlc_readers() -> list[Any]:
-    return [HdlcFrameReader(use_octet_stuffing=False, use_abort_sequence=True)]
+    return [HdlcFrameReader(use_octet_stuffing=False)]
 
 
 class TestExponentialBackOff:
