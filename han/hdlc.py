@@ -403,8 +403,9 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
                     "Max frame length reached. Discard frame: %s",
                     self._raw_frame_data.hex(),
                 )
-                self._goto_hunt_mode()
-                frame_complete = False
+                # Flags inside the frame (only without octet stuffing) may have opened
+                # frames that were swallowed, so read it again from the first of them.
+                self._rescan()
 
         return frame_complete
 
@@ -449,6 +450,18 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
         elif self._frame.is_expected_length:
             frame_complete = True
 
+        elif len(self._frame) > cast(int, self._frame.header.frame_length):
+            # Without octet stuffing a frame ends where its length field says. A frame
+            # that has passed its length is broken (typically truncated, so the flag of
+            # the next frame was read as data). It is checked here, at a flag, because
+            # only a flag can start a frame that was swallowed. Read it again from the
+            # first flag inside it, followed by this flag.
+            _LOGGER.debug(
+                "Frame longer than its length field. Discard frame: %s",
+                self._raw_frame_data.hex(),
+            )
+            self._rescan(closing_flag=True)
+
         else:
             self._append_to_frame(self.FLAG_SEQUENCE)
 
@@ -480,6 +493,26 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
         self._unescape_next = False
         self._buffer.trim_buffer_to_flag_or_end()
 
+    def _rescan(self, *, closing_flag: bool = False) -> None:
+        """Discard the current frame and read its octets again from the first flag inside it.
+
+        Without octet stuffing a flag inside a frame is read as data, but it may be the
+        opening flag of a frame that follows a truncated one. The opening flag of the
+        discarded frame is never read again, so every rescan consumes at least one octet
+        and reading always makes progress.
+
+        :param closing_flag: put back the flag that closed the discarded frame as well.
+        """
+        flag_pos = self._raw_frame_data.find(self.FLAG_SEQUENCE)
+        if flag_pos >= 0:
+            again = self._raw_frame_data[flag_pos:]
+            if closing_flag:
+                again.append(self.FLAG_SEQUENCE)
+            self._buffer.unread(bytes(again))
+        elif closing_flag:
+            self._buffer.unread(bytes([self.FLAG_SEQUENCE]))
+        self._goto_hunt_mode()
+
 
 class _ReaderBuffer:
     """Buffer class used by HdlcFrameReader."""
@@ -502,6 +535,10 @@ class _ReaderBuffer:
     def extend(self, data_chunk: bytes) -> None:
         """Add bytes to buffer."""
         self._buffer.extend(data_chunk)
+
+    def unread(self, data: bytes) -> None:
+        """Put bytes back so that they are read next, before the unread bytes."""
+        self._buffer[self._buffer_pos : self._buffer_pos] = data
 
     def trim_buffer_to_current_position(self) -> None:
         """Trim buffer to current position."""
