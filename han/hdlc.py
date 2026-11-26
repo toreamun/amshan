@@ -1,4 +1,32 @@
-"""Use this module to read HDLC frames."""
+"""Use this module to read HDLC frames.
+
+Framing, octet stuffing and the abort sequence
+----------------------------------------------
+HDLC frames start and end with the flag octet 0x7E. In HDLC with *octet stuffing*
+(ISO/IEC 13239, e.g. PPP) the sender replaces 0x7E and 0x7D in the data with 0x7D
+followed by the octet XOR 0x20, so a flag can only appear at frame boundaries.
+In that scheme 0x7D directly followed by a flag can never be data, and it is used
+as the *abort sequence*: the sender aborts a frame by sending 0x7D 0x7E and the
+receiver discards the frame.
+
+The meters this package has been tested with on the Norwegian and Swedish HAN
+port (Aidon, Kaifa and Kamstrup) send HDLC frames *without* octet stuffing: 0x7E
+and 0x7D occur as ordinary data octets, and the frame boundary is given by the
+length in the frame format field. No requirement has been found that rules out
+octet stuffing, and other meters or new firmware may behave differently, so this
+is configurable. ``use_octet_stuffing=False`` is the default because it matches
+the meters seen so far. Use ``use_octet_stuffing=True`` for a meter that escapes
+0x7E and 0x7D in the data.
+
+The abort sequence is part of octet stuffing. It is used when both
+``use_octet_stuffing`` and ``use_abort_sequence`` are true: a frame aborted with
+0x7D 0x7E is then silently discarded. With octet stuffing but without the abort
+sequence, the dangling 0x7D is dropped and the frame goes through the normal
+length and frame check (an aborted frame normally fails them). Without octet
+stuffing there is no abort sequence, because a valid frame may end with 0x7D
+(for example as the last octet of the frame check sequence), so
+``use_abort_sequence`` has no effect.
+"""
 
 from __future__ import annotations
 
@@ -295,9 +323,11 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
         self, use_octet_stuffing: bool = False, use_abort_sequence: bool = False
     ) -> None:
         """
-        Construct HHdlcFrameReader.
+        Construct HdlcFrameReader.
 
-        :param use_octet_stuffing: true to use octet stuffing (0x7D as escape octet)
+        :param use_octet_stuffing: true to use octet stuffing (0x7D as escape octet).
+            The HAN meters seen so far do not use octet stuffing, but this is not
+            guaranteed. See the module documentation.
         :param use_abort_sequence: true to silently discard frames aborted with the
             abort sequence (0x7D followed by a flag). Only used together with octet
             stuffing; without octet stuffing it has no effect and a warning is issued.
