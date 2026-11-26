@@ -173,9 +173,10 @@ class TestHdlcFrameReader:
 
         assert "Got invalid frame" in caplog.text
 
-    def test_abort_sequence_discards_frame(self) -> None:
+    def test_abort_sequence_discards_frame_with_octet_stuffing(self) -> None:
         frame = frames.hdlc_frame(AIDON_INFORMATION)
-        reader = hdlc.HdlcFrameReader(use_octet_stuffing=False, use_abort_sequence=True)
+        assert 0x7D not in frame and 0x7E not in frame[1:-1]  # no stuffing needed
+        reader = hdlc.HdlcFrameReader(use_octet_stuffing=True, use_abort_sequence=True)
 
         assert reader.is_in_hunt_mode
         assert reader.read(frame[:20] + b"\x7d\x7e") == []
