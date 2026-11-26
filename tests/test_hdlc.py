@@ -874,6 +874,21 @@ def test_frames_after_garbage_claiming_max_length_are_recovered() -> None:
     assert _valid(read) == [frame[1:-1]] * 6
 
 
+def test_valid_frame_inside_invalid_frame_is_recovered() -> None:
+    frame = _aidon_frame()
+    # A broken frame whose length field makes the flag that closes `frame` look like
+    # its own closing flag: 19 octets + the flag of `frame` + `frame` without flags.
+    target = 19 + 1 + (len(frame) - 2)
+    broken = frames.hdlc_frame(b"\x00" * (target - 10))
+    assert len(broken) - 2 == target and 0x7E not in broken[1:20]
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(broken[:20] + frame)
+
+    assert len(read) == 2
+    assert not read[0].is_valid  # the broken frame is still reported as invalid
+    assert _valid(read) == [frame[1:-1]]
+
+
 # Edge cases of recovery after a broken frame.
 
 
@@ -917,3 +932,16 @@ def test_frame_with_flag_octets_in_data_after_truncated_frame() -> None:
     read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(frame[:20] + frame * 3)
 
     assert _valid(read) == [frame[1:-1]] * 3
+
+
+def test_frame_with_flag_octets_in_data_inside_invalid_frame_of_expected_length() -> (
+    None
+):
+    frame = _aidon_frame_with_value(0x7E7E7E7E)
+    target = 19 + 1 + (len(frame) - 2)
+    broken = frames.hdlc_frame(b"\x00" * (target - 10))
+    assert 0x7E not in broken[1:20]
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(broken[:20] + frame)
+
+    assert _valid(read) == [frame[1:-1]]
