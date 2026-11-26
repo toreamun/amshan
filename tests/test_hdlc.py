@@ -661,6 +661,16 @@ def test_aborting_flag_opens_next_frame() -> None:
     assert read[0].is_valid
 
 
+def test_repeated_aborts_do_not_grow_the_buffer() -> None:
+    reader = hdlc.HdlcFrameReader(use_octet_stuffing=True, use_abort_sequence=True)
+    fragment = b"\x7e" + bytes.fromhex("a0084102011037") + b"\x7d\x7e"
+
+    for _ in range(1000):
+        reader.read(fragment)
+
+    assert len(reader._buffer._buffer) < 2 * len(fragment)
+
+
 def test_dangling_escape_before_flag_does_not_corrupt_next_frame() -> None:
     """With stuffing but without abort handling, a lone escape before a flag is dropped."""
     frame = _stuff(frames.aidon_frame_with_last_octet(0x7D))

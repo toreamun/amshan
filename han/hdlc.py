@@ -355,6 +355,8 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
                 self._start_frame()
                 self._buffer.trim_buffer_to_current_position()
 
+        # Consumed octets are kept in the current frame, so the buffer can be released.
+        self._buffer.trim_buffer_to_current_position()
         return frames_received
 
     def _read_next(self) -> bool:
