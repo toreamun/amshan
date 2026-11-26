@@ -16,6 +16,23 @@ u32 = st.integers(min_value=0, max_value=2**32 - 1)
 noise_without_flag = st.binary(max_size=40).map(lambda b: b.replace(b"\x7e", b""))
 
 
+# A frame swallowed by a broken one is released at the first flag after the broken frame
+# has passed its length field, so more frames must follow (as they do in a meter stream).
+# 50 frames of 46 octets are more than the largest length field (2047).
+_MORE_FRAMES = (
+    frames.hdlc_frame(
+        frames.data_notification(
+            frames.aidon_list(
+                frames.aidon_register(
+                    "1.0.1.7.0.255", frames.double_long_unsigned(1), 0, 27
+                )
+            )
+        )
+    )
+    * 50
+)
+
+
 @st.composite
 def aidon_hdlc_frame(draw: st.DrawFn) -> bytes:
     registers = [
@@ -147,3 +164,33 @@ def test_aidon_register_scaling_roundtrip(value: int, scaler: int) -> None:
     )
 
     assert decoded["active_power_import"] == pytest.approx(value * 10**scaler)
+
+
+@given(
+    noise=noise_without_flag,
+    items=st.lists(
+        st.tuples(aidon_hdlc_frame(), st.one_of(st.none(), st.integers(1, 200))),
+        min_size=1,
+        max_size=6,
+    ),
+    cuts=st.lists(st.integers(min_value=0), max_size=20),
+)
+def test_hdlc_reader_recovers_after_truncated_frames(
+    noise: bytes, items: list[tuple[bytes, int | None]], cuts: list[int]
+) -> None:
+    # Each item is a complete frame, or (cut is not None) only a truncated prefix of it.
+    # A flag octet in the header (length, address, control, HCS) still discards the
+    # frame; that is an xfail test in test_hdlc.py.
+    assume(all(0x7E not in f[1:9] for f, _ in items))
+    stream = (
+        noise
+        + b"".join(f if c is None else f[: 1 + c % (len(f) - 2)] for f, c in items)
+        + _MORE_FRAMES
+    )
+    expected = [f[1:-1] for f, c in items if c is None]
+    assume(expected)
+
+    read = read_all(hdlc.HdlcFrameReader(use_octet_stuffing=False), split(stream, cuts))
+
+    valid = [f.as_bytes for f in read if f.is_good_ffc and f.is_expected_length]
+    assert valid[: len(expected)] == expected

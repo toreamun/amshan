@@ -824,6 +824,29 @@ def _valid(read: list[hdlc.HdlcFrame]) -> list[bytes]:
     return [f.as_bytes for f in read if f.is_good_ffc and f.is_expected_length]
 
 
+@pytest.mark.parametrize("cut", [5, 9, 20, 30])
+@pytest.mark.parametrize("chunked", [False, True])
+def test_frames_after_truncated_frame_are_recovered(cut: int, chunked: bool) -> None:
+    frame = _aidon_frame()
+    stream = frame[:cut] + frame * 5
+    reader = hdlc.HdlcFrameReader(use_octet_stuffing=False)
+
+    if chunked:
+        read = [f for b in stream for f in reader.read(bytes([b]))]
+    else:
+        read = reader.read(stream)
+
+    assert _valid(read) == [frame[1:-1]] * 5
+
+
+def test_frames_with_shared_flags_after_truncated_frame_are_recovered() -> None:
+    frame = _aidon_frame()
+    shared = frame + frame[1:] * 4  # one flag between frames
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(frame[:20] + shared)
+
+    assert _valid(read) == [frame[1:-1]] * 5
+
+
 @pytest.mark.parametrize("use_octet_stuffing", [False, True])
 def test_too_short_frame_does_not_cost_the_next_frame(
     use_octet_stuffing: bool,
@@ -834,3 +857,63 @@ def test_too_short_frame_does_not_cost_the_next_frame(
     read = reader.read(b"\x7e\xa0\x2a\x41" + frame)
 
     assert _valid(read) == [frame[1:-1]]
+
+
+def test_frames_after_garbage_claiming_max_length_are_recovered() -> None:
+    frame = _aidon_frame()
+    # A complete header (format field claiming 2047 octets, addresses, control, HCS),
+    # so the following frames are swallowed until the maximum length is reached.
+    garbage = b"\x7e\xa7\xff\x41\x08\x83\x13\x00\x00"
+    filler = b"\x00" * (hdlc.HdlcFrame.MAX_FRAME_LENGTH + 10)
+
+    reader = hdlc.HdlcFrameReader(use_octet_stuffing=False)
+
+    assert reader.read(garbage + frame * 5) == []  # swallowed for now
+    read = reader.read(filler + frame)
+
+    assert _valid(read) == [frame[1:-1]] * 6
+
+
+# Edge cases of recovery after a broken frame.
+
+
+def _aidon_frame_with_value(value: int) -> bytes:
+    return frames.hdlc_frame(
+        frames.data_notification(
+            frames.aidon_list(
+                frames.aidon_register(
+                    "1.0.1.7.0.255", frames.double_long_unsigned(value), 0, 27
+                )
+            )
+        )
+    )
+
+
+def test_consecutive_truncated_frames_do_not_cost_following_frames() -> None:
+    frame = _aidon_frame()
+    stream = frame[:20] + frame[:5] + frame[:30] + frame[:9] + frame * 3
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(stream)
+
+    assert _valid(read) == [frame[1:-1]] * 3
+
+
+@pytest.mark.parametrize("length", [0, 1, 2, 3, 8, 9])
+def test_degenerate_length_field_does_not_cost_following_frames(length: int) -> None:
+    frame = _aidon_frame()
+    garbage = (
+        b"\x7e" + (0xA000 | length).to_bytes(2, "big") + b"\x41\x08\x83\x13\x00\x00"
+    )
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(garbage + frame * 2)
+
+    assert _valid(read) == [frame[1:-1]] * 2
+
+
+def test_frame_with_flag_octets_in_data_after_truncated_frame() -> None:
+    frame = _aidon_frame_with_value(0x7E7E7E7E)
+    assert frame[1:-1].count(0x7E) == 4
+
+    read = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(frame[:20] + frame * 3)
+
+    assert _valid(read) == [frame[1:-1]] * 3
