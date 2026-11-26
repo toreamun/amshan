@@ -381,8 +381,20 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
                     len(cast(HdlcFrame, self._frame)),
                     "good" if cast(HdlcFrame, self._frame).is_good_ffc else "bad",
                 )
-                frames_received.append(cast(HdlcFrame, self._frame))
-                self._start_frame()
+                frame = cast(HdlcFrame, self._frame)
+                frames_received.append(frame)
+                if (
+                    not self._use_octet_stuffing
+                    and not frame.is_good_ffc
+                    and self.FLAG_SEQUENCE in self._raw_frame_data
+                ):
+                    # A broken frame that reached its length exactly at a flag may hold
+                    # a complete frame after a truncated one. The broken frame is still
+                    # returned (as invalid), and its octets are read again from the first
+                    # flag inside it, followed by the flag that closed it.
+                    self._rescan(closing_flag=True)
+                else:
+                    self._start_frame()
                 self._buffer.trim_buffer_to_current_position()
 
         # Consumed octets are kept in the current frame, so the buffer can be released.
