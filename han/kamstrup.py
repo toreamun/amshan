@@ -1,6 +1,5 @@
 """Decoding support for Kamstrup meters."""
 
-# pylint: disable=protected-access
 from __future__ import annotations
 
 from datetime import datetime

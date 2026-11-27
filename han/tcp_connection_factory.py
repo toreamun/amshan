@@ -5,14 +5,14 @@ from __future__ import annotations
 from asyncio import (
     AbstractEventLoop,
     BaseProtocol,
-    Queue,  # pylint: disable=unused-import
+    Queue,
     get_event_loop,
 )
 from collections.abc import Sequence
 from typing import cast
 
 from han.common import (
-    MeterMessageBase,  # pylint: disable=unused-import
+    MeterMessageBase,
     MeterReaderBase,
 )
 from han.dlde import ModeDReader

@@ -69,7 +69,7 @@ class Obis:
         self._groups: ObisTupple = obis_tupple
 
     @property
-    def a(self) -> int | None:  # pylint: disable=invalid-name
+    def a(self) -> int | None:
         """
         Get group A.
 
@@ -78,7 +78,7 @@ class Obis:
         return self._groups[0]
 
     @property
-    def b(self) -> int | None:  # pylint: disable=invalid-name
+    def b(self) -> int | None:
         """
         Get group B.
 
@@ -90,7 +90,7 @@ class Obis:
         return self._groups[1]
 
     @property
-    def c(self) -> int:  # pylint: disable=invalid-name
+    def c(self) -> int:
         """
         Get group C.
 
@@ -107,7 +107,7 @@ class Obis:
         return self._groups[2]
 
     @property
-    def d(self) -> int:  # pylint: disable=invalid-name
+    def d(self) -> int:
         """
         Get group D.
 
@@ -118,7 +118,7 @@ class Obis:
         return self._groups[3]
 
     @property
-    def e(self) -> int | None:  # pylint: disable=invalid-name
+    def e(self) -> int | None:
         """
         Get group E.
 
@@ -128,7 +128,7 @@ class Obis:
         return self._groups[4]
 
     @property
-    def f(self) -> int | None:  # pylint: disable=invalid-name
+    def f(self) -> int | None:
         """
         Get group F.
 
