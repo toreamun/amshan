@@ -163,9 +163,9 @@ class Obis:
             return self._groups == other._groups
         try:
             other_obis = Obis.from_string(other)
-            return self._groups == other_obis._groups
         except ValueError:
             return False
+        return self._groups == other_obis._groups
 
     def __hash__(self) -> int:
         """Return instance hash code."""

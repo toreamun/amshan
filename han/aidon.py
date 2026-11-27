@@ -66,15 +66,14 @@ def _normalize_parsed_items(
 
         if isinstance(measure.content, str):
             dictionary[element_name] = measure.content
+        elif hasattr(measure.content, "datetime"):
+            dictionary[element_name] = measure.content.datetime
         else:
-            if hasattr(measure.content, "datetime"):
-                dictionary[element_name] = measure.content.datetime
-            else:
-                dictionary[element_name] = (
-                    measure.content.unscaled_value
-                    if measure.content.unscaled_value == measure.content.value
-                    else float(measure.content.value)
-                )
+            dictionary[element_name] = (
+                measure.content.unscaled_value
+                if measure.content.unscaled_value == measure.content.value
+                else float(measure.content.value)
+            )
 
     return dictionary
 

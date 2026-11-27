@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
-from typing import cast
+from typing import ClassVar, cast
 
 import construct  # type: ignore
 
@@ -19,7 +20,9 @@ class AutoDecoder:
     The successful decoder is stored and tried as the first decoder next time.
     """
 
-    payload_decoder_functions = [
+    payload_decoder_functions: ClassVar[
+        list[tuple[str, Callable[[bytes], dict[str, str | int | float | datetime]]]]
+    ] = [
         ("Aidon_frame", aidon.decode_frame_content),
         ("Kaifa_frame", kaifa.decode_frame_content),
         ("Kamstrup_frame", kamstrup.decode_frame_content),
@@ -63,10 +66,11 @@ class AutoDecoder:
             _, decoder = AutoDecoder.payload_decoder_functions[index]
             try:
                 decoded = decoder(payload)
-                self.__previous_success = index
-                return decoded
             except (construct.ConstructError, ValueError):
                 pass
+            else:
+                self.__previous_success = index
+                return decoded
 
         return None
 
@@ -97,9 +101,10 @@ class AutoDecoder:
                     if name == "P1" and isinstance(message, dlde.DataReadout)
                     else decoder(message.payload)
                 )
-                self.__previous_success = index
-                return decoded
             except (construct.ConstructError, ValueError):
                 pass
+            else:
+                self.__previous_success = index
+                return decoded
 
         return None

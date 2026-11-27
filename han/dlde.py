@@ -153,8 +153,6 @@ class DataReadout(MeterMessageBase):
             )
 
         self._data_pos = self._readout.find(LF_CHARACTER) + 1
-        # if self._data_pos < 1:
-        #     raise ValueError("Data not found.")
 
         self._calculated_crc = self._calculate_crc16()
         self._ident: Ident | None = None
@@ -172,14 +170,13 @@ class DataReadout(MeterMessageBase):
     def is_valid(self) -> bool:
         """Return True when valitation (checksum etc.) is successfull."""
         expected_checksum = self.expected_checksum
-        if expected_checksum:
-            if self._calculated_crc != expected_checksum:
-                _LOGGER.debug(
-                    "Expected cheksum is 0x%x, but calculated is 0x%x",
-                    expected_checksum,
-                    self._calculated_crc,
-                )
-                return False
+        if expected_checksum and self._calculated_crc != expected_checksum:
+            _LOGGER.debug(
+                "Expected cheksum is 0x%x, but calculated is 0x%x",
+                expected_checksum,
+                self._calculated_crc,
+            )
+            return False
         try:
             self._ident = self.identification_line
         except ValueError:
@@ -398,11 +395,10 @@ def _decode_parsed(
                 value = float(item.values[0].value)
             elif unit in ("kw", "kwh", "kvar", "kvarh"):
                 value = int(float(item.values[0].value) * 1000)
+            elif obis.to_group_cdr_str() == "1.0.0":
+                value = _parse_p1_datetime(item.values[0].value)
             else:
-                if obis.to_group_cdr_str() == "1.0.0":
-                    value = _parse_p1_datetime(item.values[0].value)
-                else:
-                    value = item.values[0].value
+                value = item.values[0].value
 
             decoded[element_name] = value
 

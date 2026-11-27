@@ -154,7 +154,7 @@ def _normalize_parsed_value_elements(
         if element_name == obis_map.FIELD_METER_DATETIME:
             dictionary[element_name] = measure.value.datetime
         else:
-            scale = _FIELD_SCALING.get(element_name, None)
+            scale = _FIELD_SCALING.get(element_name)
             if scale:
                 scaled_value = round(measure.value * (10**scale), abs(scale))
                 dictionary[element_name] = scaled_value
@@ -186,7 +186,7 @@ def _normalize_parsed_obis_elements(
         if hasattr(measure.value, "datetime"):
             dictionary[element_name] = measure.value.datetime
         else:
-            scale = _FIELD_SCALING.get(element_name, None)
+            scale = _FIELD_SCALING.get(element_name)
             if scale:
                 scaled_value = round(measure.value * (10**scale), abs(scale))
                 dictionary[element_name] = scaled_value
