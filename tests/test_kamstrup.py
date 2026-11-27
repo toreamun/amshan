@@ -886,7 +886,7 @@ def kamstrup_current(code: str, value: int) -> bytes:
             "6851131BN243101040",
             1.234,
             marks=pytest.mark.xfail(
-                reason="F1: Kamstrup CT meters (685) are not detected", strict=True
+                reason="Kamstrup CT meters (685) are not detected", strict=True
             ),
         ),
     ],

@@ -561,7 +561,7 @@ def test_long_hdlc_frame_with_format_a1() -> None:
 
 
 @pytest.mark.xfail(
-    reason="F16: flag octet in the HDLC header discards the frame", strict=True
+    reason="flag octet in the HDLC header discards the frame", strict=True
 )
 def test_frame_with_flag_octet_as_length() -> None:
     information = frames.data_notification(frames.aidon_list())

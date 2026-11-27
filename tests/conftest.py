@@ -19,7 +19,8 @@ settings.load_profile("amshan")
 async def cancel_leftover_tasks() -> AsyncIterator[None]:
     """Cancel tasks a test leaves running, so they do not leak into other tests.
 
-    ConnectionManager does not cancel its connect task on close (F13).
+    Known bug: ConnectionManager does not cancel its connect task on close; xfail tested in
+    test_meter_connection.py::test_connection_manager_close_stops_connect_task.
     """
     before = asyncio.all_tasks()
     yield

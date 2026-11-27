@@ -70,17 +70,17 @@ class TestToTupple:
         pytest.param(
             (None, 0, 1, 8, 1, None),
             "0:1.8.1",
-            marks=pytest.mark.xfail(reason="F8: group B=0 is dropped", strict=True),
+            marks=pytest.mark.xfail(reason="group B=0 is dropped", strict=True),
         ),
         pytest.param(
             (1, 1, 1, 8, 1, None),
             "1-1:1.8.1",
-            marks=pytest.mark.xfail(reason="F8: group A is repeated", strict=True),
+            marks=pytest.mark.xfail(reason="group A is repeated", strict=True),
         ),
         pytest.param(
             (None, None, 1, 8, 0, None),
             "1.8.0",
-            marks=pytest.mark.xfail(reason="F8: group E=0 is dropped", strict=True),
+            marks=pytest.mark.xfail(reason="group E=0 is dropped", strict=True),
         ),
     ],
 )
@@ -89,7 +89,7 @@ def test_obis_reduced_string(groups: tuple[int | None, ...], expected: str) -> N
 
 
 @pytest.mark.xfail(
-    reason="F9: str(Obis) is not the full code when a group is 0", strict=True
+    reason="str(Obis) is not the full code when a group is 0", strict=True
 )
 def test_obis_str_with_zero_group() -> None:
     assert str(Obis.from_string("1.0.1.8.0.255")) == "1.0.1.8.0.255"

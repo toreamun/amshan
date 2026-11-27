@@ -495,7 +495,7 @@ class TestDecode:
         assert decoded == expected
 
 
-@pytest.mark.xfail(reason="F2: byte 0x80 in P1 data is not rejected", strict=True)
+@pytest.mark.xfail(reason="byte 0x80 in P1 data is not rejected", strict=True)
 def test_p1_readout_with_non_ascii_byte_is_invalid() -> None:
     """Data bytes >= 0x80 are invalid in a P1 readout, even with a correct CRC."""
     body = b"/ABC5TEST\r\n\r\n1-0:1.7.0(01.000*kW)\x80\r\n!"
@@ -505,7 +505,7 @@ def test_p1_readout_with_non_ascii_byte_is_invalid() -> None:
 
 
 @pytest.mark.xfail(
-    reason="F12: DataReadout.is_valid raises on an invalid identification line",
+    reason="DataReadout.is_valid raises on an invalid identification line",
     strict=True,
 )
 def test_p1_readout_with_invalid_identification_line_is_invalid() -> None:
@@ -548,7 +548,7 @@ def test_reader_joins_lines_split_between_chunks() -> None:
 
 
 @pytest.mark.xfail(
-    reason="F14: reader does not resync on a new identification line", strict=True
+    reason="reader does not resync on a new identification line", strict=True
 )
 def test_reader_resyncs_after_lost_end_line() -> None:
     reader = ModeDReader()
@@ -559,7 +559,7 @@ def test_reader_resyncs_after_lost_end_line() -> None:
     assert [r.as_bytes for r in readouts if r.is_valid] == [p1_power(2), p1_power(3)]
 
 
-@pytest.mark.xfail(reason="F14: stale data is kept after buffer overflow", strict=True)
+@pytest.mark.xfail(reason="stale data is kept after buffer overflow", strict=True)
 def test_reader_recovers_after_buffer_overflow() -> None:
     reader = ModeDReader()
     reader.read(IDENT + CRLF + LINE_WITH_UNIT * 400)
@@ -579,7 +579,7 @@ def test_decode_ignores_lines_with_multiple_values() -> None:
 
 
 @pytest.mark.xfail(
-    reason="F17: reader raises on non-ASCII in a line starting with '/'", strict=True
+    reason="reader raises on non-ASCII in a line starting with '/'", strict=True
 )
 def test_reader_skips_non_ascii_start_line() -> None:
     reader = ModeDReader()
@@ -607,7 +607,7 @@ sys.exit(3 if worker.is_alive() else 0)
 
 
 @pytest.mark.xfail(
-    reason="F18: P1 parser loops forever on text after ')' or a missing ')'",
+    reason="P1 parser loops forever on text after ')' or a missing ')'",
     strict=True,
     raises=AssertionError,
 )
