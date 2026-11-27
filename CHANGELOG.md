@@ -14,7 +14,7 @@ Requires Python 3.12 or newer. Tested on Python 3.12–3.14 and a pre-release of
 - `HdlcFrameReader`: the abort sequence is only recognised together with octet stuffing. `use_abort_sequence=True` without `use_octet_stuffing` has no effect and gives a `UserWarning` ([#15](https://github.com/toreamun/amshan/pull/15)).
 - `HdlcFrameReader`: a broken frame that ends exactly at its length is returned as invalid, and its octets are then read again, so the same octets can give one invalid and one valid frame ([#16](https://github.com/toreamun/amshan/pull/16)).
 - Packaging with `pyproject.toml`, CI with ruff and mypy, and publishing with PyPI Trusted Publishing ([#12](https://github.com/toreamun/amshan/pull/12)).
-- The package version is taken from the git tag ([#17](https://github.com/toreamun/amshan/pull/17)).
+- The package version is taken from the git tag ([#18](https://github.com/toreamun/amshan/pull/18)).
 
 ### Tests
 
