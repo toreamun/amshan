@@ -79,15 +79,12 @@ def _normalize_parsed_items(
 
         if element_name == obis_map.FIELD_METER_DATETIME:
             dictionary[element_name] = measure.value.datetime
+        elif isinstance(measure.value, int) and (
+            scale := field_scaling.get(measure.obis)
+        ):
+            dictionary[element_name] = measure.value * (10**scale)
         else:
-            if isinstance(measure.value, int):
-                scale = field_scaling.get(measure.obis, None)
-                if scale:
-                    dictionary[element_name] = measure.value * (10**scale)
-                else:
-                    dictionary[element_name] = measure.value
-            else:
-                dictionary[element_name] = measure.value
+            dictionary[element_name] = measure.value
 
     return dictionary
 

@@ -68,10 +68,12 @@ class HdlcFrameHeader:
         if self._control_position is None and len(self._frame) > 3:
             self._control_position = self._get_control_field_position()
 
-        if self._control_position is not None:
-            if self._is_header_good is None:
-                if len(self._frame) == self._control_position + 3:
-                    self._is_header_good = self._frame.is_good_ffc
+        if (
+            self._control_position is not None
+            and self._is_header_good is None
+            and len(self._frame) == self._control_position + 3
+        ):
+            self._is_header_good = self._frame.is_good_ffc
 
     @property
     def frame_format(self) -> int | None:
@@ -302,12 +304,14 @@ class HdlcFrame(MeterMessageBase):
     @property
     def frame_check_sequence(self) -> int | None:
         """Frame check sequence if complete frame has been read. None or invalid number if not."""
-        if self._header.information_position is not None:
-            if len(self._frame_data) >= self._header.information_position:
-                return (
-                    self._frame_data[len(self._frame_data) - 2] << 8
-                    | self._frame_data[len(self._frame_data) - 1]
-                )
+        if (
+            self._header.information_position is not None
+            and len(self._frame_data) >= self._header.information_position
+        ):
+            return (
+                self._frame_data[len(self._frame_data) - 2] << 8
+                | self._frame_data[len(self._frame_data) - 1]
+            )
         return None
 
     @property
@@ -497,11 +501,10 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
                 self._unescape_next = False
                 unescaped = current ^ 0x20
                 self._frame.append(unescaped)
+            elif current == HdlcFrameReader.CONTROL_ESCAPE:
+                self._unescape_next = True
             else:
-                if current == HdlcFrameReader.CONTROL_ESCAPE:
-                    self._unescape_next = True
-                else:
-                    self._frame.append(current)
+                self._frame.append(current)
         else:
             self._frame.append(current)
 

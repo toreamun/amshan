@@ -7,7 +7,8 @@ def _compute_fcs_16_crc_table() -> list[int]:
     """Generate a FCS-16 table."""
     polynomial = 0x8408  # The FCS-16 generator polynomial: x**0 + x**5 + x**12 + x**16.
     crc_table = [] * 256
-    for byte in range(256):
+    for value in range(256):
+        byte = value
         crc = 0
         for _ in range(8):
             if (byte ^ crc) & 1:
@@ -53,7 +54,7 @@ class FastFrameCheckSequence16:
         when the FCS operation passes over the complemented FCS.  A good
         frame is indicated by this "good FCS" value
         """
-        return self.GOOD_FCS_16 == self._crc_value
+        return self._crc_value == self.GOOD_FCS_16
 
     @property
     def checksum(self) -> int:

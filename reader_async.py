@@ -33,9 +33,8 @@ def _get_arg_parser() -> argparse.ArgumentParser:
         host_and_port = host_port.split(":")
         if len(host_and_port) == 2:
             return host_and_port[0], host_and_port[1]
-        else:
-            msg = f"Not a valid host and port: '{host_port}'."
-            raise argparse.ArgumentTypeError(msg)
+        msg = f"Not a valid host and port: '{host_port}'."
+        raise argparse.ArgumentTypeError(msg)
 
     parser = argparse.ArgumentParser("read HAN port")
 

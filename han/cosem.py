@@ -53,14 +53,14 @@ OctedStringText = construct.FocusedSeq(
 
 ObisCode = construct.ExprAdapter(
     construct.Int8ub[6],
-    decoder=lambda obj, ctx: ".".join(f"{b}" for b in obj),
-    encoder=lambda obj, ctx: [int(part) for part in obj.split(".")],
+    decoder=lambda obj, _ctx: ".".join(f"{b}" for b in obj),
+    encoder=lambda obj, _ctx: [int(part) for part in obj.split(".")],
 )
 
 OptionalDateTimeByte = construct.ExprAdapter(
     construct.Int8ub,
-    decoder=lambda obj, ctx: obj if obj != 0xFF else None,
-    encoder=lambda obj, ctx: obj if obj is not None else 0xFF,
+    decoder=lambda obj, _ctx: obj if obj != 0xFF else None,
+    encoder=lambda obj, _ctx: obj if obj is not None else 0xFF,
 )
 
 # See COSEM blue Book section 4.1.6.1 Date and time formats
@@ -77,8 +77,8 @@ DateTime = construct.Struct(
     "deviation"
     / construct.ExprAdapter(
         construct.Int16sb,
-        decoder=lambda obj, ctx: obj if obj != -0x8000 else None,
-        encoder=lambda obj, ctx: obj if obj is not None else -0x8000,
+        decoder=lambda obj, _ctx: obj if obj != -0x8000 else None,
+        encoder=lambda obj, _ctx: obj if obj is not None else -0x8000,
     )
     * ("Range -720...+720 in minutes of local time to UTC. 0x8000 = not specified"),
     "clock_status_byte" / construct.Peek(OptionalDateTimeByte),
