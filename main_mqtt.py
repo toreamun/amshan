@@ -7,6 +7,7 @@ import logging
 import signal
 import sys
 import time
+from pathlib import Path
 
 import paho.mqtt.client as mqtt
 import serial
@@ -60,12 +61,12 @@ def _json_converter(o):
     return None
 
 
-def _signal_handler(signal_number, stack_frame):
+def _signal_handler(signal_number, _stack_frame):
     LOG.info(
         "%s signal received. Exiting gracefully.", signal.Signals(signal_number).name
     )
     _close_resources()
-    exit(0)
+    sys.exit(0)
 
 
 def _close_resources() -> None:
@@ -115,10 +116,11 @@ if __name__ == "__main__":
 
     try:
         if args.dumpfile:
-            logfile = open(args.dumpfile, "w+")
+            # Closed in _close_resources
+            logfile = Path(args.dumpfile).open("w+")  # noqa: SIM115
 
         decoder = autodecoder.AutoDecoder()
-        frame_reader = hdlc.HdlcFrameReader(False)
+        frame_reader = hdlc.HdlcFrameReader(use_octet_stuffing=False)
 
         mqtt_client = mqtt.Client()
         mqtt_client.enable_logger(LOG)
