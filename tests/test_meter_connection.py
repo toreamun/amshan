@@ -365,7 +365,7 @@ def pending_try_connect_tasks() -> list[asyncio.Task]:
 
 
 @pytest.mark.xfail(
-    reason="F13: ConnectionManager leaves its connect task running after close()",
+    reason="ConnectionManager leaves its connect task running after close()",
     strict=True,
     raises=AssertionError,
 )

@@ -726,7 +726,7 @@ class TestDecodeAidon:
 
 
 @pytest.mark.xfail(
-    reason="F3: COSEM double-long (signed 32 bit) is not supported", strict=True
+    reason="COSEM double-long (signed 32 bit) is not supported", strict=True
 )
 def test_cosem_double_long_negative_value() -> None:
     """A signed 32 bit register value decodes to a negative number."""

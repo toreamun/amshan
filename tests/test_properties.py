@@ -72,7 +72,8 @@ def read_all(reader: hdlc.HdlcFrameReader | dlde.ModeDReader, chunks: list[bytes
 def test_hdlc_reader_is_independent_of_chunking(
     noise: bytes, stream_frames: list[bytes], cuts: list[int]
 ) -> None:
-    # F16: a flag octet in the header (length, address, control, HCS) is xfail tested in test_hdlc.py
+    # Known bug: a flag octet in the header (length, address, control, HCS) discards the frame;
+    # xfail tested in test_hdlc.py::test_frame_with_flag_octet_as_length.
     assume(all(0x7E not in f[1:9] for f in stream_frames))
     stream = noise + b"".join(stream_frames)
 
@@ -121,7 +122,8 @@ p1_noise = st.lists(
 
 @given(data=p1_noise, cuts=st.lists(st.integers(min_value=0), max_size=10))
 def test_p1_reader_never_raises_on_noise(data: bytes, cuts: list[int]) -> None:
-    # F17: non-ASCII on a line starting with "/" (xfail tested in test_dlde.py)
+    # Known bug: non-ASCII on a line starting with "/" makes the reader raise;
+    # xfail tested in test_dlde.py::test_reader_skips_non_ascii_start_line.
     assume(not re.search(rb"/[^\n]*[\x80-\xff]", data))
 
     read_all(dlde.ModeDReader(), split(data, cuts))
@@ -129,7 +131,8 @@ def test_p1_reader_never_raises_on_noise(data: bytes, cuts: list[int]) -> None:
 
 @given(data=st.binary(max_size=600))
 def test_autodecoder_never_raises_on_noise(data: bytes) -> None:
-    # F18: ASCII with "(" can make the P1 parser loop forever (xfail tested in test_dlde.py)
+    # Known bug: ASCII with "(" can make the P1 parser loop forever;
+    # xfail tested in test_dlde.py::test_parse_line_with_trailing_text_terminates.
     assume(not (data.isascii() and b"(" in data))
     decoded = AutoDecoder().decode_message_payload(data)
 

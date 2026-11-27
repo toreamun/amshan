@@ -111,9 +111,7 @@ def test_decode_message():
     assert decoded
 
 
-@pytest.mark.xfail(
-    reason="F15: trailing bytes after the message are ignored", strict=True
-)
+@pytest.mark.xfail(reason="trailing bytes after the message are ignored", strict=True)
 def test_payload_with_trailing_garbage_is_not_decoded() -> None:
     body = frames.aidon_list(
         frames.aidon_register("1.0.1.7.0.255", frames.double_long_unsigned(42), 0, 27)
@@ -122,9 +120,7 @@ def test_payload_with_trailing_garbage_is_not_decoded() -> None:
     assert AutoDecoder().decode_message_payload(body + b"\xde\xad\xbe\xef") is None
 
 
-@pytest.mark.xfail(
-    reason="F15: truncated Aidon message is decoded as Kaifa", strict=True
-)
+@pytest.mark.xfail(reason="truncated Aidon message is decoded as Kaifa", strict=True)
 def test_truncated_aidon_message_is_not_decoded() -> None:
     # list version element only, from a public issue
     fragment = bytes.fromhex("020209060101000281ff0a0b4149444f4e5f5630303031")
