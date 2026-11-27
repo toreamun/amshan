@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=77"]
+requires = ["setuptools>=77", "setuptools-scm>=10"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "amshan"
-version = "2.1.1"
+dynamic = ["version"]
 description = "Decode P1 and MBUS (Meter Bus) DLMS data. Special support for norwegian and swedish meters."
 readme = "README.md"
 license = "MIT"
@@ -63,6 +63,10 @@ packages = ["han"]
 
 [tool.setuptools.package-data]
 han = ["py.typed"]
+
+# This table enables setuptools-scm; it has no settings. The version is the latest git
+# tag (e.g. 2.2.0), or a development version after it.
+[tool.setuptools_scm]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
