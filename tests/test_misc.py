@@ -32,6 +32,9 @@ class TestDlmsMessage:
         assert message.as_bytes == AIDON_INFORMATION
         assert message.payload == AIDON_INFORMATION
 
+    def test_minimum_length_is_valid(self) -> None:
+        assert DlmsMessage(b"\x00\x01\x02\x03\x04").is_valid
+
     def test_too_short_is_invalid(self) -> None:
         assert not DlmsMessage(b"\x00\x01\x02\x03").is_valid
 

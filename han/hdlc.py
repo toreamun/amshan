@@ -49,6 +49,9 @@ from han.common import MeterMessageBase, MeterMessageType, MeterReaderBase
 
 _LOGGER = logging.getLogger(__name__)
 
+# The frame format field is the first two octets after the opening flag.
+FRAME_FORMAT_LENGTH = 2
+
 
 class HdlcFrameHeader:
     """The start (header) of an HdlcFrame."""
@@ -65,7 +68,13 @@ class HdlcFrameHeader:
 
     def update(self) -> None:
         """Update fields when more frame data has been read. Used by parent HdlcFrame."""
-        if self._control_position is None and len(self._frame) > 3:
+        # The control field position can be known once the frame format and at least one
+        # octet of each address are read (2 + 1 + 1 octets); it stays None while an
+        # extended address is incomplete.
+        if (
+            self._control_position is None
+            and len(self._frame) > FRAME_FORMAT_LENGTH + 1
+        ):
             self._control_position = self._get_control_field_position()
 
         if (
@@ -80,7 +89,7 @@ class HdlcFrameHeader:
         """Return the value of frame format if the value has been read."""
         # The length of the frame format field is two bytes. It consists of three sub-fields referred to as the Format
         # type sub-field (4 bit), the Segmentation bit (S, 1 bit) and the frame length sub-field (11 bit).
-        if len(self._frame) >= 2:
+        if len(self._frame) >= FRAME_FORMAT_LENGTH:
             return self._frame.as_bytes[0] << 8 | self._frame.as_bytes[1]
         return None
 
@@ -120,8 +129,8 @@ class HdlcFrameHeader:
 
         The client address shall always be expressed on one byte.
         """
-        if len(self._frame) >= 2:
-            return self._get_address(2)
+        if len(self._frame) >= FRAME_FORMAT_LENGTH:
+            return self._get_address(FRAME_FORMAT_LENGTH)
         return None
 
     @property
@@ -136,7 +145,7 @@ class HdlcFrameHeader:
         """
         destination_adr = self.destination_address
         if destination_adr is not None:
-            return self._get_address(2 + len(destination_adr))
+            return self._get_address(FRAME_FORMAT_LENGTH + len(destination_adr))
         return None
 
     @property
@@ -218,7 +227,7 @@ class HdlcFrameHeader:
         if destination_adr is not None:
             source_adr = self.source_address
             if source_adr is not None:
-                return 2 + len(destination_adr) + len(source_adr)
+                return FRAME_FORMAT_LENGTH + len(destination_adr) + len(source_adr)
         return None
 
 

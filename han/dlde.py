@@ -18,6 +18,9 @@ _LOGGER = logging.getLogger(__name__)
 START_CHARACTER_HEX = 0x2F
 END_CHARACTER_HEX = 0x21
 LF_CHARACTER = 0x0A
+# Above this buffer length, the reader enters hunt mode and trims the buffer to the
+# next start character.
+MAX_BUFFER_LENGTH = 8191
 
 
 _ident_pattern: Pattern = regex_compile(
@@ -38,12 +41,13 @@ class DataSetValue:
     @classmethod
     def parse(cls, value: str) -> DataSetValue:
         """Parse from string."""
-        pair = value.split("*")
-        if len(pair) > 2:
-            raise ValueError("Found multiple value unit separators (*).")
-        if len(pair) == 2:
-            return DataSetValue(pair[0], pair[1])
-        return cls(pair[0], None)
+        match value.split("*"):
+            case [single]:
+                return cls(single, None)
+            case [number, unit]:
+                return cls(number, unit)
+            case _:
+                raise ValueError("Found multiple value unit separators (*).")
 
 
 @dataclass
@@ -271,7 +275,7 @@ class ModeDReader(MeterReaderBase[DataReadout]):
         """
         readouts_received: list[DataReadout] = []
 
-        if len(self._buffer) > 8191:
+        if len(self._buffer) > MAX_BUFFER_LENGTH:
             self._is_int_hunt_mode = True
             self._buffer.trim_buffer_to_flag_or_end()
 
