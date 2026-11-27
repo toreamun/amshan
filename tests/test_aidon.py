@@ -3,7 +3,7 @@
 # pylint: disable = no-self-use
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from pprint import pprint
 
@@ -551,9 +551,7 @@ class TestParseAidon:
         assert isinstance(date_time, construct.Container)
         assert date_time.obis == "0.0.1.0.0.255"
         assert date_time.content_type == "octet_string"
-        assert date_time.content.datetime == datetime(
-            2020, 1, 21, 16, 0, 0, tzinfo=timezone.utc
-        )
+        assert date_time.content.datetime == datetime(2020, 1, 21, 16, 0, 0, tzinfo=UTC)
         assert_obis_element(
             parsed_notification_body.list_items[13],
             "1.0.1.8.0.255",
@@ -710,9 +708,7 @@ class TestDecodeAidon:
         assert decoded["current_l1"] == 1.3
         assert decoded["current_l3"] == 0.9
         assert decoded["list_ver_id"] == "AIDON_V0001"
-        assert decoded["meter_datetime"] == datetime(
-            2020, 1, 21, 16, 0, tzinfo=timezone.utc
-        )
+        assert decoded["meter_datetime"] == datetime(2020, 1, 21, 16, 0, tzinfo=UTC)
         assert decoded["meter_id"] == "7359992892587665"
         assert decoded["meter_manufacturer"] == "Aidon"
         assert decoded["meter_type"] == "6525"

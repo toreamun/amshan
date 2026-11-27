@@ -19,7 +19,8 @@ from asyncio import (
     sleep,
     wait,
 )
-from typing import Awaitable, Callable, ClassVar, Sequence, Tuple
+from collections.abc import Awaitable, Callable, Sequence
+from typing import ClassVar
 
 from han.common import MeterMessageBase, MeterReaderBase
 
@@ -294,7 +295,7 @@ class SmartMeterMessagePayloadProtocol(SmartMeterBaseProtocol):
             )
 
 
-MeterTransportProtocol = Tuple[BaseTransport, SmartMeterBaseProtocol]
+MeterTransportProtocol = tuple[BaseTransport, SmartMeterBaseProtocol]
 
 AsyncConnectionFactory = Callable[[], Awaitable[MeterTransportProtocol]]
 
