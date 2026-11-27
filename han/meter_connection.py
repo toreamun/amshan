@@ -165,7 +165,7 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
             try:
                 self._transport.close()
                 self._transport = None
-            except Exception as ex:  # pylint: disable=broad-except
+            except Exception as ex:  # noqa: BLE001 - a failing close must not stop done from being set
                 _LOGGER.warning(
                     "%s: Error when closing transport %s for %s connection: %s",
                     self._instance_id(),
@@ -382,7 +382,7 @@ class ConnectionManager:
         _LOGGER.info("Connect loop done")
 
     def _update_connection_lost_circuit_breaker(self) -> None:
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.utcnow()  # noqa: DTZ003 - only measures elapsed time
         if self._connection_lost_last_time:
             delta = now - self._connection_lost_last_time
             self._connection_lost_sleep_before_reconnect = (
@@ -424,7 +424,7 @@ class ConnectionManager:
             except CancelledError:
                 _LOGGER.debug("The operation was cancelled")
                 raise
-            except Exception as ex:  # pylint: disable=broad-except
+            except Exception as ex:  # noqa: BLE001 - keep the connection loop alive
                 self._connection = None
                 self.back_off_connect_error.failure()
                 _LOGGER.warning("Error connecting: %s", ex)
