@@ -73,7 +73,7 @@ class DlmsMessage(MeterMessageBase):
         return self._binary
 
 
-TMessage = TypeVar("TMessage", bound=MeterMessageBase)  # pylint: disable=invalid-name
+TMessage = TypeVar("TMessage", bound=MeterMessageBase)
 
 
 class MeterReaderBase(ABC, Generic[TMessage]):  # noqa: UP046 - keep the module-level TypeVar TMessage, which callers may import

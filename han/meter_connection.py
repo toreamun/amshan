@@ -301,7 +301,6 @@ AsyncConnectionFactory = Callable[[], Awaitable[MeterTransportProtocol]]
 
 
 class ConnectionManager:
-    # pylint: disable=too-many-instance-attributes
     """
     Maintain connection and reconnect if connection is lost.
 

@@ -219,7 +219,7 @@ class TestDataReadout:
         assert readout.identification_line.identification == "E360"
         assert readout.end_line == "!A077"
         assert readout.expected_checksum == 0xA077
-        assert readout._calculated_crc == 0xA077  # pylint: disable=protected-access
+        assert readout._calculated_crc == 0xA077
         assert readout.is_valid
 
     def test_example_b(self):
@@ -240,7 +240,7 @@ class TestDataReadout:
         assert readout.identification_line.identification == "53833635_A"
         assert readout.end_line == "!80FF"
         assert readout.expected_checksum == 0x80FF
-        assert readout._calculated_crc == 0x80FF  # pylint: disable=protected-access
+        assert readout._calculated_crc == 0x80FF
         assert readout.is_valid
 
     def test_example_d_landisgyr_360(self):
@@ -252,7 +252,7 @@ class TestDataReadout:
         assert readout.identification_line.identification == "E360"
         assert readout.end_line == "!8012"
         assert readout.expected_checksum == 0x8012
-        assert readout._calculated_crc == 0x8012  # pylint: disable=protected-access
+        assert readout._calculated_crc == 0x8012
         assert readout.is_valid
 
     def test_example_kamstrup(self):
@@ -266,7 +266,7 @@ class TestDataReadout:
         assert readout.identification_line.identification is None
         assert readout.end_line == "!92F5"
         assert readout.expected_checksum == 0x92F5
-        assert readout._calculated_crc == 0x92F5  # pylint: disable=protected-access
+        assert readout._calculated_crc == 0x92F5
         assert readout.is_valid
 
 
