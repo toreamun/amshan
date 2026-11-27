@@ -103,7 +103,7 @@ def _measure_received(frame: bytes) -> None:
         LOG.error("Could not decode frame content: %s", frame.hex())
 
 
-async def _process_frames(queue: "Queue[bytes]") -> None:
+async def _process_frames(queue: Queue[bytes]) -> None:
     while True:
         frame = await queue.get()
         _measure_received(frame)

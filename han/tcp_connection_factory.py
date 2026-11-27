@@ -8,7 +8,8 @@ from asyncio import (
     Queue,  # pylint: disable=unused-import
     get_event_loop,
 )
-from typing import Sequence, cast
+from collections.abc import Sequence
+from typing import cast
 
 from han.common import (
     MeterMessageBase,  # pylint: disable=unused-import
@@ -24,7 +25,7 @@ from han.meter_connection import (
 
 
 async def create_tcp_message_connection(
-    queue: "Queue[MeterMessageBase]",
+    queue: Queue[MeterMessageBase],
     loop: AbstractEventLoop | None,
     readers: Sequence[MeterReaderBase] | None,
     *args,
@@ -63,7 +64,7 @@ async def create_tcp_message_connection(
 
 
 async def create_tcp_message_payload_connection(
-    queue: "Queue[bytes]",
+    queue: Queue[bytes],
     loop: AbstractEventLoop | None,
     readers: Sequence[MeterReaderBase] | None,
     *args,

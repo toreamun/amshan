@@ -16,14 +16,12 @@ NOTIFICATION_BODY_NO_LIST_1 = "0201" + "06000016dc"
 
 no_list_1 = bytes.fromhex(
     (
-        (
-            "e6e700"  # LLC: dsap, ssap, control
-            "0f"  # APDU: tag
-            "40000000"  # APDU: LongInvokeIdAndPriority
-            "090c07e3020401173416ff800000"  # APDU: DateTime
-        )
-        + NOTIFICATION_BODY_NO_LIST_1
+        "e6e700"  # LLC: dsap, ssap, control
+        "0f"  # APDU: tag
+        "40000000"  # APDU: LongInvokeIdAndPriority
+        "090c07e3020401173416ff800000"  # APDU: DateTime
     )
+    + NOTIFICATION_BODY_NO_LIST_1
 )
 
 NOTIFICATION_BODY_NO_LIST_2 = (
