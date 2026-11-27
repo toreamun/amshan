@@ -8,7 +8,7 @@ import json
 import logging
 import signal
 import sys
-from asyncio import Queue, create_task, get_event_loop, run
+from asyncio import Queue, Task, create_task, get_event_loop, run
 from typing import Any
 
 from han import autodecoder
@@ -30,11 +30,12 @@ LOG = logging.getLogger("")
 
 def _get_arg_parser() -> argparse.ArgumentParser:
     def valid_host_port(host_port: str) -> tuple[str, str]:
-        host_and_port = host_port.split(":")
-        if len(host_and_port) == 2:
-            return host_and_port[0], host_and_port[1]
-        msg = f"Not a valid host and port: '{host_port}'."
-        raise argparse.ArgumentTypeError(msg)
+        match host_port.split(":"):
+            case [host, port]:
+                return host, port
+            case _:
+                msg = f"Not a valid host and port: '{host_port}'."
+                raise argparse.ArgumentTypeError(msg)
 
     parser = argparse.ArgumentParser("read HAN port")
 
@@ -108,6 +109,11 @@ async def _process_frames(queue: Queue[bytes]) -> None:
         _measure_received(frame)
 
 
+def _log_processing_failure(task: Task[None]) -> None:
+    if not task.cancelled() and (ex := task.exception()):
+        LOG.error("Frame processing stopped", exc_info=ex)
+
+
 async def main() -> None:
     """Start reading."""
     args = _get_arg_parser().parse_args()
@@ -115,7 +121,8 @@ async def main() -> None:
 
     queue: Queue[bytes] = Queue()
 
-    create_task(_process_frames(queue))
+    processing = create_task(_process_frames(queue))
+    processing.add_done_callback(_log_processing_failure)
 
     async def tcp_connection_factory() -> MeterTransportProtocol:
         host, port = args.hostandport
@@ -148,6 +155,7 @@ async def main() -> None:
         loop.add_signal_handler(signal.SIGINT, transport.close)
         await protocol.done
 
+    processing.cancel()
     LOG.info("Done...")
 
 
