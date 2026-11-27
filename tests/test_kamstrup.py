@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from pprint import pprint
 
 import construct
 import pytest
@@ -209,13 +208,11 @@ class TestParseKamstrup:
         """Parse SE list."""
         if llc_pdu is not None:
             parsed = kamstrup.LlcPdu.parse(llc_pdu)
-            print(parsed)
             assert_apdu(parsed, 0, datetime(2022, 1, 24, 18, 58, 50))
             parsed_notification_body = parsed.information.notification_body
 
         if notification_body is not None:
             parsed = kamstrup.NotificationBody.parse(notification_body)
-            print(parsed)
             parsed_notification_body = parsed
 
         assert isinstance(parsed_notification_body, construct.Container)
@@ -311,13 +308,11 @@ class TestParseKamstrup:
         """Parse single phase NO list number 1."""
         if llc_pdu is not None:
             parsed = kamstrup.LlcPdu.parse(llc_pdu)
-            print(parsed)
             assert_apdu(parsed, 0, datetime(2022, 1, 17, 12, 44, 40))
             parsed_notification_body = parsed.information.notification_body
 
         if notification_body is not None:
             parsed = kamstrup.NotificationBody.parse(notification_body)
-            print(parsed)
             parsed_notification_body = parsed
 
         assert isinstance(parsed_notification_body, construct.Container)
@@ -389,13 +384,11 @@ class TestParseKamstrup:
         """Parse single phase NO list number 1."""
         if llc_pdu is not None:
             parsed = kamstrup.LlcPdu.parse(llc_pdu)
-            print(parsed)
             assert_apdu(parsed, 0, datetime(2021, 11, 24, 0, 0, 25))
             parsed_notification_body = parsed.information.notification_body
 
         if notification_body is not None:
             parsed = kamstrup.NotificationBody.parse(notification_body)
-            print(parsed)
             parsed_notification_body = parsed
 
         assert isinstance(parsed_notification_body, construct.Container)
@@ -498,13 +491,11 @@ class TestParseKamstrup:
         """Parse three phase NO list number 1."""
         if llc_pdu is not None:
             parsed = kamstrup.LlcPdu.parse(llc_pdu)
-            print(parsed)
             assert_apdu(parsed, 0, datetime(2000, 1, 1, 22, 33, 0))
             parsed_notification_body = parsed.information.notification_body
 
         if notification_body is not None:
             parsed = kamstrup.NotificationBody.parse(notification_body)
-            print(parsed)
             parsed_notification_body = parsed
 
         assert parsed_notification_body.length == 0x19
@@ -599,13 +590,11 @@ class TestParseKamstrup:
         """Parse single phase NO list number 2."""
         if llc_pdu is not None:
             parsed = kamstrup.LlcPdu.parse(llc_pdu)
-            print(parsed)
             assert_apdu(parsed, 0, datetime(2017, 8, 16, 16, 0, 5))
             parsed_notification_body = parsed.information.notification_body
 
         if notification_body is not None:
             parsed = kamstrup.NotificationBody.parse(notification_body)
-            print(parsed)
             parsed_notification_body = parsed
 
         assert parsed_notification_body.length == 15
@@ -622,13 +611,11 @@ class TestParseKamstrup:
         """Parse three phase NO list number 2."""
         if llc_pdu is not None:
             parsed = kamstrup.LlcPdu.parse(llc_pdu)
-            print(parsed)
             assert_apdu(parsed, 0, datetime(2017, 8, 16, 16, 0, 5))
             parsed_notification_body = parsed.information.notification_body
 
         if notification_body is not None:
             parsed = kamstrup.NotificationBody.parse(notification_body)
-            print(parsed)
             parsed_notification_body = parsed
 
         assert parsed_notification_body.length == 35
@@ -652,8 +639,6 @@ class TestDecodeKamstrup:
 
         if notification_body is not None:
             decoded = kamstrup.decode_notification_body(notification_body)
-
-        pprint(decoded)
 
         assert isinstance(decoded, dict)
 
@@ -695,7 +680,6 @@ class TestDecodeKamstrup:
         if notification_body is not None:
             decoded = kamstrup.decode_notification_body(notification_body)
 
-        pprint(decoded)
         assert isinstance(decoded, dict)
 
         if llc_pdu is not None:
@@ -732,8 +716,6 @@ class TestDecodeKamstrup:
         if notification_body is not None:
             decoded = kamstrup.decode_notification_body(notification_body)
 
-        pprint(decoded)
-
         assert isinstance(decoded, dict)
         assert len(decoded) == 15
         assert decoded["active_power_export"] == 0
@@ -767,7 +749,6 @@ class TestDecodeKamstrup:
         if notification_body is not None:
             decoded = kamstrup.decode_notification_body(notification_body)
 
-        pprint(decoded)
         assert isinstance(decoded, dict)
 
         if llc_pdu is not None:
@@ -806,8 +787,6 @@ class TestDecodeKamstrup:
         if notification_body is not None:
             decoded = kamstrup.decode_notification_body(notification_body)
 
-        pprint(decoded)
-
         assert isinstance(decoded, dict)
         assert len(decoded) == 19
         assert decoded["active_power_export"] == 0
@@ -844,8 +823,6 @@ class TestDecodeKamstrup:
 
         if notification_body is not None:
             decoded = kamstrup.decode_notification_body(notification_body)
-
-        pprint(decoded)
 
         assert isinstance(decoded, dict)
         assert len(decoded) == 9

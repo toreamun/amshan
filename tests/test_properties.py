@@ -57,7 +57,7 @@ def p1_readout(draw: st.DrawFn) -> bytes:
 
 def split(data: bytes, cuts: list[int]) -> list[bytes]:
     points = sorted({c % (len(data) + 1) for c in cuts})
-    return [data[a:b] for a, b in zip([0, *points], [*points, len(data)])]
+    return [data[a:b] for a, b in zip([0, *points], [*points, len(data)], strict=True)]
 
 
 def read_all(reader: hdlc.HdlcFrameReader | dlde.ModeDReader, chunks: list[bytes]):

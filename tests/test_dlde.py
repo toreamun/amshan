@@ -3,7 +3,6 @@
 import subprocess
 import sys
 from datetime import datetime
-from pprint import pprint
 
 import pytest
 
@@ -194,7 +193,6 @@ class TestModeDReader:
         assert readouts[0].is_valid
 
         items = parse_p1_readout(readouts[0])
-        pprint(items)
         assert items[0] == DataSet(
             address="0-0:1.0.0", values=[DataSetValue(value="210106160710W", unit=None)]
         )
@@ -205,7 +203,6 @@ class TestModeDReader:
         readout_data = IDENT + CRLF + LINE_WITHOUT_UNIT + LINE_WITH_UNIT + END_LINE
         readouts = reader.read(readout_data)
         items = parse_p1_readout(readouts[0])
-        pprint(items)
         assert items[1] == DataSet(
             address="1-0:41.7.0", values=[DataSetValue(value="0000.350", unit="kW")]
         )
@@ -285,7 +282,6 @@ class TestParse:
     def test_parse_example_a_landisgyr_360(self):
         """Parse example data A Landis+Gyr 360."""
         parsed = parse_p1_readout(DataReadout(EXAMPLE_DATA_A_LANDISGYR_360))
-        pprint(parsed)
         assert parsed[0] == DataSet(
             address="0-0:1.0.0",
             values=[DataSetValue(value="210222161900W", unit=None)],
@@ -376,7 +372,6 @@ class TestParse:
         """Parse data block line of single data set and multiple values."""
         data_block = b"1-0:99.97.0(5)(0-0:96.7.19)(170520130938S)(0000005627*s)(170325044014W)(0043178677*s)\r\n"
         parsed = parse_p1_readout_content(data_block)
-        pprint(parsed)
         assert parsed == [
             DataSet(
                 address="1-0:99.97.0",
@@ -398,7 +393,6 @@ class TestParse:
             b"0-0:1.0.0(180924132132S)"
         )
         parsed = parse_p1_readout_content(data_block)
-        pprint(parsed)
         assert parsed == [
             DataSet(
                 address="1-0:99.97.0",
@@ -424,7 +418,6 @@ class TestDecode:
     def test_decode_example(self):
         """Decode example data."""
         decoded = decode_p1_readout(DataReadout(EXAMPLE_DATA_D_LANDISGYR_360))
-        pprint(decoded)
         expected = {
             "active_power_export": 0,
             "active_power_export_l1": 0,
@@ -461,7 +454,6 @@ class TestDecode:
     def test_decode_kamstrup(self):
         """Decode example data."""
         decoded = decode_p1_readout(DataReadout(EXAMPLE_DATA_KAMSTRUP))
-        pprint(decoded)
         expected = {
             "active_power_export": 0,
             "active_power_export_l1": 0,
@@ -589,7 +581,7 @@ def test_reader_skips_non_ascii_start_line() -> None:
     assert [r.as_bytes for r in readouts] == [p1_power(1)]
 
 
-F18_CHILD = """
+PARSE_LINE_IN_CHILD = """
 import sys, threading
 from han import dlde
 
@@ -620,7 +612,10 @@ def test_parse_line_with_trailing_text_terminates(line: str) -> None:
     # Run in a subprocess: the endless loop also grows memory and cannot be interrupted.
     # The parse timeout starts after imports, so slow interpreter startup does not matter.
     result = subprocess.run(
-        [sys.executable, "-c", F18_CHILD, line], capture_output=True, timeout=60
+        [sys.executable, "-c", PARSE_LINE_IN_CHILD, line],  # noqa: S603 - our own code
+        capture_output=True,
+        timeout=60,
+        check=False,
     )
 
     assert result.returncode == 0, result.stderr.decode()
