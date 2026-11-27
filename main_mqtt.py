@@ -116,8 +116,7 @@ if __name__ == "__main__":
 
     try:
         if args.dumpfile:
-            # Closed in _close_resources
-            logfile = Path(args.dumpfile).open("w+")  # noqa: SIM115
+            logfile = Path(args.dumpfile).open("w+")  # noqa: SIM115 - closed in _close_resources
 
         decoder = autodecoder.AutoDecoder()
         frame_reader = hdlc.HdlcFrameReader(use_octet_stuffing=False)
@@ -178,6 +177,6 @@ if __name__ == "__main__":
                 if len(frames):
                     for f in frames:
                         _hdlc_frame_received(f)
-    except Exception as ex:
+    except Exception as ex:  # noqa: BLE001 - log any error and close
         LOG.error("Exception: %s", ex)
         _close_resources()

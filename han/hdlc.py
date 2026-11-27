@@ -343,7 +343,9 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
     FLAG_SEQUENCE: int = 0x7E
 
     def __init__(
-        self, use_octet_stuffing: bool = False, use_abort_sequence: bool = False
+        self,
+        use_octet_stuffing: bool = False,  # noqa: FBT001, FBT002 - callers pass it positionally
+        use_abort_sequence: bool = False,  # noqa: FBT001, FBT002 - callers pass it positionally
     ) -> None:
         """
         Construct HdlcFrameReader.
@@ -503,7 +505,7 @@ class HdlcFrameReader(MeterReaderBase[HdlcFrame]):
         return frame_complete
 
     def _append_to_frame(self, current: int) -> None:
-        assert self._frame is not None
+        assert self._frame is not None  # noqa: S101 - narrows the type for mypy
         self._raw_frame_data.append(current)
         if self._use_octet_stuffing:
             if self._unescape_next:

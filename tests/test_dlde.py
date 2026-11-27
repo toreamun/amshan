@@ -611,8 +611,8 @@ sys.exit(3 if worker.is_alive() else 0)
 def test_parse_line_with_trailing_text_terminates(line: str) -> None:
     # Run in a subprocess: the endless loop also grows memory and cannot be interrupted.
     # The parse timeout starts after imports, so slow interpreter startup does not matter.
-    result = subprocess.run(
-        [sys.executable, "-c", PARSE_LINE_IN_CHILD, line],  # noqa: S603 - our own code
+    result = subprocess.run(  # noqa: S603 - runs sys.executable with test-defined code and arguments
+        [sys.executable, "-c", PARSE_LINE_IN_CHILD, line],
         capture_output=True,
         timeout=60,
         check=False,

@@ -188,7 +188,10 @@ class DataReadout(MeterMessageBase):
             return False
 
         for char in self._readout[self._data_pos : self._end_pos]:
-            if char > 0x80 or char == b"!":
+            # Known bug: 0x80 itself passes (should be >= 0x80); xfail tested in
+            # test_p1_readout_with_non_ascii_byte_is_invalid. The b"!" test is dead code:
+            # char is an int, and the slice ends before the first "!".
+            if char > 0x80 or char == b"!":  # noqa: PLR2004 - left as is until the bug is fixed
                 _LOGGER.debug("Invalid character 0x%x sin readout data.", char)
                 return False
 
@@ -352,7 +355,9 @@ class _ReaderBuffer:
 
 def _parse_p1_datetime(value: str) -> datetime:
     """Parse P1 date time string to datetime."""
-    return datetime(
+    # P1 time is local time with an S/W (summer/winter) suffix; the suffix is ignored and
+    # a naive datetime is returned.
+    return datetime(  # noqa: DTZ001 - naive by design, see above
         2000 + int(value[0:2]),
         int(value[2:4]),
         int(value[4:6]),

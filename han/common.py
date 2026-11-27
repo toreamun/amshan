@@ -76,7 +76,7 @@ class DlmsMessage(MeterMessageBase):
 TMessage = TypeVar("TMessage", bound=MeterMessageBase)  # pylint: disable=invalid-name
 
 
-class MeterReaderBase(ABC, Generic[TMessage]):
+class MeterReaderBase(ABC, Generic[TMessage]):  # noqa: UP046 - keep the module-level TypeVar TMessage, which callers may import
     """Abstract base class for meter reader types."""
 
     @property

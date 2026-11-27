@@ -88,8 +88,23 @@ target-version = "py312"
 extend-exclude = ["*.md"]
 
 [tool.ruff.lint]
-# Rules beyond this baseline are evaluated in the quality review.
-select = ["E4", "E7", "E9", "F", "I"]
+select = [
+    "E4", "E7", "E9", "F", "I", "W",
+    "UP", "B", "SIM", "RUF", "DTZ", "BLE", "PERF", "C4", "PIE", "RET", "PL", "N",
+    "ARG", "PTH", "TRY", "LOG", "G", "S", "FBT", "T20", "ERA", "ASYNC", "A",
+]
+# Messages passed to built-in exceptions (e.g. ValueError("...")) are fine; no custom
+# exception classes.
+ignore = ["TRY003"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests: asserts, expected values, naive datetimes as the decoders return them,
+# boolean test parameters and positional booleans in calls, seeded random data and
+# helpers with many arguments.
+"tests/**" = ["S101", "PLR2004", "DTZ001", "FBT", "S311", "PLR0913", "PLR0917"]
+# The example script logs expected errors (MQTT/serial) with LOG.error without a
+# traceback; it then re-raises, retries or shuts down.
+"main_mqtt.py" = ["TRY400"]
 
 [tool.mypy]
 packages = ["han"]
