@@ -43,6 +43,10 @@ class MeterMessageBase(ABC):
 class DlmsMessage(MeterMessageBase):
     """Message containing DLMS (binary) message without HDLC framing."""
 
+    # Messages shorter than this are rejected by is_valid. The origin of the limit is not
+    # documented.
+    MIN_LENGTH = 5
+
     def __init__(self, binary: bytes) -> None:
         """Initialize DlmsMessage."""
         super().__init__()
@@ -56,7 +60,7 @@ class DlmsMessage(MeterMessageBase):
     @property
     def is_valid(self) -> bool:
         """Return True when minimum length is fulfilled."""
-        return len(self._binary) > 4
+        return len(self._binary) >= self.MIN_LENGTH
 
     @property
     def as_bytes(self) -> bytes | None:

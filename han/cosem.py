@@ -51,6 +51,11 @@ OctedStringText = construct.FocusedSeq(
     "value" / construct.PaddedString(construct.this.length, "ASCII"),
 )
 
+# COSEM date and time: 0xFF in an optional byte field (hour, minute, second, hundredths,
+# clock status) and a deviation of -0x8000 mean «not specified».
+NOT_SPECIFIED = 0xFF
+DEVIATION_NOT_SPECIFIED = -0x8000
+
 ObisCode = construct.ExprAdapter(
     construct.Int8ub[6],
     decoder=lambda obj, _ctx: ".".join(f"{b}" for b in obj),
@@ -59,8 +64,8 @@ ObisCode = construct.ExprAdapter(
 
 OptionalDateTimeByte = construct.ExprAdapter(
     construct.Int8ub,
-    decoder=lambda obj, _ctx: obj if obj != 0xFF else None,
-    encoder=lambda obj, _ctx: obj if obj is not None else 0xFF,
+    decoder=lambda obj, _ctx: obj if obj != NOT_SPECIFIED else None,
+    encoder=lambda obj, _ctx: obj if obj is not None else NOT_SPECIFIED,
 )
 
 # See COSEM blue Book section 4.1.6.1 Date and time formats
@@ -77,14 +82,16 @@ DateTime = construct.Struct(
     "deviation"
     / construct.ExprAdapter(
         construct.Int16sb,
-        decoder=lambda obj, _ctx: obj if obj != -0x8000 else None,
-        encoder=lambda obj, _ctx: obj if obj is not None else -0x8000,
+        decoder=lambda obj, _ctx: obj if obj != DEVIATION_NOT_SPECIFIED else None,
+        encoder=lambda obj, _ctx: obj if obj is not None else DEVIATION_NOT_SPECIFIED,
     )
     * ("Range -720...+720 in minutes of local time to UTC. 0x8000 = not specified"),
     "clock_status_byte" / construct.Peek(OptionalDateTimeByte),
     "clock_status"
     / construct.If(
-        construct.this.clock_status_byte != 0xFF,
+        # Known bug: always true, because OptionalDateTimeByte already decodes 0xFF to None,
+        # so a clock status of 0xFF is parsed as all flags set.
+        construct.this.clock_status_byte != NOT_SPECIFIED,
         construct.BitStruct(
             "invalid_value"
             / construct.BitsInteger(1)
@@ -119,7 +126,7 @@ DateTime = construct.Struct(
             * "Flag set to true: the transmitted time contains the daylight saving deviation (summer time).",
         ),
     ),
-    construct.If(construct.this.clock_status_byte == 0xFF, construct.Int8ub),
+    construct.If(construct.this.clock_status_byte == NOT_SPECIFIED, construct.Int8ub),
     "datetime"
     / construct.Computed(
         lambda ctx: datetime.datetime(
