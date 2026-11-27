@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # setuptools-scm needs the tags to find the version
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
@@ -20,6 +23,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip build
           python -m build
+      - name: Check that the version is the tag
+        # Also for manual runs: they must be started from a tag.
+        shell: python
+        run: |
+          import os, pathlib
+          from packaging.version import Version
+          tag = Version(os.environ["GITHUB_REF_NAME"])
+          built = {Version(p.name.removeprefix("amshan-").removesuffix(".tar.gz")) for p in pathlib.Path("dist").glob("*.tar.gz")}
+          assert built == {tag}, f"built {built}, tag {tag}"
       - uses: actions/upload-artifact@v7
         with:
           name: dist

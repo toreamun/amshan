@@ -1,3 +1,7 @@
 graft tests
 include conftest.py
 global-exclude __pycache__ *.py[cod]
+# setuptools-scm adds every file tracked by git; keep the sdist as before.
+prune .github
+prune .vscode
+exclude .gitignore .gitattributes .git_archival.txt main_mqtt.py reader_async.py
