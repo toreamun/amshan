@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import Decimal
-from pprint import pprint
 
 import construct
 import pytest
@@ -155,13 +154,11 @@ class TestParseAidon:
         """Parse swedish list number 1."""
         if llc_pdu is not None:
             parsed = aidon.LlcPdu.parse(llc_pdu)
-            print(parsed)
             assert_apdu(parsed, 4194304, 0)
             parsed_notification_body = parsed.information.notification_body
 
         if notification_body is not None:
             parsed = aidon.NotificationBody.parse(notification_body)
-            print(parsed)
             parsed_notification_body = parsed
 
         assert parsed_notification_body.length == 27
@@ -340,13 +337,11 @@ class TestParseAidon:
         """Parse list number 1."""
         if llc_pdu is not None:
             parsed = aidon.LlcPdu.parse(llc_pdu)
-            print(parsed)
             assert_apdu(parsed, 4194304, 0)
             parsed_notification_body = parsed.information.notification_body
 
         if notification_body is not None:
             parsed = aidon.NotificationBody.parse(notification_body)
-            print(parsed)
             parsed_notification_body = parsed
 
         assert parsed_notification_body.length == 1
@@ -369,13 +364,11 @@ class TestParseAidon:
         """Parse list number 2."""
         if llc_pdu is not None:
             parsed = aidon.LlcPdu.parse(llc_pdu)
-            print(parsed)
             assert_apdu(parsed, 4194304, 0)
             parsed_notification_body = parsed.information.notification_body
 
         if notification_body is not None:
             parsed = aidon.NotificationBody.parse(notification_body)
-            print(parsed)
             parsed_notification_body = parsed
 
         assert parsed_notification_body.length == 12
@@ -464,13 +457,11 @@ class TestParseAidon:
         """Parse list number 2."""
         if llc_pdu is not None:
             parsed = aidon.LlcPdu.parse(llc_pdu)
-            print(parsed)
             assert_apdu(parsed, 4194304, 0)
             parsed_notification_body = parsed.information.notification_body
 
         if notification_body is not None:
             parsed = aidon.NotificationBody.parse(notification_body)
-            print(parsed)
             parsed_notification_body = parsed
 
         assert parsed_notification_body.length == 17
@@ -596,8 +587,6 @@ class TestDecodeAidon:
         if notification_body is not None:
             decoded = aidon.decode_notification_body(notification_body)
 
-        pprint(decoded)
-
         assert len(decoded) == 28
         assert isinstance(decoded, dict)
         assert decoded["active_power_export"] == 0
@@ -643,8 +632,6 @@ class TestDecodeAidon:
         if notification_body is not None:
             decoded = aidon.decode_notification_body(notification_body)
 
-        pprint(decoded)
-
         assert isinstance(decoded, dict)
         assert len(decoded) == 2
         assert decoded["active_power_import"] == 280
@@ -664,8 +651,6 @@ class TestDecodeAidon:
 
         if notification_body is not None:
             decoded = aidon.decode_notification_body(notification_body)
-
-        pprint(decoded)
 
         assert isinstance(decoded, dict)
         assert len(decoded) == 13
@@ -697,8 +682,6 @@ class TestDecodeAidon:
 
         if notification_body is not None:
             decoded = aidon.decode_notification_body(notification_body)
-
-        pprint(decoded)
 
         assert isinstance(decoded, dict)
         assert len(decoded) == 18

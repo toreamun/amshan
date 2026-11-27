@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from pprint import pprint
 
 import construct
 import pytest
@@ -135,13 +134,11 @@ class TestParseKaifa:
         """Parse SE list."""
         if llc_pdu is not None:
             parsed = kaifa.LlcPdu.parse(llc_pdu)
-            print(parsed)
             assert_apdu(parsed, 4194304, 0)
             parsed_notification_body = parsed.information.notification_body
 
         if notification_body is not None:
             parsed = kaifa.NotificationBody.parse(notification_body)
-            print(parsed)
             parsed_notification_body = parsed
 
         assert parsed_notification_body.type == kaifa.KaifaBodyType.OBIS_ELEMENTS
@@ -261,7 +258,6 @@ class TestParseKaifa:
     def test_parse_no_list_1(self):
         """Parse NO list number 1."""
         parsed = kaifa.LlcPdu.parse(no_list_1)
-        print(parsed)
         assert_apdu(parsed, 4194304, datetime(2019, 2, 4, 23, 52, 22))
 
         assert (
@@ -283,13 +279,11 @@ class TestParseKaifa:
         """Parse NO list number 2."""
         if llc_pdu is not None:
             parsed = kaifa.LlcPdu.parse(llc_pdu)
-            print(parsed)
             assert_apdu(parsed, 4194304, datetime(2020, 1, 25, 13, 9, 30))
             parsed_notification_body = parsed.information.notification_body
 
         if notification_body is not None:
             parsed = kaifa.NotificationBody.parse(notification_body)
-            print(parsed)
             parsed_notification_body = parsed
 
         assert parsed_notification_body.length == 13
@@ -331,13 +325,11 @@ class TestParseKaifa:
         """Parse NO list number 3."""
         if llc_pdu is not None:
             parsed = kaifa.LlcPdu.parse(no_list_3)
-            print(parsed)
             assert_apdu(parsed, 4194304, datetime(2020, 1, 25, 14, 0, 10))
             parsed_notification_body = parsed.information.notification_body
 
         if notification_body is not None:
             parsed = kaifa.NotificationBody.parse(notification_body)
-            print(parsed)
             parsed_notification_body = parsed
 
         assert parsed_notification_body.type == kaifa.KaifaBodyType.VALUE_ELEMENTS
@@ -400,7 +392,6 @@ class TestDecodeKaifa:
         if notification_body is not None:
             decoded = kaifa.decode_notification_body(notification_body)
 
-        pprint(decoded)
         assert isinstance(decoded, dict)
         assert len(decoded) == 19
         assert decoded["active_power_export"] == 0
@@ -440,7 +431,6 @@ class TestDecodeKaifa:
         if notification_body is not None:
             decoded = kaifa.decode_notification_body(notification_body)
 
-        pprint(decoded)
         assert isinstance(decoded, dict)
 
         assert decoded["active_power_import"] == 5852
@@ -468,7 +458,6 @@ class TestDecodeKaifa:
         if notification_body is not None:
             decoded = kaifa.decode_notification_body(notification_body)
 
-        pprint(decoded)
         assert isinstance(decoded, dict)
 
         if llc_pdu is not None:
@@ -506,7 +495,6 @@ class TestDecodeKaifa:
         if notification_body is not None:
             decoded = kaifa.decode_notification_body(notification_body)
 
-        pprint(decoded)
         assert isinstance(decoded, dict)
 
         assert len(decoded) == 19

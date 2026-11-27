@@ -341,9 +341,8 @@ class TestConnectionManager:
 
         assert connections.calls == 1
 
-    async def test_loop_can_be_started_again_after_close(
-        self, sleeps: list[float]
-    ) -> None:
+    @pytest.mark.usefixtures("sleeps")
+    async def test_loop_can_be_started_again_after_close(self) -> None:
         connections = FakeConnections()
         manager = ConnectionManager(connections.factory)
 

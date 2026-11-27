@@ -3,6 +3,8 @@
 # pylint: disable = no-self-use
 from __future__ import annotations
 
+import random
+
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
@@ -991,8 +993,6 @@ def test_truncated_stuffed_frame_does_not_cost_the_next_frame() -> None:
 
 
 def test_reader_buffer_stays_bounded_with_garbage() -> None:
-    import random
-
     rnd = random.Random(20261127)
     frame = _aidon_frame()
     reader = hdlc.HdlcFrameReader(use_octet_stuffing=False)
