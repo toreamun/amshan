@@ -112,6 +112,6 @@ files = ["han", "tests", "main_mqtt.py", "reader_async.py"]
 strict = true
 
 [[tool.mypy.overrides]]
-# construct and pyserial-asyncio have no type information.
-module = ["construct", "construct.*", "serial_asyncio"]
+# construct and pyserial-asyncio ship no type information (no py.typed or stubs).
+module = ["construct", "serial_asyncio"]
 ignore_missing_imports = true

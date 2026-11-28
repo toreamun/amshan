@@ -104,9 +104,11 @@ class DataSet:
             while position > -1:
                 position, address, values = get_address_and_values(data_line, position)
                 if values:
-                    # Known bug: address is None only for text after the last ")", where
-                    # this loop never ends; xfail tested in
-                    # test_parse_line_with_trailing_text_terminates.
+                    # Known bug: address is None when text follows a ")" with no "(" after
+                    # it. Then this loop never ends (xfail tested in
+                    # test_parse_line_with_trailing_text_terminates), or, if the line ends
+                    # in ")", a data set without address is returned, and decoding it
+                    # raises TypeError.
                     items.append(cls(address, values))  # type: ignore[arg-type]
 
         return items
