@@ -8,6 +8,7 @@ shows up as a snapshot diff (update with `pytest --snapshot-update` when intende
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 from syrupy.assertion import SnapshotAssertion
@@ -23,9 +24,10 @@ def read_corpus_file(path: Path) -> bytes:
     return bytes.fromhex("".join(x for x in lines if not x.startswith("#")))
 
 
-def decode(path: Path) -> tuple[str | None, dict | None]:
+def decode(path: Path) -> tuple[str | None, dict[str, Any] | None]:
     data = read_corpus_file(path)
     decoder = AutoDecoder()
+    messages: list[hdlc.HdlcFrame] | list[dlde.DataReadout]
     if "_hdlc_" in path.name:
         messages = hdlc.HdlcFrameReader(use_octet_stuffing=False).read(data)
     elif "_p1_" in path.name:

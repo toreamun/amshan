@@ -129,7 +129,9 @@ class TestParseKaifa:
             [None, bytes.fromhex(NOTIFICATION_BODY_SE_LIST)],
         ],
     )
-    def test_parse_se_list(self, llc_pdu, notification_body):
+    def test_parse_se_list(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Parse SE list."""
         if llc_pdu is not None:
             parsed = kaifa.LlcPdu.parse(llc_pdu)
@@ -254,7 +256,7 @@ class TestParseKaifa:
             578528,
         )
 
-    def test_parse_no_list_1(self):
+    def test_parse_no_list_1(self) -> None:
         """Parse NO list number 1."""
         parsed = kaifa.LlcPdu.parse(no_list_1)
         assert_apdu(parsed, 4194304, datetime(2019, 2, 4, 23, 52, 22))
@@ -274,7 +276,9 @@ class TestParseKaifa:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2)],
         ],
     )
-    def test_parse_no_list_2(self, llc_pdu, notification_body):
+    def test_parse_no_list_2(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Parse NO list number 2."""
         if llc_pdu is not None:
             parsed = kaifa.LlcPdu.parse(llc_pdu)
@@ -320,7 +324,9 @@ class TestParseKaifa:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_3)],
         ],
     )
-    def test_parse_no_list_3(self, llc_pdu, notification_body):
+    def test_parse_no_list_3(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Parse NO list number 3."""
         if llc_pdu is not None:
             parsed = kaifa.LlcPdu.parse(no_list_3)
@@ -383,7 +389,9 @@ class TestDecodeKaifa:
             [None, bytes.fromhex(NOTIFICATION_BODY_SE_LIST)],
         ],
     )
-    def test_decode_frame_se_list(self, llc_pdu, notification_body):
+    def test_decode_frame_se_list(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Decode SE list."""
         if llc_pdu is not None:
             decoded = kaifa.decode_frame_content(llc_pdu)
@@ -422,7 +430,9 @@ class TestDecodeKaifa:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_1)],
         ],
     )
-    def test_decode_frame_no_list_1(self, llc_pdu, notification_body):
+    def test_decode_frame_no_list_1(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Decode NO list number 1."""
         if llc_pdu is not None:
             decoded = kaifa.decode_frame_content(llc_pdu)
@@ -449,7 +459,9 @@ class TestDecodeKaifa:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2)],
         ],
     )
-    def test_decode_frame_no_list_2(self, llc_pdu, notification_body):
+    def test_decode_frame_no_list_2(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Decode NO list number 2."""
         if llc_pdu is not None:
             decoded = kaifa.decode_frame_content(llc_pdu)
@@ -486,7 +498,9 @@ class TestDecodeKaifa:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_3)],
         ],
     )
-    def test_decode_frame_no_list_3(self, llc_pdu, notification_body):
+    def test_decode_frame_no_list_3(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Decode NO list number 3."""
         if llc_pdu is not None:
             decoded = kaifa.decode_frame_content(llc_pdu)

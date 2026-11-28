@@ -17,7 +17,7 @@ from han.obis_map import (
 class TestObis:
     """Test obis class."""
 
-    def test_obis(self):
+    def test_obis(self) -> None:
         """Test from_string, str and eq."""
         obis_code_a = "1.2.3"
         obis_code_b = "4.5.6"
@@ -27,7 +27,7 @@ class TestObis:
         assert obis_a == obis_code_a
         assert obis_a != obis_b
 
-    def test_all_from_obis_map_in_obis_codes(self):
+    def test_all_from_obis_map_in_obis_codes(self) -> None:
         """Assert that all required obis codes from obis_map in OBIS_CODES."""
         remove = [
             FIELD_OBIS_LIST_VER_ID,
@@ -49,7 +49,7 @@ class TestObis:
 class TestToTupple:
     """Test obis-to-tupple parsing."""
 
-    def test_reduced(self):
+    def test_reduced(self) -> None:
         """Assert that reduced codes parse correctly."""
         assert to_obis_tupple("3.4") == (None, None, 3, 4, None, None)
         assert to_obis_tupple("3.4.5") == (None, None, 3, 4, 5, None)
@@ -59,7 +59,7 @@ class TestToTupple:
         assert to_obis_tupple("1-2:3.4*6") == (1, 2, 3, 4, None, 6)
         assert to_obis_tupple("1-2:3.4.5*6") == (1, 2, 3, 4, 5, 6)
 
-    def test_standard(self):
+    def test_standard(self) -> None:
         """Assert that standard codes parse correctly."""
         assert to_obis_tupple("1.2.3.4.5.6") == (1, 2, 3, 4, 5, 6)
 
