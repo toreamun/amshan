@@ -111,7 +111,7 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
     def _set_transport_info(self) -> None:
         if self._transport:
             if hasattr(self._transport, "serial"):
-                self._transport_info = str(self._transport.serial)  # type: ignore
+                self._transport_info = str(self._transport.serial)
             else:
                 peer_name = self._transport.get_extra_info("peername")
                 if peer_name:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import construct  # type: ignore
 
@@ -97,7 +97,7 @@ class AutoDecoder:
             name, decoder = AutoDecoder.payload_decoder_functions[index]
             try:
                 decoded = (
-                    dlde.decode_p1_readout(cast(dlde.DataReadout, message))
+                    dlde.decode_p1_readout(message)
                     if name == "P1" and isinstance(message, dlde.DataReadout)
                     else decoder(message.payload)
                 )
