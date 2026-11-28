@@ -8,7 +8,7 @@ from asyncio import (
     get_event_loop,
 )
 from collections.abc import Sequence
-from typing import cast
+from typing import Any, cast
 
 import serial_asyncio  # type: ignore
 
@@ -28,9 +28,9 @@ from han.meter_connection import (
 async def create_serial_message_connection(
     queue: Queue[MeterMessageBase],
     loop: AbstractEventLoop | None,
-    readers: Sequence[MeterReaderBase] | None,
-    *args,
-    **kwargs,
+    readers: Sequence[MeterReaderBase[Any]] | None,
+    *args: Any,
+    **kwargs: Any,
 ) -> MeterTransportProtocol:
     """
     Create serial connection using SmartMeterMessageProtocol.
@@ -64,9 +64,9 @@ async def create_serial_message_connection(
 async def create_serial_message_payload_connection(
     queue: Queue[bytes],
     loop: AbstractEventLoop | None,
-    readers: Sequence[MeterReaderBase] | None,
-    *args,
-    **kwargs,
+    readers: Sequence[MeterReaderBase[Any]] | None,
+    *args: Any,
+    **kwargs: Any,
 ) -> MeterTransportProtocol:
     """Create serial connection using SmartMeterMessagePayloadProtocol.
 
