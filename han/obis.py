@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from re import Pattern
 from re import compile as compile_regex
+from typing import Any
 
 REDUCED_OBIS_PATTERN = r"((?P<AR>\d{0,3}){1}-)?((?P<BR>\d{0,3}){1}:)?((?P<CR>\d{0,3})\.)(?P<DR>\d{0,3})?(\.(?P<ER>\d{0,3}))?(\*(?P<FR>\d{0,3}))?"
 STANDARD_OBIS_PATTERN = r"(?P<AS>\d{0,3})\.(?P<BS>\d{0,3})\.(?P<CS>\d{0,3})\.(?P<DS>\d{0,3})\.(?P<ES>\d{0,3})\.(?P<FS>\d{0,3})?"
@@ -14,7 +15,7 @@ OBIS_PATTERN_BOTH = (
 )
 
 # Compiled obis regex
-_obis_pattern: Pattern = compile_regex(OBIS_PATTERN_BOTH)
+_obis_pattern: Pattern[str] = compile_regex(OBIS_PATTERN_BOTH)
 
 ObisTupple = tuple[int | None, int | None, int, int, int | None, int | None]
 """6 part tupple value of all elements in oder A, B, C, D, E, and F."""
@@ -157,7 +158,7 @@ class Obis:
 
         return obis_code
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         """Return True if both instances represents the same obis code."""
         if isinstance(other, Obis):
             return self._groups == other._groups
@@ -187,13 +188,13 @@ class Obis:
         """Create from obis-code string."""
         return Obis(to_obis_tupple(obis_code))
 
-    def filter_group_cde(self):
+    def filter_group_cde(self) -> Obis:
         """Filter out group C, D and E."""
         return Obis(
             (None, None, self._groups[2], self._groups[3], self._groups[4], None)
         )
 
-    def to_group_cdr_str(self):
+    def to_group_cdr_str(self) -> str:
         """To OBIS C.D.E string."""
         return f"{self._groups[2]}.{self._groups[3]}.{self._groups[4]}"
 
