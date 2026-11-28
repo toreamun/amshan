@@ -49,7 +49,7 @@ Issues = "https://github.com/toreamun/amshan/issues"
 dev = [
     "hypothesis",
     "mypy==2.4.1",
-    "paho-mqtt",
+    "paho-mqtt==2.2.0",
     "pyserial-asyncio",
     "pytest",
     "pytest-asyncio",
