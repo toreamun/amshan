@@ -10,7 +10,7 @@ from asyncio import (
 from collections.abc import Sequence
 from typing import Any, cast
 
-import serial_asyncio  # type: ignore
+import serial_asyncio
 
 from han.common import (
     MeterMessageBase,

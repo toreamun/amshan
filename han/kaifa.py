@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 
-import construct  # type: ignore
+import construct
 
 from han import cosem, obis_map
 from han.obis import Obis
