@@ -8,6 +8,7 @@ import signal
 import sys
 import time
 from pathlib import Path
+from types import FrameType
 
 import paho.mqtt.client as mqtt
 import serial
@@ -55,13 +56,13 @@ def _get_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _json_converter(o):
+def _json_converter(o: object) -> str | None:
     if isinstance(o, datetime.datetime):
         return o.isoformat()
     return None
 
 
-def _signal_handler(signal_number, _stack_frame):
+def _signal_handler(signal_number: int, _stack_frame: FrameType | None) -> None:
     LOG.info(
         "%s signal received. Exiting gracefully.", signal.Signals(signal_number).name
     )
@@ -70,7 +71,7 @@ def _signal_handler(signal_number, _stack_frame):
 
 
 def _close_resources() -> None:
-    if ser is not None and ser.isOpen():
+    if ser is not None and ser.is_open:
         LOG.debug("Close serial port %s", ser.name)
         ser.close()
     if logfile is not None and logfile:
@@ -82,6 +83,8 @@ def _close_resources() -> None:
 
 
 def _dump_to_file(dump_data: bytes) -> None:
+    if logfile is None:
+        return
     for b in dump_data:
         is_flag = b == b"\x7e"[0]
         if is_flag:
@@ -92,13 +95,15 @@ def _dump_to_file(dump_data: bytes) -> None:
 
 
 def _hdlc_frame_received(frame: hdlc.HdlcFrame) -> None:
-    if frame.is_good_ffc and frame.is_expected_length:
-        LOG.debug("Got frame info content: %s", frame.payload.hex())
-        decoded_frame = decoder.decode_message_payload(frame.payload)
+    payload = frame.payload
+    if frame.is_good_ffc and frame.is_expected_length and payload is not None:
+        LOG.debug("Got frame info content: %s", payload.hex())
+        decoded_frame = decoder.decode_message_payload(payload)
         if decoded_frame:
             json_frame = json.dumps(decoded_frame, default=_json_converter)
             LOG.debug("Decoded frame: %s", json_frame)
-            mqtt_client.publish(args.mqtttopic, json_frame)
+            if mqtt_client is not None:
+                mqtt_client.publish(args.mqtttopic, json_frame)
         else:
             LOG.error("Could not decode frame: %s", frame.as_bytes.hex())
     else:
@@ -159,13 +164,13 @@ if __name__ == "__main__":
 
         while True:
             try:
-                if not ser.isOpen():
+                if not ser.is_open:
                     ser.open()
                 read_len = ser.in_waiting if ser.in_waiting > 0 else 1
                 data = ser.read(read_len)
             except serial.SerialException as ex:
                 LOG.error("Trouble reading from serial port: %s", ex)
-                data = []
+                data = b""
                 ser.close()
                 time.sleep(2)
 
