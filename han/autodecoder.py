@@ -6,7 +6,7 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import ClassVar
 
-import construct  # type: ignore
+import construct
 
 from han import aidon, dlde, kaifa, kamstrup
 from han.common import MeterMessageBase

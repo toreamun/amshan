@@ -56,6 +56,7 @@ dev = [
     "pytest-cov",
     "ruff==0.17.6",
     "syrupy",
+    "types-pyserial==3.5.0.20261104",
 ]
 
 [tool.setuptools]
@@ -107,4 +108,10 @@ ignore = ["TRY003"]
 "main_mqtt.py" = ["TRY400"]
 
 [tool.mypy]
-packages = ["han"]
+files = ["han", "tests", "main_mqtt.py", "reader_async.py"]
+strict = true
+
+[[tool.mypy.overrides]]
+# construct and pyserial-asyncio have no type information.
+module = ["construct", "construct.*", "serial_asyncio"]
+ignore_missing_imports = true

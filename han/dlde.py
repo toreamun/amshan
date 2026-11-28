@@ -196,7 +196,7 @@ class DataReadout(MeterMessageBase):
             # Known bug: 0x80 itself passes (should be >= 0x80); xfail tested in
             # test_p1_readout_with_non_ascii_byte_is_invalid. The b"!" test is dead code:
             # char is an int, and the slice ends before the first "!".
-            if char > 0x80 or char == b"!":  # noqa: PLR2004 - left as is until the bug is fixed
+            if char > 0x80 or char == b"!":  # type: ignore[comparison-overlap]  # noqa: PLR2004 - left as is until the bug is fixed
                 _LOGGER.debug("Invalid character 0x%x sin readout data.", char)
                 return False
 
