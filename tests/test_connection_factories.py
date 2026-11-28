@@ -163,12 +163,8 @@ async def test_serial_connection_uses_given_readers(
         captured.update(loop=loop, protocol=factory(), args=args, kwargs=kwargs)
         return "transport", captured["protocol"]
 
-    monkeypatch.setattr(
-        serial_connection_factory.serial_asyncio,
-        "create_serial_connection",
-        fake_create,
-    )
-    readers = [object()]
+    monkeypatch.setattr("serial_asyncio.create_serial_connection", fake_create)
+    readers: list[Any] = [object()]
     loop = asyncio.get_running_loop()
 
     await serial_connection_factory.create_serial_message_connection(
@@ -176,7 +172,7 @@ async def test_serial_connection_uses_given_readers(
         loop,
         readers,
         "/dev/ttyUSB0",
-        baudrate=2400,  # type: ignore[list-item]
+        baudrate=2400,
     )
 
     assert captured["loop"] is loop

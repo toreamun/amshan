@@ -88,7 +88,7 @@ from tests import frames
         ],
     ],
 )
-def test_decode_frame(expected_decoder, llc_pdu):
+def test_decode_frame(expected_decoder: str, llc_pdu: bytes) -> None:
     """Test AutoDecoder."""
     decoder = autodecoder.AutoDecoder()
     assert decoder.previous_success_decoder is None
@@ -102,7 +102,7 @@ def test_decode_frame(expected_decoder, llc_pdu):
     assert decoder.previous_success_decoder == expected_decoder
 
 
-def test_decode_message():
+def test_decode_message() -> None:
     """Test AutoDecoder."""
     decoder = autodecoder.AutoDecoder()
     decoded = decoder.decode_message(

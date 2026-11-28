@@ -203,7 +203,9 @@ class TestParseKamstrup:
             [None, bytes.fromhex(NOTIFICATION_BODY_SE_LIST_REAL_SAMPLE)],
         ],
     )
-    def test_parse_se_list_three_phase_real_sample(self, llc_pdu, notification_body):
+    def test_parse_se_list_three_phase_real_sample(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Parse SE list."""
         if llc_pdu is not None:
             parsed = kamstrup.LlcPdu.parse(llc_pdu)
@@ -303,7 +305,9 @@ class TestParseKamstrup:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_1_SINGLE_PHASE_REAL_SAMPLE)],
         ],
     )
-    def test_parse_no_list_1_single_phase_real_sample(self, llc_pdu, notification_body):
+    def test_parse_no_list_1_single_phase_real_sample(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Parse single phase NO list number 1."""
         if llc_pdu is not None:
             parsed = kamstrup.LlcPdu.parse(llc_pdu)
@@ -379,7 +383,9 @@ class TestParseKamstrup:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2_SINGLE_PHASE_REAL_SAMPLE)],
         ],
     )
-    def test_parse_no_list_2_single_phase_real_sample(self, llc_pdu, notification_body):
+    def test_parse_no_list_2_single_phase_real_sample(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Parse single phase NO list number 1."""
         if llc_pdu is not None:
             parsed = kamstrup.LlcPdu.parse(llc_pdu)
@@ -486,7 +492,9 @@ class TestParseKamstrup:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_1_THREE_PHASE)],
         ],
     )
-    def test_parse_no_list_1_three_phase(self, llc_pdu, notification_body):
+    def test_parse_no_list_1_three_phase(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Parse three phase NO list number 1."""
         if llc_pdu is not None:
             parsed = kamstrup.LlcPdu.parse(llc_pdu)
@@ -585,7 +593,9 @@ class TestParseKamstrup:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2_SINGLE_PHASE)],
         ],
     )
-    def test_parse_no_list_2_single_phase(self, llc_pdu, notification_body):
+    def test_parse_no_list_2_single_phase(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Parse single phase NO list number 2."""
         if llc_pdu is not None:
             parsed = kamstrup.LlcPdu.parse(llc_pdu)
@@ -606,7 +616,9 @@ class TestParseKamstrup:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2_THREE_PHASE)],
         ],
     )
-    def test_parse_no_list_2_three_phase(self, llc_pdu, notification_body):
+    def test_parse_no_list_2_three_phase(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Parse three phase NO list number 2."""
         if llc_pdu is not None:
             parsed = kamstrup.LlcPdu.parse(llc_pdu)
@@ -631,7 +643,9 @@ class TestDecodeKamstrup:
             [None, bytes.fromhex(NOTIFICATION_BODY_SE_LIST_REAL_SAMPLE)],
         ],
     )
-    def test_decode_se_list_three_phase_real_sample(self, llc_pdu, notification_body):
+    def test_decode_se_list_three_phase_real_sample(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Decode three phase SE list (real sample)."""
         if llc_pdu is not None:
             decoded = kamstrup.decode_frame_content(llc_pdu)
@@ -670,8 +684,8 @@ class TestDecodeKamstrup:
         ],
     )
     def test_decode_frame_no_list_1_single_phase_real_sample(
-        self, llc_pdu, notification_body
-    ):
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Decode three phase no list number 1."""
         if llc_pdu is not None:
             decoded = kamstrup.decode_frame_content(llc_pdu)
@@ -706,8 +720,8 @@ class TestDecodeKamstrup:
         ],
     )
     def test_decode_frame_no_list_2_single_phase_real_sample(
-        self, llc_pdu, notification_body
-    ):
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Decode three phase no list number 1."""
         if llc_pdu is not None:
             decoded = kamstrup.decode_frame_content(llc_pdu)
@@ -740,7 +754,9 @@ class TestDecodeKamstrup:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_1_THREE_PHASE)],
         ],
     )
-    def test_decode_frame_no_list_1_three_phase(self, llc_pdu, notification_body):
+    def test_decode_frame_no_list_1_three_phase(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Decode three phase no list number 1."""
         if llc_pdu is not None:
             decoded = kamstrup.decode_frame_content(llc_pdu)
@@ -778,7 +794,9 @@ class TestDecodeKamstrup:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2_THREE_PHASE)],
         ],
     )
-    def test_decode_frame_no_list_2_three_phase(self, llc_pdu, notification_body):
+    def test_decode_frame_no_list_2_three_phase(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Decode three phase no list number 2."""
         if llc_pdu is not None:
             decoded = kamstrup.decode_frame_content(llc_pdu)
@@ -815,7 +833,9 @@ class TestDecodeKamstrup:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2_SINGLE_PHASE)],
         ],
     )
-    def test_decode_frame_no_list_2_single_phase(self, llc_pdu, notification_body):
+    def test_decode_frame_no_list_2_single_phase(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Decode single phase no list number 2."""
         if llc_pdu is not None:
             decoded = kamstrup.decode_frame_content(llc_pdu)

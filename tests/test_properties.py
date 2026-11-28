@@ -10,6 +10,7 @@ from hypothesis import strategies as st
 
 from han import aidon, dlde, hdlc
 from han.autodecoder import AutoDecoder
+from han.common import MeterMessageBase, MeterReaderBase
 from tests import frames
 
 u32 = st.integers(min_value=0, max_value=2**32 - 1)
@@ -60,7 +61,9 @@ def split(data: bytes, cuts: list[int]) -> list[bytes]:
     return [data[a:b] for a, b in zip([0, *points], [*points, len(data)], strict=True)]
 
 
-def read_all(reader: hdlc.HdlcFrameReader | dlde.ModeDReader, chunks: list[bytes]):
+def read_all[T: MeterMessageBase](
+    reader: MeterReaderBase[T], chunks: list[bytes]
+) -> list[T]:
     return [m for chunk in chunks for m in reader.read(chunk)]
 
 

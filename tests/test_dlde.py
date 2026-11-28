@@ -171,13 +171,13 @@ EXAMPLE_DATA_KAMSTRUP = bytes.fromhex(
 class TestModeDReader:
     """Test Mode D reader."""
 
-    def test_incomplete(self):
+    def test_incomplete(self) -> None:
         """Incomplete message should return empty."""
         reader = ModeDReader()
         assert len(reader.read(IDENT)) == 0
         assert len(reader.read(LINE_WITHOUT_UNIT)) == 0
 
-    def test_read_item_without_unit(self):
+    def test_read_item_without_unit(self) -> None:
         """Test read item without unit."""
         reader = ModeDReader()
 
@@ -197,7 +197,7 @@ class TestModeDReader:
             address="0-0:1.0.0", values=[DataSetValue(value="210106160710W", unit=None)]
         )
 
-    def test_read_item_with_unit(self):
+    def test_read_item_with_unit(self) -> None:
         """Test read item without unit."""
         reader = ModeDReader()
         readout_data = IDENT + CRLF + LINE_WITHOUT_UNIT + LINE_WITH_UNIT + END_LINE
@@ -211,7 +211,7 @@ class TestModeDReader:
 class TestDataReadout:
     """Test DataReadout."""
 
-    def test_example_a_landisgyr_360(self):
+    def test_example_a_landisgyr_360(self) -> None:
         """Load example data A Landis+Gyr 360."""
         readout = DataReadout(EXAMPLE_DATA_A_LANDISGYR_360)
         assert readout.identification_line
@@ -222,7 +222,7 @@ class TestDataReadout:
         assert readout._calculated_crc == 0xA077
         assert readout.is_valid
 
-    def test_example_b(self):
+    def test_example_b(self) -> None:
         """Load example data B."""
         readout = DataReadout(EXAMPLE_DATA_B)
         assert readout.identification_line
@@ -231,7 +231,7 @@ class TestDataReadout:
         assert readout.identification_line.identification == "LGBBFFB231314239"
         assert readout.end_line == "!"
 
-    def test_example_c(self):
+    def test_example_c(self) -> None:
         """Load example data C."""
         readout = DataReadout(EXAMPLE_DATA_C)
         assert readout.identification_line
@@ -243,7 +243,7 @@ class TestDataReadout:
         assert readout._calculated_crc == 0x80FF
         assert readout.is_valid
 
-    def test_example_d_landisgyr_360(self):
+    def test_example_d_landisgyr_360(self) -> None:
         """Load example data D Landis+Gyr E360."""
         readout = DataReadout(EXAMPLE_DATA_D_LANDISGYR_360)
         assert readout.identification_line
@@ -255,7 +255,7 @@ class TestDataReadout:
         assert readout._calculated_crc == 0x8012
         assert readout.is_valid
 
-    def test_example_kamstrup(self):
+    def test_example_kamstrup(self) -> None:
         """Load example data Kamstrup."""
         data = EXAMPLE_DATA_KAMSTRUP
 
@@ -273,13 +273,13 @@ class TestDataReadout:
 class TestParse:
     """Test parse P1 readouts."""
 
-    def test_parse_junk(self):
+    def test_parse_junk(self) -> None:
         """Assert that parsing junk data return empty."""
         junk = bytes([1, 2, 3, 4, 5])
         parsed = parse_p1_readout_content(junk)
         assert len(parsed) == 0
 
-    def test_parse_example_a_landisgyr_360(self):
+    def test_parse_example_a_landisgyr_360(self) -> None:
         """Parse example data A Landis+Gyr 360."""
         parsed = parse_p1_readout(DataReadout(EXAMPLE_DATA_A_LANDISGYR_360))
         assert parsed[0] == DataSet(
@@ -368,7 +368,7 @@ class TestParse:
             address="1-0:71.7.0", values=[DataSetValue(value="000.3", unit="A")]
         )
 
-    def test_parse_multi_value_line(self):
+    def test_parse_multi_value_line(self) -> None:
         """Parse data block line of single data set and multiple values."""
         data_block = b"1-0:99.97.0(5)(0-0:96.7.19)(170520130938S)(0000005627*s)(170325044014W)(0043178677*s)\r\n"
         parsed = parse_p1_readout_content(data_block)
@@ -386,7 +386,7 @@ class TestParse:
             ),
         ]
 
-    def test_parse_multi_dataset_line(self):
+    def test_parse_multi_dataset_line(self) -> None:
         """Parse data block line of multiple data set and multiple values."""
         data_block = (
             b"1-0:99.97.0(5)(0-0:96.7.19)(170520130938S)(0000005627*s)(170325044014W)(0043178677*s)"
@@ -415,7 +415,7 @@ class TestParse:
 class TestDecode:
     """Test decode P1 readouts."""
 
-    def test_decode_example(self):
+    def test_decode_example(self) -> None:
         """Decode example data."""
         decoded = decode_p1_readout(DataReadout(EXAMPLE_DATA_D_LANDISGYR_360))
         expected = {
@@ -451,7 +451,7 @@ class TestDecode:
         }
         assert decoded == expected
 
-    def test_decode_kamstrup(self):
+    def test_decode_kamstrup(self) -> None:
         """Decode example data."""
         decoded = decode_p1_readout(DataReadout(EXAMPLE_DATA_KAMSTRUP))
         expected = {

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import Any
 
 import construct
 import pytest
@@ -127,8 +128,11 @@ se_list = bytes.fromhex(
 
 
 def assert_obis_element(
-    container, expected_obis_code, expected_value_type, expected_value
-):
+    container: Any,
+    expected_obis_code: str | None,
+    expected_value_type: str,
+    expected_value: Any,
+) -> None:
     """Assert OBIS element is as expected."""
     assert isinstance(container, construct.Container)
     assert container.obis == expected_obis_code
@@ -149,7 +153,9 @@ class TestParseAidon:
             [None, bytes.fromhex(NOTIFICATION_BODY_SE_LIST)],
         ],
     )
-    def test_parse_se_list(self, llc_pdu, notification_body):
+    def test_parse_se_list(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Parse swedish list number 1."""
         if llc_pdu is not None:
             parsed = aidon.LlcPdu.parse(llc_pdu)
@@ -332,7 +338,9 @@ class TestParseAidon:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_1)],
         ],
     )
-    def test_parse_no_list_1(self, llc_pdu, notification_body):
+    def test_parse_no_list_1(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Parse list number 1."""
         if llc_pdu is not None:
             parsed = aidon.LlcPdu.parse(llc_pdu)
@@ -359,7 +367,9 @@ class TestParseAidon:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2)],
         ],
     )
-    def test_parse_no_list_2(self, llc_pdu, notification_body):
+    def test_parse_no_list_2(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Parse list number 2."""
         if llc_pdu is not None:
             parsed = aidon.LlcPdu.parse(llc_pdu)
@@ -452,7 +462,9 @@ class TestParseAidon:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_3)],
         ],
     )
-    def test_parse_no_list_3(self, llc_pdu, notification_body):
+    def test_parse_no_list_3(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Parse list number 2."""
         if llc_pdu is not None:
             parsed = aidon.LlcPdu.parse(llc_pdu)
@@ -578,7 +590,9 @@ class TestDecodeAidon:
             [None, bytes.fromhex(NOTIFICATION_BODY_SE_LIST)],
         ],
     )
-    def test_decode_frame_se_list(self, llc_pdu, notification_body):
+    def test_decode_frame_se_list(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Decode SE list."""
         if llc_pdu is not None:
             decoded = aidon.decode_frame_content(llc_pdu)
@@ -623,7 +637,9 @@ class TestDecodeAidon:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_1)],
         ],
     )
-    def test_decode_frame_no_list_1(self, llc_pdu, notification_body):
+    def test_decode_frame_no_list_1(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Decode NO list number 1."""
         if llc_pdu is not None:
             decoded = aidon.decode_frame_content(llc_pdu)
@@ -643,7 +659,9 @@ class TestDecodeAidon:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_2)],
         ],
     )
-    def test_decode_frame_no_list_2(self, llc_pdu, notification_body):
+    def test_decode_frame_no_list_2(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Decode NO list number 2."""
         if llc_pdu is not None:
             decoded = aidon.decode_frame_content(llc_pdu)
@@ -674,7 +692,9 @@ class TestDecodeAidon:
             [None, bytes.fromhex(NOTIFICATION_BODY_NO_LIST_3)],
         ],
     )
-    def test_decode_frame_no_list_3(self, llc_pdu, notification_body):
+    def test_decode_frame_no_list_3(
+        self, llc_pdu: bytes | None, notification_body: bytes | None
+    ) -> None:
         """Decode NO list number 3."""
         if llc_pdu is not None:
             decoded = aidon.decode_frame_content(llc_pdu)

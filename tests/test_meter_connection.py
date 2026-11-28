@@ -355,11 +355,12 @@ class TestConnectionManager:
         assert connections.calls == 2
 
 
-def pending_try_connect_tasks() -> list[asyncio.Task]:
+def pending_try_connect_tasks() -> list[asyncio.Task[Any]]:
     return [
         t
         for t in asyncio.all_tasks()
-        if not t.done() and t.get_coro().__qualname__.endswith("._try_connect")
+        if not t.done()
+        and getattr(t.get_coro(), "__qualname__", "").endswith("._try_connect")
     ]
 
 

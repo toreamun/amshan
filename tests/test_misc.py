@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import datetime
 
 import pytest
 
@@ -118,7 +119,9 @@ class TestDataReadout:
         assert decoded["current_l1"] == 1.5
         assert decoded["active_power_import_total"] == 12345
         assert decoded["99.99.0"] == "abc"
-        assert decoded["meter_datetime"].isoformat() == "2026-11-25T21:30:00"
+        meter_datetime = decoded["meter_datetime"]
+        assert isinstance(meter_datetime, datetime)
+        assert meter_datetime.isoformat() == "2026-11-25T21:30:00"
 
     def test_multiple_unit_separators(self) -> None:
         with pytest.raises(ValueError, match="multiple"):
