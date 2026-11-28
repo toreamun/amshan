@@ -20,7 +20,7 @@ from asyncio import (
     wait,
 )
 from collections.abc import Awaitable, Callable, Sequence
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from han.common import MeterMessageBase, MeterReaderBase
 
@@ -87,7 +87,7 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
 
     def __init__(
         self,
-        reader_candidates: Sequence[MeterReaderBase],
+        reader_candidates: Sequence[MeterReaderBase[Any]],
     ) -> None:
         """
         Initialize SmartMeterProtocol.
@@ -98,7 +98,7 @@ class SmartMeterBaseProtocol(Protocol, metaclass=ABCMeta):
         self._done: Future[None] = Future()
         self.instance_id: int = SmartMeterBaseProtocol.total_instance_counter
         self._reader_candidates = list(reader_candidates)
-        self._selected_reader: MeterReaderBase | None = None
+        self._selected_reader: MeterReaderBase[Any] | None = None
         self._transport: BaseTransport | None = None
         self._transport_info: str | None = None
         SmartMeterBaseProtocol.total_instance_counter += 1
@@ -234,7 +234,7 @@ class SmartMeterMessageProtocol(SmartMeterBaseProtocol):
     def __init__(
         self,
         destination_queue: Queue[MeterMessageBase],
-        reader_candidates: Sequence[MeterReaderBase],
+        reader_candidates: Sequence[MeterReaderBase[Any]],
     ) -> None:
         """
         Initialize SmartMeterMessageProtocol.
@@ -265,7 +265,7 @@ class SmartMeterMessagePayloadProtocol(SmartMeterBaseProtocol):
     def __init__(
         self,
         destination_queue: Queue[bytes],
-        reader_candidates: Sequence[MeterReaderBase],
+        reader_candidates: Sequence[MeterReaderBase[Any]],
     ) -> None:
         """
         Initialize SmartMeterMessagePayloadProtocol.
